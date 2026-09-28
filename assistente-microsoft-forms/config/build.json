@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "entrypoints": {
+    "content.js": "src/content/index.js",
+    "content.css": "src/styles/index.css",
+    "background.js": "src/background/index.js",
+    "storage.js": "src/storage/index.js"
+  }
+}

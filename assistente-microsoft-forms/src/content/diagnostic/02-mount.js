@@ -1,0 +1,10 @@
+
+  async function mount(panel){if(mounted&&hostPanel===panel)return;if(mountPromise)return mountPromise;mountPromise=(async()=>{await globalThis.GSSF_STORAGE?.init?.();hostPanel=panel;const host=panel?.querySelector?.('#gssf-native-diagnostic-host');if(!host)throw new Error('Área nativa do Diagnóstico não encontrada.');host.replaceChildren();shadowRoot=host.shadowRoot||host.attachShadow({mode:'open'});shadowRoot.innerHTML=`<style>${DIAGNOSTIC_RUNTIME_CSS}</style><div class="diagnostic-app-root">${DIAGNOSTIC_ORIGINAL_BODY}</div>`;runtime=await startDiagnosticRuntime(shadowRoot);resizeObserver?.disconnect?.();if(typeof ResizeObserver==='function'){resizeObserver=new ResizeObserver(()=>{try{runtime?.resize?.();}catch(_){}});resizeObserver.observe(host);}mounted=true;})().finally(()=>{mountPromise=null;});return mountPromise;}
+  function activate(){runtime?.activate?.();}
+  async function unmount(){resizeObserver?.disconnect?.();resizeObserver=null;const currentRuntime=runtime;runtime=null;shadowRoot=null;hostPanel=null;mounted=false;try{await currentRuntime?.destroy?.();}catch(error){console.warn('Falha ao encerrar Diagnóstico:',error);}}
+  async function flushBackupState(){runtime?.flushBackupState?.();await globalThis.GSSF_STORAGE?.flush?.();}
+  async function reloadBackupState(){runtime?.reloadBackupState?.();}
+  async function clearStoredData({resetRuntime=true}={}){const panel=hostPanel;if(mounted)await unmount();await deleteDiagnosticDatabase();DIAGNOSTIC_SETTINGS_KEYS.forEach(key=>{try{globalThis.GSSF_STORAGE?.removeItem?.(key)}catch(_){}});if(resetRuntime&&panel?.isConnected)await mount(panel);}
+  const publicApi=Object.freeze({workspaceHtml,mount,activate,unmount,clearStoredData,flushBackupState,reloadBackupState,isMounted:()=>mounted,getSourceVersion:()=>DIAGNOSTIC_SOURCE_VERSION,getSourceHashes:()=>({...DIAGNOSTIC_SOURCE_HASHES}),getSharedSnapshot:()=>runtime?.getSnapshot?.()||null,handleSharedQuery:(action,params)=>runtime?.handleQuery?.(action,params)});
+  globalThis.GSSFDiagnostic=publicApi;
+  globalThis.DiagnosticoPedagogicoApp=publicApi;

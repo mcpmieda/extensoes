@@ -1,0 +1,164 @@
+[
+  {
+    "module": "core",
+    "originalSection": "00-core.js",
+    "source": "src/content/core/index.js",
+    "responsibility": "Estado, configuração, elegibilidade da página, painel, progresso e ciclo de vida.",
+    "originalLines": {
+      "start": 4
+    }
+  },
+  {
+    "module": "forms-dom",
+    "originalSection": "10-forms-dom.js",
+    "source": "src/content/forms-dom/index.js",
+    "responsibility": "Descoberta de questões/seções, campos editáveis e adaptação ao DOM do Forms.",
+    "originalLines": {
+      "start": 1519
+    }
+  },
+  {
+    "module": "alternatives",
+    "originalSection": "20-alternatives.js",
+    "source": "src/content/alternatives/index.js",
+    "responsibility": "Letras, capitalização, sequências V/F e ações sobre alternativas.",
+    "originalLines": {
+      "start": 2511
+    }
+  },
+  {
+    "module": "clipboard-word",
+    "originalSection": "30-clipboard-word.js",
+    "source": "src/content/clipboard-word/index.js",
+    "responsibility": "Cópia, formatação, parágrafos, MathML, sanitização, imagens e exportação Word.",
+    "originalLines": {
+      "start": 2894
+    }
+  },
+  {
+    "module": "sections-dialogs",
+    "originalSection": "40-sections-dialogs.js",
+    "source": "src/content/sections-dialogs/index.js",
+    "responsibility": "Remoção de seções e diálogos de confirmação.",
+    "originalLines": {
+      "start": 4999
+    }
+  },
+  {
+    "module": "math-audit",
+    "originalSection": "50-alternatives-math-audit.js",
+    "source": "src/content/math-audit/index.js",
+    "responsibility": "Edição de alternativas matemáticas, teclado, prefixos e confirmação visual.",
+    "originalLines": {
+      "start": 5162
+    }
+  },
+  {
+    "module": "audit-bank",
+    "originalSection": "60-audit-bank.js",
+    "source": "src/content/audit-bank/index.js",
+    "responsibility": "Auditoria, mapas de questões, banco de formulários e respostas manuais.",
+    "originalLines": {
+      "start": 6003
+    }
+  },
+  {
+    "module": "omr-import",
+    "originalSection": "70-omr-import.js",
+    "source": "src/content/omr-import/index.js",
+    "responsibility": "Gabarito OMR, histórico, correspondência, importação e atualização do quadro.",
+    "originalLines": {
+      "start": 7131
+    }
+  },
+  {
+    "module": "response-tools",
+    "originalSection": "71-response-tools-shell.js",
+    "source": "src/content/response-tools/index.js",
+    "responsibility": "Shell e navegação das ferramentas de respostas.",
+    "originalLines": {
+      "start": 8855
+    }
+  },
+  {
+    "module": "spreadsheet-adapter",
+    "originalSection": "72-answer-card-xlsx.js",
+    "source": "src/content/spreadsheet-adapter/index.js",
+    "responsibility": "Adaptador da biblioteca SheetJS local.",
+    "originalLines": {
+      "start": 9114
+    }
+  },
+  {
+    "module": "shared-bridge",
+    "originalSection": "72-shared-bridge.js",
+    "source": "src/content/shared-bridge/index.js",
+    "responsibility": "Contrato de dados compartilhados e sincronização entre ferramentas.",
+    "originalLines": {
+      "start": 9124
+    }
+  },
+  {
+    "module": "answer-card",
+    "originalSection": "73-answer-card.js",
+    "source": "src/content/answer-card/index.js",
+    "responsibility": "Cartão-resposta, turmas/alunos, layout, OMR, mídia e impressão.",
+    "originalLines": {
+      "start": 9170
+    }
+  },
+  {
+    "module": "printing",
+    "originalSection": "74-printing.js",
+    "source": "src/content/printing/index.js",
+    "responsibility": "Ambiente isolado de impressão, importação e seleção de lotes.",
+    "originalLines": {
+      "start": 11205
+    }
+  },
+  {
+    "module": "diagnostic",
+    "originalSection": "75-diagnostic.js",
+    "source": "src/content/diagnostic/index.js",
+    "responsibility": "Análise pedagógica, comparações, correspondências e relatórios.",
+    "originalLines": {
+      "start": 12958
+    }
+  },
+  {
+    "module": "organizer",
+    "originalSection": "76-organizer.js",
+    "source": "src/content/organizer/index.js",
+    "responsibility": "Organização de conteúdos e relatórios.",
+    "originalLines": {
+      "start": 13785
+    }
+  },
+  {
+    "module": "analysis-dashboard",
+    "originalSection": "80-analysis-dashboard.js",
+    "source": "src/content/analysis-dashboard/index.js",
+    "responsibility": "Painel de indicadores, análise automática e diagnóstico técnico.",
+    "originalLines": {
+      "start": 15343
+    }
+  },
+  {
+    "module": "backup-observer",
+    "originalSection": "90-backup-observer.js",
+    "source": "src/content/backup-observer/index.js",
+    "responsibility": "Backup, restauração, mesclagem e observadores da página.",
+    "originalLines": {
+      "start": 15691
+    }
+  },
+  {
+    "module": "bootstrap",
+    "originalSection": "99-bootstrap.js",
+    "source": "src/content/bootstrap/index.js",
+    "responsibility": "Inicialização, troca de versão, mensagens e registro de ciclo de vida.",
+    "originalLines": {
+      "start": 16131
+    }
+  }
+]

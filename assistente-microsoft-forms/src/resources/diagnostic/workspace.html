@@ -1,0 +1,87 @@
+<div class="app">
+  <header class="topbar">
+    <div class="status" hidden><span class="status-pill" id="libraryStatus">Preparando leitor de planilhas…</span><span class="status-pill" id="dataStatus">Nenhum lote selecionado</span></div>
+    <div class="diagnostic-navigation">
+      <div class="filters">
+        <div class="filter-controls" id="filterControls">
+          <select class="compact-select" id="classFilter" title="Turma"></select>
+          <select class="compact-select" id="studentFilter" title="Aluno"></select>
+          <select class="compact-select" id="sectionFilter" title="Disciplina"></select>
+        </div>
+        <div class="view-tabs" id="viewTabs">
+          <span class="view-indicator" id="viewIndicator" aria-hidden="true"></span>
+          <button type="button" class="view-tab active" data-view="overview">GERAL</button>
+          <button type="button" class="view-tab" data-view="class">TURMAS</button>
+          <button type="button" class="view-tab" data-view="sections">DISCIPLINAS</button>
+          <button type="button" class="view-tab" data-view="student">ALUNOS</button>
+          <button type="button" class="view-tab" data-view="questions">QUESTÕES</button>
+          <button type="button" class="view-tab" data-view="reports">RELATÓRIOS</button>
+        </div>
+      </div>
+    </div>
+    <div class="analysis-context topbar-context" id="analysisContext" aria-live="polite" hidden></div>
+  </header>
+  <main class="shell">
+    <section class="workspace">
+      <div class="content" id="dashboard"></div>
+    </section>
+    <aside class="settings">
+      <header class="settings-head"><div><h2>Configurações</h2><p>Lotes, mapeamento pedagógico, auditorias e parâmetros.</p></div></header>
+      <div class="settings-scroll">
+        <section class="card"><div class="card-body">
+          <div class="card-title"><div class="index">1</div><div><strong>Lotes de avaliações</strong><span>Cadastre a avaliação atual e quantas avaliações anteriores desejar.</span></div></div>
+          <label class="field"><span>Nome do novo lote<span class="required-mark">*</span></span><input id="batchName" required placeholder="Ex.: Simulado 1º trimestre — 2026"></label>
+          <label class="field"><span>Data da avaliação<span class="required-mark">*</span></span><input id="batchDate" required type="date"></label>
+          <label class="upload" id="batchUpload" for="batchFiles"><input id="batchFiles" type="file" multiple required accept=".xls,.xlsx,.xlsm,.xlsb,.ods"><strong id="batchFileTitle">Selecionar arquivos do EvalBee<span class="required-mark">*</span></strong><small id="batchFileHint">Um arquivo por turma; vários arquivos formam um lote.</small><div class="upload-file-list" id="batchFileList" hidden></div></label>
+          <p class="form-help" id="batchFormHelp">Preencha o nome, a data e selecione pelo menos um arquivo para cadastrar o lote.</p>
+          <div class="actions"><button type="button" class="btn primary" id="createBatch" disabled>CADASTRAR LOTE</button><button type="button" class="btn" id="loadDemo">CARREGAR DEMONSTRAÇÃO</button></div>
+          <p class="batch-visibility-help">Use o olho para incluir ou ocultar cada lote nas análises, comparações, impressões de desempenho e relatórios. O lote continua salvo.</p>
+          <div class="batch-list" id="batchList"></div>
+        </div></section>
+
+        <section class="card"><div class="card-body">
+          <div class="card-title"><div class="index">2</div><div><strong>Seleção da análise</strong><span>O lote de data mais recente é reconhecido automaticamente como a avaliação atual.</span></div></div>
+          <div class="field"><span>Lote analisado</span><div class="batch-choice" id="activeBatchButtons"></div><select id="activeBatch" class="hidden"></select></div>
+          <div class="comparison-panel">
+            <div class="field"><span>Modo de comparação</span><div class="segmented" id="comparisonModeToggle"><button class="seg-btn active" data-comparison-mode="trajectory" type="button">TRAJETÓRIA COMPLETA</button><button class="seg-btn" data-comparison-mode="one_to_one" type="button">COMPARAÇÃO 1:1</button></div></div>
+            <div class="field comparison-field" id="compareOneToOneField" hidden><span>Comparar o lote analisado com</span><div class="batch-choice" id="compareBatchButtons"></div><select id="compareBatch" class="hidden"></select></div>
+            <div class="comparison-help" id="comparisonHelp"><strong>Trajetória completa:</strong> utiliza automaticamente todos os lotes anteriores com o olho aberto, em ordem de data, para acompanhar evolução de alunos, turmas e áreas. A avaliação imediatamente anterior é usada nos indicadores de variação.</div>
+          </div>
+          <div class="config-metrics"><label class="field"><span>Meta de aproveitamento</span><input id="targetPercent" type="number" min="0" max="100" value="60"></label></div>
+          <p class="muted-help">Percentual de referência usado para classificar resultados, componentes e prioridades. As análises consideram todos os componentes que possuam dados, sem quantidade mínima de questões.</p>
+        </div></section>
+
+        <details class="card" id="sectionsAreasSettings"><summary><div class="card-title" style="margin:0"><div class="index">3</div><div><strong>Seções e áreas</strong><span>Cada disciplina corresponde a uma seção da avaliação e ao intervalo de suas questões.</span></div></div></summary><div class="details-content">
+          <div class="segmented" id="presetToggle"><button type="button" class="seg-btn active" data-preset="school">PRESET ESCOLAR</button><button type="button" class="seg-btn" data-preset="generic">MODO GERAL</button></div>
+          <div class="actions"><button type="button" class="btn small" id="addSection">Adicionar seção</button><button type="button" class="btn small" id="resetSections">Restaurar preset</button></div>
+          <div style="overflow:hidden;max-width:100%"><table class="section-table" id="sectionTable"><tbody></tbody></table></div>
+          <div class="actions"><button type="button" class="btn small" id="importMapBtn">Importar mapa JSON</button><button type="button" class="btn small" id="exportMapBtn">Exportar mapa JSON</button></div>
+          <input id="importMapFile" class="hidden" type="file" accept="application/json,.json">
+          <p class="muted" style="font-size:8.5px;line-height:1.4">Na futura integração com o Assistente do Microsoft Forms, as seções do Forms serão lidas como disciplinas e suas questões preencherão automaticamente estes intervalos.</p>
+        </div></details>
+
+        <details class="card audit-card no-batch" id="auditCard"><summary><div class="card-title" style="margin:0"><div class="index">4</div><div><strong>Auditoria de compatibilidade</strong><span>Verifica contagem de questões, lacunas, sobreposições e correspondência histórica.</span></div></div></summary><div class="details-content"><div id="auditList"></div></div></details>
+
+        <details class="card" id="moreDiagnosticSettings"><summary><div class="card-title" style="margin:0"><div class="index">5</div><div><strong>Mais configurações</strong><span>Colunas do EvalBee, identificação e regras de correspondência.</span></div></div></summary><div class="details-content">
+          <div class="grid2"><label class="field"><span>Turma</span><input id="colExam" value="Exam"></label><label class="field"><span>Número</span><input id="colRoll" value="Roll No"></label></div>
+          <div class="grid2"><label class="field"><span>Nome</span><input id="colName" value="Name"></label><label class="field"><span>Nota</span><input id="colMarks" value="Total Marks"></label></div>
+          <div class="grid3"><label class="field"><span>Acertos</span><input id="colCorrect" value="Correct Answers"></label><label class="field"><span>Erros</span><input id="colIncorrect" value="Incorrect Answers"></label><label class="field"><span>Branco</span><input id="colBlank" value="Not attempted"></label></div>
+          <div class="field"><span>Excluir aluno da análise</span><div class="filter-actions"><select id="excludeStudentSelect" class="compact-select" data-no-nav><option value="">Selecione um aluno</option></select><button class="btn small" id="excludeStudentBtn" type="button">EXCLUIR</button><button class="btn small" id="clearExcludedBtn" type="button">LIMPAR FILTRO</button></div><div class="excluded-list" id="excludedStudentList"></div><p class="muted-help">Use este filtro para retirar casos específicos da análise pedagógica sem apagar o aluno do lote original.</p></div>
+          <label class="field"><span>Correspondência histórica</span><select id="matchMode"><option value="class_roll_name">Turma + número, confirmando nome</option><option value="class_roll">Turma + número</option><option value="class_name">Turma + nome</option><option value="name">Somente nome</option></select></label>
+          <label class="field"><span>Tratamento da turma</span><select id="classNormalization"><option value="auto">Converter 6A → 6º ANO A</option><option value="literal">Manter texto original</option></select></label>
+          <div class="config-help"><strong>Como esta configuração funciona?</strong>Os nomes acima devem corresponder aos títulos das colunas do arquivo exportado pelo EvalBee. A correspondência histórica define como o mesmo aluno será localizado em avaliações diferentes. O tratamento da turma converte códigos como “6A” em “6º ANO A”; use o modo literal quando sua escola já exportar o nome completo ou adotar outro padrão.</div>
+          <div class="actions"><button type="button" class="btn" id="exportSummary">Exportar resumo CSV</button><button type="button" class="btn danger" id="resetApp">Redefinir recurso</button></div>
+        </div></details>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<div class="match-review-layer" id="matchReviewLayer" hidden>
+  <section class="match-review-dialog" role="dialog" aria-modal="true" aria-labelledby="matchReviewTitle">
+    <header class="match-review-head"><div><strong id="matchReviewTitle">Conferência de correspondências</strong><span id="matchReviewSubtitle">Confira os alunos que não foram relacionados automaticamente.</span></div><button class="match-review-close" id="matchReviewClose" type="button" aria-label="Fechar">×</button></header>
+    <div class="match-review-summary" id="matchReviewSummary"></div>
+    <div class="match-review-scroll"><table class="match-review-table" id="matchReviewTable"><thead><tr><th>Turma</th><th>Aluno atual</th><th>Status</th><th>Correspondência na avaliação anterior</th></tr></thead><tbody id="matchReviewBody"></tbody></table><div class="match-review-empty" id="matchReviewEmpty" hidden>Nenhuma correspondência exige conferência neste lote.</div></div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>

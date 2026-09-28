@@ -1,0 +1,162 @@
+<div class="app-backdrop">
+  <main class="modal" role="dialog" aria-modal="true" aria-label="Impressão de notas">
+    <header class="modal-head">
+      <div class="mode-switch" aria-label="Alternar ferramenta">
+        <button class="mode-button inactive" id="cardTab" type="button">Cartão-resposta</button>
+        <button class="mode-button active" type="button">Impressão</button>
+      </div>
+      <div class="head-right">
+        <div class="status-pill" id="statusPill">Aguardando arquivos de notas do EvalBee</div>
+        <button class="close-btn" id="closeBtn" type="button" title="Fechar">×</button>
+      </div>
+    </header>
+
+    <div class="modal-body">
+      <section class="preview-column">
+        <div class="preview-toolbar">
+          <div class="preview-title"><strong>Visualização da folha</strong><span>O guia colorido aparece apenas na tela e não será impresso.</span></div>
+          <div class="toolbar-actions">
+            <button class="toggle-guide active" id="guideToggle" type="button">GUIA VISUAL</button>
+            <div class="zoom-controls" aria-label="Zoom da visualização">
+              <button class="zoom-button" id="zoomOut" type="button" title="Diminuir zoom">−</button>
+              <button class="zoom-value" id="zoomReset" type="button" title="Restaurar zoom">100%</button>
+              <button class="zoom-button" id="zoomIn" type="button" title="Aumentar zoom">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="preview-scroll" id="previewScroll">
+          <div class="paper-viewport" id="paperViewport">
+            <div class="paper-shell" id="paperShell">
+              <div class="paper-scale" id="paperScale">
+                <article class="sheet" id="previewSheet"></article>
+              </div>
+            </div>
+          </div>
+          <div class="preview-chip" id="previewChip">PRÉVIA</div>
+        </div>
+      </section>
+
+      <aside class="settings-column">
+        <header class="settings-head"><strong>Configurações da impressão</strong><span>Esta aba possui dados, ajustes e armazenamento próprios.</span></header>
+        <div class="settings-scroll">
+          <section class="card" id="lotCard">
+            <div class="card-title"><div class="card-index">1</div><div class="card-heading"><strong>Lotes de avaliações</strong><span>Cadastre a avaliação que deseja imprimir e quantas avaliações anteriores precisar.</span></div></div>
+            <label class="field"><span>Nome do novo lote<span class="required-mark">*</span></span><input id="lotName" type="text" required placeholder="Ex.: Simulado 1º trimestre — 2026"></label>
+            <label class="field"><span>Data da avaliação<span class="required-mark">*</span></span><input id="lotDate" type="date" required autocomplete="off"></label>
+            <label class="lot-file-drop" id="lotUpload" for="lotFiles"><input id="lotFiles" type="file" multiple required accept=".xls,.xlsx,.xlsm,.xlsb,.ods,.csv"><strong id="lotFileTitle">Selecionar arquivos do EvalBee<span class="required-mark">*</span></strong><small id="lotFileHint">Um arquivo por turma; vários arquivos formam um lote.</small><div class="lot-file-list" id="lotFileList" hidden></div></label>
+            <p class="lot-form-help" id="lotFormHelp">Preencha o nome, a data e selecione pelo menos um arquivo para cadastrar o lote.</p>
+            <div class="actions single"><button class="action-btn primary" id="createLot" type="button" disabled>CADASTRAR LOTE</button></div>
+            <div class="lot-status" id="lotStatus"><strong>Nenhum lote cadastrado</strong>Cadastre uma avaliação para liberar a seleção da impressão.</div>
+            <div class="lot-list" id="lotList"><div class="lot-empty">Nenhum lote cadastrado.</div></div>
+          </section>
+
+          <section class="card" id="printSelectionCard">
+            <div class="card-title"><div class="card-index">2</div><div class="card-heading"><strong>Seleção da impressão</strong><span>Escolha qual avaliação fornecerá os resultados impressos</span></div></div>
+            <div class="field"><span>Resultado escolhido para impressão</span><div class="batch-choice" id="activeLotButtons"></div><select id="activeLotSelect" class="hidden"></select></div>
+            <div class="comparison-panel">
+              <div class="field"><span>Como usar os demais lotes no desempenho</span><div class="segmented two" id="comparisonModeToggle"><button class="seg-btn active" data-comparison-mode="trajectory" type="button">TRAJETÓRIA COMPLETA</button><button class="seg-btn" data-comparison-mode="one_to_one" type="button">COMPARAÇÃO 1:1</button></div></div>
+              <div class="field comparison-field" id="compareOneToOneField" hidden><span>Comparar o resultado impresso com</span><div class="batch-choice" id="compareLotButtons"></div><select id="compareLotSelect" class="hidden"></select></div>
+              <div class="comparison-help" id="comparisonHelp" hidden><strong>Comparação 1:1:</strong> usa somente a avaliação escolhida como referência histórica.</div>
+            </div>
+            <div class="selected-result-status empty" id="selectedResultStatus"><strong>Nenhum resultado selecionado</strong>Cadastre lotes na Etapa 1 e escolha o resultado acima.</div>
+          </section>
+
+          <section class="card" id="studentsPrintCard">
+            <div class="card-title"><div class="card-index">3</div><div class="card-heading"><strong>Turmas, alunos e impressão</strong><span>Escolha a turma e o aluno, defina a ordem e gere as folhas.</span></div></div>
+            <label class="field"><span>Selecione a TURMA</span>
+              <div class="select-row"><select id="datasetSelect" disabled><option>Selecione um lote primeiro</option></select><div class="nav-group"><button class="nav-btn" id="prevDataset" disabled type="button">‹</button><button class="nav-btn" id="nextDataset" disabled type="button">›</button></div></div>
+            </label>
+            <label class="field"><span>Selecione o ALUNO</span>
+              <div class="select-row"><select id="studentSelect" disabled><option>Selecione uma turma primeiro</option></select><div class="nav-group"><button class="nav-btn" id="prevStudent" disabled type="button">‹</button><button class="nav-btn" id="nextStudent" disabled type="button">›</button></div></div>
+            </label>
+            <div class="summary">
+              <div><span>Alunos</span><b id="studentCount">0</b></div>
+              <div class="wide"><span>Turma</span><b id="classSummary">—</b></div>
+              <div><span>Número</span><b id="rollSummary">—</b></div>
+              <div><span>Nota</span><b id="scoreSummary">—</b></div>
+            </div>
+            <div class="student-match-status empty" id="studentMatchStatus"><strong>Correspondência histórica ainda não conferida</strong>Selecione um resultado e, quando houver avaliações anteriores, confira as correspondências.</div>
+            <div class="front-content-config">
+              <strong>Conteúdo da frente do cartão</strong>
+              <span>Escolha se a área das instruções será usada antes da prova ou reservada para a devolutiva.</span>
+              <div class="field"><span>O que será usado nesta avaliação</span>
+                <div class="segmented two" id="frontContentButtons"><button class="seg-btn" data-front-content="instructions" type="button">MOSTRAR INSTRUÇÕES</button><button class="seg-btn active" data-front-content="performance" type="button">RESERVAR PARA DESEMPENHO</button></div>
+              </div>
+            </div>
+            <div class="field"><span>Ordem para imprimir a turma</span>
+              <div class="segmented" id="orderButtons"><button class="seg-btn active" data-order="asc" type="button">MENOR → MAIOR</button><button class="seg-btn" data-order="desc" type="button">MAIOR → MENOR</button><button class="seg-btn" data-order="file" type="button">ORDEM DO ARQUIVO</button></div>
+            </div>
+            <div class="actions"><button class="action-btn primary" id="printStudent" disabled type="button">IMPRIMIR ALUNO</button><button class="action-btn primary" id="printClass" disabled type="button">IMPRIMIR TURMA</button></div>
+          </section>
+
+          <details class="card analysis-config-card" id="analysisSettings">
+            <summary><div class="card-heading"><strong>Seções e áreas</strong><span>Configure as disciplinas, intervalos de questões e a meta usada nas análises impressas.</span></div></summary>
+            <div class="details-content">
+              <div class="analysis-target-row"><label class="field"><span>Meta de aproveitamento</span><input id="performanceTarget" type="number" min="0" max="100" value="60"></label><p>A mesma referência é usada para classificar componentes, focos e resultados.</p></div>
+              <div class="segmented two" id="performancePresetToggle"><button class="seg-btn active" data-performance-preset="school" type="button">PRESET ESCOLAR</button><button class="seg-btn" data-performance-preset="generic" type="button">MODO GERAL</button></div>
+              <div class="analysis-config-actions"><button class="action-btn secondary" id="addPerformanceSection" type="button">ADICIONAR SEÇÃO</button><button class="action-btn secondary" id="resetPerformanceSections" type="button">RESTAURAR PRESET</button></div>
+              <div class="analysis-section-table-wrap"><table class="analysis-section-table"><thead><tr><th>Usar</th><th>Disciplina / seção</th><th>Área</th><th>Início</th><th>Fim</th><th></th></tr></thead><tbody id="performanceSectionTable"></tbody></table></div>
+            </div>
+          </details>
+
+          <details class="card" id="moreSettings">
+            <summary><div class="card-heading"><strong>Mais configurações</strong><span>Correspondências, formato, aparência e calibração da impressora.</span></div></summary>
+            <div class="details-content">
+              <section class="subsection">
+                <div class="subsection-head"><strong>Etapas / grupos das turmas</strong><span>Usado para localizar alunos que mudaram de turma</span></div>
+                <p class="stage-help">O sistema já reconhece automaticamente padrões como <b>6A → 6º</b> e <b>7B → 7º</b>. Ajuste apenas quando uma turma pertencer a outro grupo.</p>
+                <div class="stage-mapping-list" id="stageMappingList"><div class="stage-map-empty">As turmas aparecerão aqui depois que um lote for selecionado.</div></div>
+                <button class="stage-reset" id="resetStageMappings" type="button">RESTAURAR ETAPAS AUTOMÁTICAS</button>
+              </section>
+
+              <section class="subsection">
+                <div class="subsection-head"><strong>Formato da nota</strong><span>Aplicado na prévia e na impressão</span></div>
+                <div class="segmented" id="decimalButtons"><button class="seg-btn active" data-decimals="auto" type="button">ORIGINAL</button><button class="seg-btn" data-decimals="1" type="button">1 DECIMAL</button><button class="seg-btn" data-decimals="2" type="button">2 DECIMAIS</button></div>
+                <div class="segmented two" id="separatorButtons"><button class="seg-btn active" data-separator="dot" type="button">PONTO 3.5</button><button class="seg-btn" data-separator="comma" type="button">VÍRGULA 3,5</button></div>
+              </section>
+
+              <section class="subsection">
+                <div class="subsection-head"><strong>Calibração geral</strong><span>Compensa diferenças entre impressoras</span></div>
+                <div class="range-block"><div class="range-caption"><span>Mover tudo na horizontal</span></div><div class="range-row"><input id="globalX" type="range" min="-15" max="15" step="0.5" value="0"><div class="range-value" id="globalXValue">0 mm</div></div></div>
+                <div class="range-block"><div class="range-caption"><span>Mover tudo na vertical</span></div><div class="range-row"><input id="globalY" type="range" min="-15" max="15" step="0.5" value="0"><div class="range-value" id="globalYValue">0 mm</div></div></div>
+                <div class="subsection-actions"><button class="action-btn secondary" id="resetGeneralCalibration" type="button">RESTAURAR CALIBRAÇÃO GERAL</button></div>
+              </section>
+
+              <section class="subsection">
+                <div class="subsection-head"><strong>Posições individuais</strong><span>Ajuste pelo controle ou digite o valor em milímetros</span></div>
+                <div class="position-controls">
+                  <div class="range-block position-control"><div class="range-caption"><span>Nome — horizontal (X)</span></div><div class="range-row editable"><input id="nameXRange" type="range" min="0" max="210" step="0.5"><label class="range-input-box"><input id="nameX" type="number" min="0" max="210" step="0.5"><span>mm</span></label></div></div>
+                  <div class="range-block position-control"><div class="range-caption"><span>Nome — vertical (Y)</span></div><div class="range-row editable"><input id="nameYRange" type="range" min="0" max="297" step="0.5"><label class="range-input-box"><input id="nameY" type="number" min="0" max="297" step="0.5"><span>mm</span></label></div></div>
+                  <div class="range-block position-control"><div class="range-caption"><span>Nota — horizontal (X)</span></div><div class="range-row editable"><input id="totalXRange" type="range" min="0" max="210" step="0.5"><label class="range-input-box"><input id="totalX" type="number" min="0" max="210" step="0.5"><span>mm</span></label></div></div>
+                  <div class="range-block position-control"><div class="range-caption"><span>Nota — vertical (Y)</span></div><div class="range-row editable"><input id="totalYRange" type="range" min="0" max="297" step="0.5"><label class="range-input-box"><input id="totalY" type="number" min="0" max="297" step="0.5"><span>mm</span></label></div></div>
+                  <div class="range-block position-control"><div class="range-caption"><span>Acertos — horizontal (X)</span></div><div class="range-row editable"><input id="correctXRange" type="range" min="0" max="210" step="0.5"><label class="range-input-box"><input id="correctX" type="number" min="0" max="210" step="0.5"><span>mm</span></label></div></div>
+                  <div class="range-block position-control"><div class="range-caption"><span>Erros — horizontal (X)</span></div><div class="range-row editable"><input id="incorrectXRange" type="range" min="0" max="210" step="0.5"><label class="range-input-box"><input id="incorrectX" type="number" min="0" max="210" step="0.5"><span>mm</span></label></div></div>
+                  <div class="range-block position-control"><div class="range-caption"><span>Em branco — horizontal (X)</span></div><div class="range-row editable"><input id="blankXRange" type="range" min="0" max="210" step="0.5"><label class="range-input-box"><input id="blankX" type="number" min="0" max="210" step="0.5"><span>mm</span></label></div></div>
+                  <div class="range-block position-control"><div class="range-caption"><span>Contadores — vertical (Y)</span></div><div class="range-row editable"><input id="countsYRange" type="range" min="0" max="297" step="0.5"><label class="range-input-box"><input id="countsY" type="number" min="0" max="297" step="0.5"><span>mm</span></label></div></div>
+                </div>
+                <div class="subsection-actions"><button class="action-btn secondary" id="resetIndividualPositions" type="button">RESTAURAR POSIÇÕES INDIVIDUAIS</button></div>
+              </section>
+
+              <section class="subsection">
+                <div class="subsection-head"><strong>Tamanhos da fonte</strong><span>Arial, conforme o modelo de impressão</span></div>
+                <div class="grid-3"><label class="field"><span>Nome</span><input id="nameSize" type="number" min="4" max="16" step="0.5"></label><label class="field"><span>Nota</span><input id="totalSize" type="number" min="10" max="36" step="1"></label><label class="field"><span>Acertos/erros</span><input id="countSize" type="number" min="10" max="32" step="1"></label></div>
+              </section>
+
+              <section class="subsection"><button class="reset-btn" id="resetSettings" type="button">RESTAURAR CONFIGURAÇÕES DA IMPRESSÃO</button></section>
+            </div>
+          </details>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+
+<div class="excluded-layer" id="excludedLayer" hidden>
+  <section class="excluded-dialog" role="dialog" aria-modal="true" aria-labelledby="excludedTitle">
+    <header class="excluded-head"><div class="excluded-head-text"><strong id="excludedTitle">Conferência de correspondências</strong><span id="excludedSubtitle">Confirme a sugestão do sistema ou escolha o aluno correto.</span></div><button class="excluded-close" id="excludedClose" type="button" aria-label="Fechar">×</button></header>
+    <div class="excluded-toolbar"><div class="excluded-summary" id="excludedSummary"></div><div class="excluded-filters" id="excludedFilters"><button class="excluded-filter active" type="button" data-excluded-filter="all">TODOS</button><button class="excluded-filter" type="button" data-excluded-filter="blocked">BLOQUEADOS</button><button class="excluded-filter" type="button" data-excluded-filter="not-found">NÃO LOCALIZADOS</button><button class="excluded-filter" type="button" data-excluded-filter="transferred">OUTRA TURMA</button></div></div>
+    <div class="excluded-scroll"><table class="excluded-table" id="excludedTable"><thead><tr><th>Turma atual</th><th>Nº</th><th>Aluno</th><th>Situação</th><th>Motivo e correspondência</th></tr></thead><tbody id="excludedTableBody"></tbody></table><div class="excluded-empty-state" id="excludedEmpty" hidden>Nenhum aluno neste filtro.</div></div>
+  </section>
+</div>
+<div class="print-queue" id="printQueue"></div>
+<div class="toast" id="toast"></div>

@@ -1,0 +1,4 @@
+/* @include ./00-index-start.js */
+/* @include ./01-toolbar-action.js */
+/* @include ./02-image-fetch.js */
+/* @include ./03-pedagogical-media.js */

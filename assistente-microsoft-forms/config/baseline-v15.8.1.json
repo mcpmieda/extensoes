@@ -1,0 +1,76 @@
+{
+  "sourceArchive": "V15.8.1(2).zip",
+  "version": "15.8.1",
+  "date": "2026-09-28",
+  "archiveSha256": "5973e894c65ffdd48a1d34e3635496b35133397a74e6790fc57ba8dfc414fc1a",
+  "files": {
+    "assets/answer-card-print.css": {
+      "bytes": 30144,
+      "sha256": "19fbbfd70902995f55947aa2d3bf1f50beaaf391654b71b7680debf124348796"
+    },
+    "assets/omr-template.jpg": {
+      "bytes": 72198,
+      "sha256": "758a62878bf1ce5ca4b5741c680eeb6fad1ec013dd8c30eeb46dd48543a5314b"
+    },
+    "assets/organizer-cabecalho.jpg": {
+      "bytes": 161604,
+      "sha256": "081717e4ce648e48daa8fbd9a1072d2c314129e4db4b4107fc90301476524153"
+    },
+    "assets/organizer-logo.png": {
+      "bytes": 522945,
+      "sha256": "c3dcd16de2b761a19f76980c7f43d60dab099f921ad0e843f937fa4298768783"
+    },
+    "background.js": {
+      "bytes": 9902,
+      "sha256": "ed30616af87d991893bf114a7724aed82c74c1aa8d7e794e645a5bc6bc0d7262"
+    },
+    "content.css": {
+      "bytes": 142110,
+      "sha256": "f553f8342fe6429233dc661838f2a23b8dd42604a7d788fa95a1d9ca071dcab8"
+    },
+    "content.js": {
+      "bytes": 2107006,
+      "sha256": "c1c965ccc20649952b5b5f4dd9c63b023c237de09dc2dca6a5a788ce86d7ebcd"
+    },
+    "icons/icon128.png": {
+      "bytes": 18509,
+      "sha256": "c7e837d90d9b80729302f41c882fbe52e026b77a7f77f73377c40c06ee6d8b68"
+    },
+    "icons/icon16.png": {
+      "bytes": 748,
+      "sha256": "6995ab90739d295bc2b78597b57357e3e84a6bac08539a450dbcef8fe64b1615"
+    },
+    "icons/icon32.png": {
+      "bytes": 2137,
+      "sha256": "b114714bb90f08fcae0d3525c39ae273715e47a3b6742aeeaa727239fabfbffb"
+    },
+    "icons/icon48.png": {
+      "bytes": 4118,
+      "sha256": "4e2ca385ef259b6b0d284c5abc3d5ef19da7bbc13025f6e55e43b5a9d08945c2"
+    },
+    "manifest.json": {
+      "bytes": 1877,
+      "sha256": "56dc7d46dc85b1b3c4916b085624c5de8a110658ee335f3329645595bd29d87b"
+    },
+    "storage.js": {
+      "bytes": 8999,
+      "sha256": "8843a0327718ab4ff1e120099a7104c359d4595a56f316407df8e50cee12ac06"
+    },
+    "vendor/LICENSE.jszip.txt": {
+      "bytes": 885,
+      "sha256": "55d136a41733799045c890afb29f52498f712f4e560c7051588c4c5e5e8ddd7a"
+    },
+    "vendor/LICENSE.sheetjs.txt": {
+      "bytes": 11355,
+      "sha256": "4d2a38ac35cda06a555c84074a819d413339cd3691b822cae50f8f322fe01f64"
+    },
+    "vendor/jszip.min.js": {
+      "bytes": 97688,
+      "sha256": "17350c989e79ac0fd2b9e2b040140a7ce41427deb1edf9c3415d24784b8fb876"
+    },
+    "vendor/xlsx.full.min.js": {
+      "bytes": 881727,
+      "sha256": "c9506197caf809a075b6dee1da0d36fb19da7158ffe8a88e7b0c96c5d8623c99"
+    }
+  }
+}

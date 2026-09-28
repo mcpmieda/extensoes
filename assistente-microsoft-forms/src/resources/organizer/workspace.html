@@ -1,0 +1,202 @@
+<div class="cr-modal is-open" id="crModal" role="presentation">
+<section aria-label="Organizador de conteúdos das avaliações" class="cr-dialog" role="application">
+
+<div class="cr-dialog-body">
+<section aria-label="Pré-visualização do relatório" class="cr-preview-column">
+<header class="cr-column-head">
+<div class="cr-column-head-text">
+<strong>Pré-visualização editável</strong>
+<span>Clique nos conteúdos da tabela para revisar o texto antes de gerar os arquivos.</span>
+</div>
+<div class="cr-preview-tools">
+<button aria-pressed="true" class="sync-equivalent-toggle active" id="syncEquivalentBtn" title="Replicar alterações entre turmas com o mesmo professor, a mesma disciplina e o mesmo texto anterior" type="button">
+<span aria-hidden="true" class="sync-equivalent-indicator"></span>
+<span class="sync-equivalent-label">Sincronizar textos: ativado</span>
+</button>
+<div aria-label="Zoom da visualização" class="cr-zoom-controls">
+<button aria-label="Diminuir zoom" class="cr-zoom-button" id="zoomOutBtn" title="Diminuir zoom" type="button">−</button>
+<button aria-label="Restaurar zoom" class="cr-zoom-value" id="zoomResetBtn" title="Restaurar zoom" type="button"><span id="zoomValue">100%</span></button>
+<button aria-label="Aumentar zoom" class="cr-zoom-button" id="zoomInBtn" title="Aumentar zoom" type="button">+</button>
+</div>
+<div class="cr-preview-actions">
+<button class="mini primary" id="downloadCurrentPdfBtn" type="button">PDF desta turma</button>
+<button class="mini" id="downloadCurrentPngBtn" type="button">Imagem desta turma</button>
+</div>
+</div>
+</header>
+<div class="cr-preview-tabs-wrap">
+<div aria-label="Turmas disponíveis" class="preview-tabs" id="previewTabs" role="tablist"></div>
+</div>
+<div class="cr-preview-scroll" id="previewScroll">
+<div class="org-preview-stack">
+<div class="preview-hint" id="previewHint">Importe uma planilha para visualizar os conteúdos por turma.</div>
+<div class="report-preview" id="reportPreview"></div>
+</div>
+</div>
+</section>
+<aside aria-label="Configurações do Organizador" class="cr-settings-column">
+<header class="cr-settings-head">
+<strong>Configurações</strong>
+<span>As alterações e correções ficam salvas neste navegador.</span>
+</header>
+<div class="cr-settings-scroll">
+<section class="cr-card">
+<div class="cr-card-title">
+<div class="cr-card-index">1</div>
+<div class="cr-card-heading"><strong>Importar planilha</strong><span>O Organizador identifica automaticamente turma, disciplina e conteúdo.</span></div>
+</div><div class="organizer-utility-row">
+<span class="cr-status-pill" id="fileBadge">Nenhuma planilha</span>
+<button class="cr-head-button danger" id="clearStorageBtn" type="button">Limpar dados salvos</button>
+<button aria-label="Limpar tela" class="cr-icon-button" id="resetBtn" title="Limpar tela" type="button">↺</button>
+</div>
+<label class="file-drop" for="fileInput">
+<input accept=".xlsx" id="fileInput" type="file"/>
+<strong>Selecionar arquivo Excel</strong>
+<span>Formato: XLSX exportado do Forms</span>
+</label>
+<div class="columns-info" id="columnsInfo">Aguardando planilha.</div>
+<div class="restore-box hidden" id="restoreBox">
+<strong>Edições salvas encontradas para esta planilha.</strong>
+<span>Os dados não são restaurados sem sua escolha.</span>
+<div class="restore-actions">
+<button class="mini primary" id="restoreSavedBtn" type="button">Restaurar</button>
+<button class="mini" id="ignoreSavedBtn" type="button">Ignorar</button>
+<button class="mini danger-mini" id="clearSavedThisBtn" type="button">Apagar salvamento</button>
+</div>
+</div>
+</section>
+<section class="cr-card">
+<div class="cr-card-title">
+<div class="cr-card-index">2</div>
+<div class="cr-card-heading"><strong>Dados do relatório</strong><span>Defina o título, a data opcional e o cabeçalho usado nos arquivos.</span></div>
+</div>
+<div class="org-data-section">
+<div class="org-data-title">Informações principais</div>
+<label class="field-label" for="assessmentInput">Nome da avaliação</label>
+<input class="field" id="assessmentInput" value=""/>
+<label class="field-label" for="fullTitleInput">Título completo personalizado (opcional)</label>
+<input class="field" id="fullTitleInput" placeholder="Ex.: {TURMA} - CONTEÚDOS DA AVALIAÇÃO DO II TRIMESTRE" value=""/>
+<div class="field-helper">Por padrão, o relatório usa automaticamente o nome da avaliação como título principal. Preencha este campo apenas se quiser substituir o título completo. Use <b>{TURMA}</b> para inserir a turma automaticamente.</div>
+<div class="org-inline-grid org-inline-grid-date">
+<div>
+<label class="field-label" for="dateInput">Data da avaliação</label>
+<input class="field" id="dateInput" type="date" value=""/>
+</div>
+<label class="date-visibility-option date-visibility-option--box">
+<input checked="" id="showDateInput" type="checkbox"/>
+<span>Exibir data no relatório</span>
+</label>
+</div>
+</div>
+<div class="org-data-section">
+<div class="org-data-title">Cabeçalho do relatório</div>
+<div class="header-actions">
+<label class="header-import" for="headerInput">
+<input accept="image/*" id="headerInput" type="file"/>
+<strong>Importar imagem</strong>
+</label>
+<button class="mini" id="resetHeaderBtn" type="button">Usar padrão</button>
+</div>
+<div class="columns-info small-info" id="headerInfo">Cabeçalho padrão carregado.</div>
+</div>
+</section>
+<section class="cr-card">
+<div class="cr-card-title">
+<div class="cr-card-index">3</div>
+<div class="cr-card-heading"><strong>Turmas e downloads</strong><span>Escolha as turmas e gere PDF ou imagem individualmente ou em lote.</span></div>
+</div>
+<div class="section-head">
+<div><h2>Turmas encontradas</h2><p>Todas as turmas ficam visíveis diretamente nesta etapa.</p></div>
+<span class="small-badge" id="turmaCount">0</span>
+</div>
+<div class="select-actions">
+<button class="mini primary" id="selectAllBtn" type="button">Selecionar todas</button>
+<button class="mini" id="clearAllBtn" type="button">Limpar seleção</button>
+</div>
+<div class="suffix-actions" id="suffixActions"></div>
+<div class="turma-list empty" id="turmaList">Nenhuma turma carregada.</div>
+<div class="download-box">
+<button class="download pdf" id="downloadPdfBtn" type="button">Baixar PDF(s)</button>
+<button class="download image" id="downloadPngBtn" type="button">Baixar imagem(ns)</button>
+</div>
+</section>
+<section class="cr-card">
+<div class="cr-card-title">
+<div class="cr-card-index">4</div>
+<div class="cr-card-heading"><strong>Validações rápidas</strong><span>Compara todas as turmas e detecta conteúdos ausentes, campos vazios e repetições.</span></div>
+</div>
+<div class="section-head">
+<div><h2>Conferência do arquivo</h2><p>Uma disciplina presente em qualquer turma é esperada em todas as demais.</p></div>
+</div>
+<div aria-live="polite" class="validation-summary neutral" id="validationSummary" role="status">Aguardando planilha.</div>
+<div class="validation-list" id="validationList"></div>
+<div class="ignored-validation-box hidden" id="ignoredValidationBox">
+<div class="ignored-validation-head"><span>Erros ignorados para situações especiais</span><span class="ignored-validation-count" id="ignoredValidationCount">0</span></div>
+<div class="ignored-validation-list" id="ignoredValidationList"></div>
+</div>
+</section>
+<section class="cr-card">
+<div class="cr-card-title">
+<div class="cr-card-index">5</div>
+<div class="cr-card-heading"><strong>Mais configurações</strong><span>Ajuste colunas, professor, agrupamento das turmas e outros comportamentos úteis.</span></div>
+</div>
+<div class="org-data-section">
+<div class="org-data-title">Mapeamento de colunas</div>
+<div class="more-config-grid">
+<div>
+<label class="field-label" for="headerRowInput">Linha do cabeçalho</label>
+<input class="field" id="headerRowInput" min="1" placeholder="Auto" type="number"/>
+</div>
+<div>
+<label class="field-label" for="turmaColInput">Coluna da turma</label>
+<select class="field" id="turmaColInput"><option value="">Aguardando planilha</option></select>
+</div>
+<div>
+<label class="field-label" for="disciplinaColInput">Coluna da disciplina</label>
+<select class="field" id="disciplinaColInput"><option value="">Aguardando planilha</option></select>
+</div>
+<div>
+<label class="field-label" for="conteudoColInput">Coluna do conteúdo</label>
+<select class="field" id="conteudoColInput"><option value="">Aguardando planilha</option></select>
+</div>
+<div>
+<label class="field-label" for="professorColInput">Coluna do professor</label>
+<select class="field" id="professorColInput"><option value="">Aguardando planilha</option></select>
+</div>
+</div>
+<div class="field-helper">As opções mostram a letra e o cabeçalho reais do Excel. Se você alterar uma coluna, o arquivo atual será reprocessado automaticamente.</div>
+</div>
+<div class="org-data-section">
+<div class="org-data-title">Agrupamento personalizado das turmas</div>
+<div class="more-config-grid more-config-grid--stages">
+<div>
+<label class="field-label" for="group6Input">Etapa do 6º</label>
+<input class="field" id="group6Input" placeholder="Ex.: 6A, 6B, 6C"/>
+</div>
+<div>
+<label class="field-label" for="group7Input">Etapa do 7º</label>
+<input class="field" id="group7Input" placeholder="Ex.: 7A, 7B"/>
+</div>
+<div>
+<label class="field-label" for="group8Input">Etapa do 8º</label>
+<input class="field" id="group8Input" placeholder="Ex.: 8A, 8B"/>
+</div>
+<div>
+<label class="field-label" for="group9Input">Etapa do 9º</label>
+<input class="field" id="group9Input" placeholder="Ex.: 9A, 9B"/>
+</div>
+</div>
+<label class="field-label" for="groupExtraInput">Outros grupos / observações</label>
+<input class="field" id="groupExtraInput" placeholder="Ex.: EJA A, EJA B ou outras turmas fora das etapas acima"/>
+<div class="field-helper">As turmas informadas aqui passam a aparecer agrupadas dessa forma na etapa 3. As demais continuam sendo organizadas automaticamente.</div>
+</div>
+<div class="org-data-section">
+<div class="org-data-title">Comportamentos úteis</div>
+<div class="field-helper">• A prévia inicia em <b>110%</b> após a importação. • As validações já funcionam em tempo real, sem botão manual.</div>
+</div>
+</section>
+</div>
+</aside>
+</div>
+</section>
+</div><div aria-hidden="true" class="render-area" id="renderArea"></div><div aria-live="polite" class="toast" id="toast" role="status"></div>

@@ -1,0 +1,88 @@
+{
+  "ANSWER_CARD_LOGO": {
+    "path": "public/assets/organizer-logo.png",
+    "encoding": "data-url",
+    "quote": "'",
+    "mime": "image/png",
+    "originalSha256": "c3dcd16de2b761a19f76980c7f43d60dab099f921ad0e843f937fa4298768783"
+  },
+  "ANSWER_CARD_OMR": {
+    "path": "public/assets/omr-template.jpg",
+    "encoding": "data-url",
+    "quote": "'",
+    "mime": "image/jpeg",
+    "originalSha256": "758a62878bf1ce5ca4b5741c680eeb6fad1ec013dd8c30eeb46dd48543a5314b"
+  },
+  "ANSWER_CARD_INSTRUCTION_LEFT": {
+    "path": "src/resources/answer-card/instructions-left.html",
+    "encoding": "text",
+    "quote": "`",
+    "originalSha256": "bddae5f5349d507466449a6461e5508fd109d9eaadc55065aacb390f7fd1dff4"
+  },
+  "ANSWER_CARD_INSTRUCTION_RIGHT": {
+    "path": "src/resources/answer-card/instructions-right.html",
+    "encoding": "text",
+    "quote": "`",
+    "originalSha256": "15e9f9a5237d11a972ee6ad0e927faa2c57805d505e49eba79f74295956d1bdc"
+  },
+  "ROSTER_TEMPLATE_BASE64": {
+    "path": "src/resources/answer-card/roster-template.xlsx",
+    "encoding": "base64",
+    "quote": "'",
+    "originalSha256": "1618362a2c434fcce873f38b2a2fb5d99a3a389bd3ede8e1f7837b8e81d95c69"
+  },
+  "WORKSPACE_HTML": {
+    "path": "src/resources/answer-card/workspace.html",
+    "encoding": "text",
+    "quote": "\"",
+    "originalSha256": "d106bc4820fa2dbbff0274fe035c46342bb4f62e4f7c33a4bbc04d8b5ad750ab"
+  },
+  "PRINT_ORIGINAL_CSS": {
+    "path": "src/resources/printing/original.css",
+    "encoding": "text",
+    "quote": "\"",
+    "originalSha256": "e7915cf26dcc8085e08a7e65142d5140653b37ac82ffdb8a4a430dcbc4ef9779"
+  },
+  "PRINT_ORIGINAL_BODY": {
+    "path": "src/resources/printing/workspace.html",
+    "encoding": "text",
+    "quote": "\"",
+    "originalSha256": "2521b555a0f68c9f601c7e2195842cdde9271b1d00d514d3ce1828616326c827"
+  },
+  "DIAGNOSTIC_ORIGINAL_CSS": {
+    "path": "src/resources/diagnostic/original.css",
+    "encoding": "text",
+    "quote": "\"",
+    "originalSha256": "f87b8815d5c81b8e538f7a4f46b3ac343d6c7039bd7bad0c15ab2ecc95f6e174"
+  },
+  "DIAGNOSTIC_ORIGINAL_BODY": {
+    "path": "src/resources/diagnostic/workspace.html",
+    "encoding": "text",
+    "quote": "\"",
+    "originalSha256": "76e49cc4e89ef8698d1b3ce66b8a4a3a53e593cb61c80cfe4f0ae0fd6405bcec"
+  },
+  "DIAGNOSTIC_RUNTIME_CSS": {
+    "path": "src/resources/diagnostic/runtime.css",
+    "encoding": "text",
+    "quote": "'",
+    "originalSha256": "70bae7cf89b4efdf3b22415c31b935dfac69323807ee4f39d55fefaad33f969e"
+  },
+  "ORGANIZER_ORIGINAL_CSS": {
+    "path": "src/resources/organizer/original.css",
+    "encoding": "text",
+    "quote": "\"",
+    "originalSha256": "371e37fc56f0bc67a2c2928be33c8a02befc26a0065f534e57ed5cb6c125916b"
+  },
+  "ORGANIZER_ORIGINAL_BODY": {
+    "path": "src/resources/organizer/workspace.html",
+    "encoding": "text",
+    "quote": "\"",
+    "originalSha256": "540eda91694ed33dd6a40f748f82c20c140f150dc0f4d95152d7998f9c839256"
+  },
+  "ORGANIZER_RUNTIME_CSS": {
+    "path": "src/resources/organizer/runtime.css",
+    "encoding": "text",
+    "quote": "\"",
+    "originalSha256": "a73a5ce3e54fb1d43d76add5cc8beb1fac756e90e71fb326330a9c7ebbb20d03"
+  }
+}

@@ -1,0 +1,151 @@
+<div class="cr-dialog-body" id="crCardWorkspace">
+<section aria-label="Visualização do cartão-resposta" class="cr-preview-column">
+<header class="cr-column-head">
+<div class="cr-column-head-text"><strong>Visualização da folha</strong><span id="crPreviewCaption">Modelo inicial — importe a planilha para selecionar um aluno</span></div>
+<div class="cr-preview-tools">
+<div aria-label="Zoom da visualização" class="cr-zoom-controls">
+<button aria-label="Diminuir zoom" class="cr-zoom-button" id="crZoomOut" title="Diminuir zoom" type="button">−</button>
+<button aria-label="Restaurar zoom" class="cr-zoom-value" id="crZoomReset" title="Restaurar zoom" type="button"><span id="crZoomValue">100%</span></button>
+<button aria-label="Aumentar zoom" class="cr-zoom-button" id="crZoomIn" title="Aumentar zoom" type="button">+</button>
+</div>
+<div aria-label="Lado da folha" class="cr-side-tabs" role="tablist">
+<button aria-controls="crFrontFace" aria-selected="true" class="cr-side-tab active" data-side="front" id="crSideFront" role="tab" tabindex="0" type="button">Frente</button>
+<button aria-controls="crBackFace" aria-selected="false" class="cr-side-tab" data-side="back" id="crSideBack" role="tab" tabindex="-1" type="button">Verso</button>
+</div>
+</div>
+</header>
+<div class="cr-preview-scroll" id="crPreviewScroll">
+<div class="cr-paper-viewport" id="crPaperViewport">
+<div class="cr-paper-shell" id="crPaperShell"><div class="cr-paper-scale" id="crPaperScale"><div class="cr-paper-flip" id="crPaperFlip"><div aria-hidden="false" aria-labelledby="crSideFront" class="cr-paper-face front" id="crFrontFace" role="tabpanel"></div><div aria-hidden="true" aria-labelledby="crSideBack" class="cr-paper-face back" id="crBackFace" role="tabpanel"></div></div></div></div>
+</div>
+<div class="cr-preview-chip" id="crPreviewChip">FRENTE</div>
+</div>
+</section>
+<aside aria-label="Configurações do cartão-resposta" class="cr-settings-column">
+<header class="cr-settings-head"><strong>Configurações</strong><span>As alterações são aplicadas e salvas automaticamente.</span><span class="cr-visually-hidden" id="crLibraryStatus" aria-live="polite">Leitor local de planilhas</span></header>
+<div class="cr-settings-scroll">
+<section class="cr-card">
+<div class="cr-card-title"><div class="cr-card-index">1</div><div class="cr-card-heading"><strong>Importar planilha</strong><span>Use sua relação escolar habitual ou o modelo simples disponibilizado abaixo.</span></div></div>
+<label class="cr-file-drop" for="crFileInput" id="crFileDrop">
+<input accept=".xls,.xlsx,.xlsm,.xlsb,.ods,.csv,text/csv" id="crFileInput" type="file"/>
+<strong id="crFilePrompt">Selecionar arquivo Excel</strong>
+<small id="crFileName">XLS, XLSX, XLSM, XLSB, ODS ou CSV</small>
+</label>
+<div class="cr-workbook-links"><button class="cr-workbook-link" id="crDownloadModel" type="button">Baixar modelo Excel</button><span aria-hidden="true">•</span><button class="cr-workbook-link danger" hidden id="crClearWorkbook" type="button">Remover planilha</button></div>
+<div class="cr-message" hidden="" id="crWorkbookMessage"></div>
+</section>
+<section class="cr-card cr-students-card" id="crStudentsSection">
+<div class="cr-card-title"><div class="cr-card-index">2</div><div class="cr-card-heading"><strong>Alunos e impressão</strong><span id="crStudentsRangeHint">Linhas 2 a 47; linhas vazias não são exibidas.</span></div></div>
+<div class="cr-card-static-content">
+<label class="cr-field"><span>Selecione a TURMA</span><div class="cr-select-row"><select disabled="" id="crClassSelect"><option>Importe uma planilha primeiro</option></select><div class="cr-select-nav-group"><button aria-label="Selecionar turma anterior" class="cr-select-nav" disabled="" id="crPrevClass" title="Turma anterior" type="button">‹</button><button aria-label="Selecionar próxima turma" class="cr-select-nav" disabled="" id="crNextClass" title="Próxima turma" type="button">›</button></div></div></label>
+<label class="cr-field"><span>Selecione o ALUNO</span><div class="cr-select-row"><select disabled="" id="crStudentSelect"><option>Importe uma planilha primeiro</option></select><div class="cr-select-nav-group"><button aria-label="Selecionar aluno anterior" class="cr-select-nav" disabled="" id="crPrevStudent" title="Aluno anterior" type="button">‹</button><button aria-label="Selecionar próximo aluno" class="cr-select-nav" disabled="" id="crNextStudent" title="Próximo aluno" type="button">›</button></div></div></label>
+<div class="cr-summary">
+<div><span>Alunos válidos</span><b id="crStudentCount">0</b></div>
+<div class="cr-summary-class"><span>Turma</span><b id="crStudentClass">—</b></div>
+</div>
+<section class="cr-subsection">
+<div class="cr-subsection-title"><strong>Conteúdo da frente do cartão</strong><span>Escolha se a área das instruções será usada antes da prova ou reservada para a devolutiva.</span></div>
+<div class="cr-field"><span>O que será usado nesta avaliação</span><input id="crFrontContentMode" type="hidden" value="instructions"/><div class="cr-choice-switch two-options" data-choice-target="crFrontContentMode"><button class="cr-choice-button active" data-value="instructions" type="button">Mostrar instruções</button><button class="cr-choice-button" data-value="performance" type="button">Reservar para desempenho</button></div></div>
+<div class="cr-front-mode-status" id="crPerformanceStatus"><strong>Fluxo com instruções</strong>As instruções serão impressas no cartão-resposta. A guia Impressão adicionará somente a nota e as contagens.</div>
+</section>
+</div>
+</section>
+<details class="cr-card cr-details" id="crInstructionSection">
+<summary>
+<div class="cr-card-title"><div class="cr-card-index">3</div><div class="cr-card-heading"><strong>Texto das instruções</strong><span>Cada caixa possui sua própria formatação de negrito, itálico, sublinhado e tamanho.</span></div></div>
+</summary>
+<div class="cr-details-content">
+<div class="cr-editor-group">
+<div class="cr-editor-label">Título do cartão</div>
+<div class="cr-editor-toolbar" data-editor-target="crCardTitleEditor">
+<button class="cr-editor-tool" data-command="bold" type="button"><b>B</b></button>
+<button class="cr-editor-tool" data-command="italic" type="button"><i>I</i></button>
+<button class="cr-editor-tool" data-command="underline" type="button"><u>U</u></button>
+<select data-font-size="" title="Tamanho da fonte"><option value="18">18 px</option><option value="22">22 px</option><option value="26">26 px</option><option selected="" value="30">30 px</option><option value="34">34 px</option><option value="38">38 px</option></select>
+<button class="cr-editor-tool" data-reset-editor="cardTitle" title="Restaurar este texto" type="button">↺</button>
+</div>
+<div class="cr-editor single-line" contenteditable="true" data-editor-key="cardTitle" id="crCardTitleEditor"></div>
+</div>
+<div class="cr-editor-group">
+<div class="cr-editor-label">Subtítulo do cartão</div>
+<div class="cr-editor-toolbar" data-editor-target="crCardSubtitleEditor">
+<button class="cr-editor-tool" data-command="bold" type="button"><b>B</b></button>
+<button class="cr-editor-tool" data-command="italic" type="button"><i>I</i></button>
+<button class="cr-editor-tool" data-command="underline" type="button"><u>U</u></button>
+<select data-font-size="" title="Tamanho da fonte"><option value="9">9 px</option><option value="10">10 px</option><option selected="" value="11">11 px</option><option value="12">12 px</option><option value="13">13 px</option><option value="14">14 px</option></select>
+<button class="cr-editor-tool" data-reset-editor="cardSubtitle" title="Restaurar este texto" type="button">↺</button>
+</div>
+<div class="cr-editor single-line" contenteditable="true" data-editor-key="cardSubtitle" id="crCardSubtitleEditor"></div>
+</div>
+<div class="cr-editor-group">
+<div class="cr-editor-label">Instruções — coluna esquerda</div>
+<div class="cr-editor-toolbar" data-editor-target="crInstructionLeft">
+<button class="cr-editor-tool" data-command="bold" type="button"><b>B</b></button>
+<button class="cr-editor-tool" data-command="italic" type="button"><i>I</i></button>
+<button class="cr-editor-tool" data-command="underline" type="button"><u>U</u></button>
+<select data-font-size="" title="Tamanho da fonte"><option value="8">8 px</option><option value="9">9 px</option><option value="10">10 px</option><option value="11">11 px</option><option value="12">12 px</option><option value="13">13 px</option><option value="14">14 px</option><option value="15">15 px</option><option value="16">16 px</option><option selected="" value="18">18 px</option><option value="20">20 px</option></select>
+<button class="cr-editor-tool" data-reset-editor="instructionLeft" title="Restaurar este texto" type="button">↺</button>
+</div>
+<div class="cr-editor" contenteditable="true" data-editor-key="instructionLeft" id="crInstructionLeft"></div>
+</div>
+<div class="cr-editor-group">
+<div class="cr-editor-label">Instruções — coluna direita</div>
+<div class="cr-editor-toolbar" data-editor-target="crInstructionRight">
+<button class="cr-editor-tool" data-command="bold" type="button"><b>B</b></button>
+<button class="cr-editor-tool" data-command="italic" type="button"><i>I</i></button>
+<button class="cr-editor-tool" data-command="underline" type="button"><u>U</u></button>
+<select data-font-size="" title="Tamanho da fonte"><option value="8">8 px</option><option value="9">9 px</option><option value="10">10 px</option><option value="11">11 px</option><option value="12">12 px</option><option value="13">13 px</option><option value="14">14 px</option><option value="15">15 px</option><option value="16">16 px</option><option selected="" value="18">18 px</option><option value="20">20 px</option></select>
+<button class="cr-editor-tool" data-reset-editor="instructionRight" title="Restaurar este texto" type="button">↺</button>
+</div>
+<div class="cr-editor" contenteditable="true" data-editor-key="instructionRight" id="crInstructionRight"></div>
+</div>
+</div>
+</details>
+<section class="cr-card">
+<div class="cr-card-title"><div class="cr-card-index">4</div><div class="cr-card-heading"><strong>Gerar fichas</strong><span>Cada aluno gera frente e verso em páginas A4.</span></div></div>
+<div class="cr-actions"><button class="cr-action-button primary" disabled="" id="crPrintStudent" type="button">Imprimir aluno</button><button class="cr-action-button primary" disabled="" id="crPrintClass" type="button">Imprimir turma</button></div>
+<p class="cr-helper">A janela de impressão permite escolher “Salvar como PDF”. Para frente e verso, use virar na borda longa.</p>
+</section>
+<details class="cr-card cr-details" id="crMoreSettings">
+<summary><div class="cr-details-summary"><strong>Mais configurações</strong><span>Colunas, logomarca, páginas personalizadas e folha OMR.</span></div></summary>
+<div class="cr-details-content">
+<div aria-live="polite" class="cr-storage-status" id="crStorageStatus" role="status"><strong>Armazenamento das imagens</strong><span>Verificando armazenamento permanente neste navegador…</span></div>
+<section class="cr-subsection">
+<div class="cr-subsection-title"><strong>Mapeamento da planilha</strong><span>Aplicação automática</span></div>
+<div class="cr-grid-2"><label class="cr-field"><span>Nome do aluno</span><select id="crMapName"></select></label><label class="cr-field"><span>Aluno e número</span><select id="crMapLabel"></select></label></div>
+<div class="cr-grid-2"><label class="cr-field"><span>Número do aluno</span><select id="crMapNumber"></select></label><label class="cr-field"><span>Turma</span><select id="crMapClass"></select></label></div>
+<div class="cr-grid-2"><label class="cr-field"><span>Linha do cabeçalho</span><input id="crHeaderRow" max="100" min="1" type="number" value="1"/></label><label class="cr-field"><span>Intervalo de dados</span><div class="cr-grid-2"><input aria-label="Linha inicial" id="crStartRow" max="500" min="1" type="number" value="2"/><input aria-label="Linha final" id="crEndRow" max="500" min="1" type="number" value="47"/></div></label></div>
+</section>
+<section class="cr-subsection">
+<div class="cr-subsection-title"><strong>Logo da instituição</strong><span>Logo oficial predefinida</span></div>
+<div class="cr-upload-row"><label class="cr-upload-button">Trocar logomarca<input accept="image/png,image/jpeg,image/webp" id="crLogoInput" type="file"/></label><button class="cr-small-button" id="crResetLogo" type="button">Restaurar</button></div>
+</section>
+<section class="cr-subsection">
+<div class="cr-subsection-title"><strong>Substituir uma página</strong><span>Imagem personalizada</span></div>
+<div class="cr-field"><span>Lado que será substituído</span><input id="crCustomPageSide" type="hidden" value="front"/><div class="cr-choice-switch two-options" data-choice-target="crCustomPageSide"><button class="cr-choice-button active" data-value="front" type="button">Frente</button><button class="cr-choice-button" data-value="back" type="button">Verso</button></div></div>
+<div class="cr-upload-row"><label class="cr-upload-button">Selecionar imagem<input accept="image/png,image/jpeg,image/webp" id="crCustomPageInput" type="file"/></label><button class="cr-small-button" id="crRemoveCustomPage" type="button">Remover lado</button></div>
+<div class="cr-custom-page-status" id="crCustomPageStatus"><b>Nenhuma substituição:</b> o modelo original está ativo nos dois lados.</div>
+</section>
+<section class="cr-subsection">
+<div class="cr-subsection-title"><strong>Folha OMR</strong><span>Detecção de alternativas e Roll No</span></div>
+<div class="cr-upload-row"><label class="cr-upload-button">Trocar imagem OMR<input accept="image/png,image/jpeg,image/webp" id="crOmrInput" type="file"/></label><button class="cr-small-button" id="crResetOmr" type="button">Restaurar</button></div>
+<div class="cr-field"><span>Modo de ajuste</span><input id="crOmrFit" type="hidden" value="contain"/><div class="cr-choice-switch three-options" data-choice-target="crOmrFit"><button class="cr-choice-button active" data-value="contain" type="button">Conter na área</button><button class="cr-choice-button" data-value="width" type="button">Ajustar à largura</button><button class="cr-choice-button" data-value="stretch" type="button">Preencher a área</button></div></div>
+<div class="cr-range-block"><div class="cr-range-caption"><span>Escala diagonal</span></div><div class="cr-range-row"><input aria-label="Escala diagonal da folha OMR" id="crOmrScale" max="120" min="70" step="1" type="range" value="100"/><div class="cr-range-value" id="crOmrScaleValue">100%</div></div></div>
+<div class="cr-range-block"><div class="cr-range-caption"><span>Ajuste horizontal (posição)</span></div><div class="cr-range-row"><input aria-label="Posição horizontal da folha OMR" id="crOmrScaleX" max="20" min="-20" step="1" type="range" value="0"/><div class="cr-range-value" id="crOmrScaleXValue">0%</div></div></div>
+<div class="cr-range-block"><div class="cr-range-caption"><span>Ajuste vertical (posição)</span></div><div class="cr-range-row"><input aria-label="Posição vertical da folha OMR" id="crOmrScaleY" max="20" min="-20" step="1" type="range" value="0"/><div class="cr-range-value" id="crOmrScaleYValue">0%</div></div></div>
+<div class="cr-range-block"><div class="cr-range-caption"><span>Barra do nome e turma — vertical</span></div><div class="cr-range-row"><input aria-label="Posição vertical da barra do nome e da turma" id="crClassBarY" max="12" min="-12" step="0.5" type="range" value="0"/><div class="cr-range-value" id="crClassBarYValue">0 mm</div></div></div>
+<button class="cr-small-button" id="crResetOmrAdjustments" style="width:100%" type="button">Restaurar tamanho e posição</button>
+<div class="cr-detection"><span id="crDetectionText"><b>Analisando:</b> identificação automática pendente.</span><button class="cr-small-button primary" id="crDetectOmr" type="button">Detectar</button></div>
+</section>
+<section class="cr-subsection">
+<div class="cr-subsection-title"><strong>Redefinir cartão-resposta</strong><span>Restaura textos, imagens, OMR e ajustes</span></div>
+<button class="cr-reset-card-button" id="crResetCard" type="button">REDEFINIR TODAS AS CONFIGURAÇÕES</button>
+</section>
+</div>
+</details>
+</div>
+</aside>
+</div>
+<div aria-hidden="true" id="crPrintQueue"></div>
+<canvas class="cr-hidden-canvas" id="crDetectionCanvas"></canvas>
+<div aria-live="polite" class="cr-toast" id="crToast" role="status"></div>

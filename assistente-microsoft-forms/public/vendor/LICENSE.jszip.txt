@@ -1,0 +1,11 @@
+JSZip v3.10.1 — license and integration notice
+
+Copyright (c) 2009-2016 Stuart Knightley <stuart [at] stuartk.com>
+
+JSZip is dual-licensed under the MIT license or GPLv3. The browser build also includes pako, released under the MIT license.
+
+Source project: https://github.com/Stuk/jszip
+Version incorporated: 3.10.1
+
+Integration note for Manifest V3:
+The original v3.10.1 browser build embedded in Gerenciador_Organizador_HTML_Unico_v1.0.9.html contains a legacy setImmediate fallback that accepts a string callback through new Function. The Organizador uses only function callbacks. The packaged runtime keeps JSZip 3.10.1 and removes only that unused dynamic-code fallback so the extension contains no eval or new Function. The original upstream bytes remain preserved inside ORGANIZADOR_ORIGINAL_V1.0.9.html, and both hashes are recorded in ORGANIZADOR_FONTE_V1.0.9_SHA256.json.

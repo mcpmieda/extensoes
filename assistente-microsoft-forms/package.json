@@ -1,0 +1,21 @@
+{
+  "name": "assistente-microsoft-forms",
+  "version": "15.8.1",
+  "private": true,
+  "description": "Fontes modulares do Assistente do Microsoft Forms.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/check.mjs",
+    "test": "node scripts/check.mjs",
+    "verify:baseline": "node scripts/check.mjs --baseline",
+    "package": "node scripts/package.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mcpmieda/extensoes.git",
+    "directory": "assistente-microsoft-forms"
+  }
+}

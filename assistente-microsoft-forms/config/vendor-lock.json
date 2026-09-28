@@ -1,0 +1,35 @@
+{
+  "reviewedOn": "2026-09-28",
+  "libraries": [
+    {
+      "name": "SheetJS CE",
+      "version": "0.18.5",
+      "licenseFile": "public/vendor/LICENSE.sheetjs.txt",
+      "securityStatus": "Revisão de atualização pendente; consultar docs/SECURITY.md."
+    },
+    {
+      "name": "JSZip",
+      "version": "3.10.1",
+      "licenseFile": "public/vendor/LICENSE.jszip.txt",
+      "securityStatus": "Preservado do pacote original; não representa certificação de segurança."
+    }
+  ],
+  "files": {
+    "vendor/LICENSE.jszip.txt": {
+      "bytes": 885,
+      "sha256": "55d136a41733799045c890afb29f52498f712f4e560c7051588c4c5e5e8ddd7a"
+    },
+    "vendor/LICENSE.sheetjs.txt": {
+      "bytes": 11355,
+      "sha256": "4d2a38ac35cda06a555c84074a819d413339cd3691b822cae50f8f322fe01f64"
+    },
+    "vendor/jszip.min.js": {
+      "bytes": 97688,
+      "sha256": "17350c989e79ac0fd2b9e2b040140a7ce41427deb1edf9c3415d24784b8fb876"
+    },
+    "vendor/xlsx.full.min.js": {
+      "bytes": 881727,
+      "sha256": "c9506197caf809a075b6dee1da0d36fb19da7158ffe8a88e7b0c96c5d8623c99"
+    }
+  }
+}

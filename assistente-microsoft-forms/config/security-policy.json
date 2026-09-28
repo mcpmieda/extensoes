@@ -1,0 +1,23 @@
+{
+  "permissions": [
+    "clipboardWrite",
+    "storage"
+  ],
+  "hostPermissions": [
+    "https://forms.cloud.microsoft/*",
+    "https://forms.office.com/*",
+    "https://hive.forms.usercontent.microsoft/*",
+    "https://*.forms.usercontent.microsoft/*",
+    "https://statics.forms.microsoft/*"
+  ],
+  "contentScriptMatches": [
+    "https://forms.cloud.microsoft/Pages/DesignPageV2.aspx*",
+    "https://forms.office.com/Pages/DesignPageV2.aspx*",
+    "https://forms.cloud.microsoft/Pages/EditFormPage.aspx*",
+    "https://forms.office.com/Pages/EditFormPage.aspx*"
+  ],
+  "webAccessibleMatches": [
+    "https://forms.cloud.microsoft/*",
+    "https://forms.office.com/*"
+  ]
+}

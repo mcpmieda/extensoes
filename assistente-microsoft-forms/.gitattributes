@@ -1,0 +1,5 @@
+# Preserve source bytes across Windows and Linux for baseline verification.
+* -text
+*.png binary
+*.jpg binary
+*.xlsx binary

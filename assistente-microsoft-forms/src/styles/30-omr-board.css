@@ -1,0 +1,1010 @@
+/* ===== 30-omr-board.css ===== */
+/* Fonte modular: omr board */
+html.gssf-omr-open #gssf-toast {
+  right: 18px ;
+}
+html.gssf-omr-open, html.gssf-omr-open body {
+  overflow: hidden !important;
+}
+#gssf-modal.omr-mode {
+  padding: 3vh 2vw ;
+  align-items: center ;
+  justify-content: center ;
+}
+#gssf-modal.omr-mode .gssf-omr-dialog {
+  width: 96vw ;
+  height: 94vh ;
+  max-width: 96vw ;
+  max-height: 94vh ;
+  border-radius: 20px ;
+  overflow: hidden ;
+}
+#gssf-modal.omr-mode .gssf-omr-head {
+  flex: 0 0 auto ;
+  min-height: 58px ;
+  padding: 10px 14px ;
+}
+#gssf-modal.omr-mode .gssf-omr-head-main {
+  display: grid ;
+  gap: 2px ;
+  min-width: 0 ;
+}
+#gssf-modal.omr-mode .gssf-omr-head strong {
+  font-size: 30px ;
+  line-height: 1.03 ;
+  font-weight: 950 ;
+  white-space: nowrap ;
+  overflow: hidden ;
+  text-overflow: ellipsis ;
+}
+#gssf-modal.omr-mode .gssf-omr-head span {
+  max-width: calc(96vw - 90px) ;
+  font-size: 11px ;
+  color: #64748b ;
+  letter-spacing: .08em ;
+}
+#gssf-modal.omr-mode .gssf-omr-body.gssf-omr-layout {
+  flex: 1 1 auto ;
+  min-height: 0 ;
+  display: grid ;
+  grid-template-columns: minmax(0,68fr) minmax(360px,32fr) ;
+  grid-template-rows: minmax(0,1fr) ;
+  gap: 0 ;
+  padding: 0 ;
+  overflow: hidden ;
+  background: #eef3f8 ;
+}
+#gssf-modal.omr-mode .gssf-omr-current-column, #gssf-modal.omr-mode .gssf-omr-source-column {
+  min-width: 0 ;
+  min-height: 0 ;
+  display: flex ;
+  flex-direction: column ;
+  overflow: hidden ;
+  background: #f8fafc ;
+}
+#gssf-modal.omr-mode .gssf-omr-current-column {
+  border-right: 1px solid #cbd5e1 ;
+}
+#gssf-modal.omr-mode .gssf-omr-source-column {
+  background: #f4f8fb ;
+}
+#gssf-modal.omr-mode .gssf-omr-source-head {
+  flex: 0 0 auto ;
+  display: grid ;
+  gap: 2px ;
+  padding: 9px 12px ;
+  border-bottom: 1px solid #dbe5f0 ;
+  background: #fff ;
+}
+#gssf-modal.omr-mode .gssf-omr-source-head strong {
+  font-size: 12.5px ;
+  color: #0f172a ;
+}
+#gssf-modal.omr-mode .gssf-omr-source-head span {
+  font-size: 10.8px ;
+  color: #64748b ;
+  white-space: nowrap ;
+  overflow: hidden ;
+  text-overflow: ellipsis ;
+}
+#gssf-modal.omr-mode .gssf-omr-current-scroll {
+  flex: 1 1 auto ;
+  min-width: 0 ;
+  min-height: 0 ;
+  overflow-y: auto ;
+  overflow-x: hidden ;
+  overscroll-behavior: contain ;
+  padding: 10px ;
+  scrollbar-gutter: stable ;
+}
+#gssf-modal.omr-mode .gssf-omr-source-pane {
+  flex: 1 1 auto ;
+  min-height: 0 ;
+  display: flex ;
+  flex-direction: column ;
+  gap: 8px ;
+  overflow: auto ;
+  padding: 10px ;
+  scrollbar-gutter: stable ;
+}
+#gssf-modal.omr-mode .gssf-omr-bank-summary {
+  gap: 2px ;
+  padding: 8px 10px ;
+  margin: 0 0 9px ;
+  border: 1px solid #dbe5f0 ;
+  border-radius: 10px ;
+  background: #fff ;
+}
+#gssf-modal.omr-mode .gssf-omr-bank-summary strong {
+  font-size: 12px ;
+  color: #0f172a ;
+}
+#gssf-modal.omr-mode .gssf-omr-bank-summary span {
+  font-size: 11px ;
+  color: #475569 ;
+}
+#gssf-modal.omr-mode .gssf-omr-bank-summary em {
+  font-size: 10.5px ;
+  color: #64748b ;
+  font-style: normal ;
+}
+#gssf-modal.omr-mode .gssf-source-selector {
+  flex: 0 0 auto ;
+  display: grid ;
+  gap: 6px ;
+  min-height: 0 ;
+}
+#gssf-modal.omr-mode .gssf-source-selector-title {
+  display: flex ;
+  align-items: center ;
+  justify-content: space-between ;
+  gap: 8px ;
+  padding: 0 2px ;
+}
+#gssf-modal.omr-mode .gssf-source-selector-title strong {
+  font-size: 11.5px ;
+  color: #0f172a ;
+}
+#gssf-modal.omr-mode .gssf-source-selector-title span {
+  font-size: 10.5px ;
+  color: #64748b ;
+}
+#gssf-modal.omr-mode .gssf-source-card-list {
+  display: grid ;
+  overscroll-behavior: contain ;
+  padding-right: 2px ;
+}
+
+#gssf-modal.omr-mode .gssf-source-prompt, #gssf-modal.omr-mode .gssf-source-empty {
+  flex: 1 1 auto ;
+  min-height: 150px ;
+  display: grid ;
+  place-content: center ;
+  justify-items: center ;
+  gap: 7px ;
+  padding: 20px ;
+  border: 1px dashed #94a3b8 ;
+  border-radius: 12px ;
+  background: #fff ;
+  text-align: center ;
+}
+#gssf-modal.omr-mode .gssf-source-empty>span {
+  display: grid ;
+  place-items: center ;
+  width: 34px ;
+  height: 34px ;
+  border-radius: 999px ;
+  background: #e0f2fe ;
+  color: #03787c ;
+  font-size: 24px ;
+}
+#gssf-modal.omr-mode .gssf-source-prompt strong, #gssf-modal.omr-mode .gssf-source-empty strong {
+  font-size: 13px ;
+  color: #0f172a ;
+}
+#gssf-modal.omr-mode .gssf-source-prompt p, #gssf-modal.omr-mode .gssf-source-empty p {
+  max-width: 360px ;
+  margin: 0 ;
+  font-size: 11.5px ;
+  line-height: 1.4 ;
+  color: #64748b ;
+}
+#gssf-modal.omr-mode .gssf-source-empty.compact {
+  min-height: 118px ;
+  padding: 14px ;
+}
+#gssf-modal.omr-mode .gssf-source-message {
+  flex: 0 0 auto ;
+  padding: 7px 9px ;
+  border: 1px solid #86efac ;
+  border-radius: 9px ;
+  background: #ecfdf5 ;
+  color: #166534 ;
+  font-size: 11px ;
+  font-weight: 750 ;
+}
+#gssf-modal.omr-mode .gssf-import-section-launch {
+  position: relative ;
+  z-index: 1 ;
+  display: grid ;
+  gap: 5px ;
+  padding: 6px 7px ;
+  border: 1px solid #b9ccd8 ;
+  border-radius: 10px ;
+  background: linear-gradient(135deg,#dce8ef,#edf4f8) ;
+}
+#gssf-modal.omr-mode .gssf-import-section-launch.ready {
+  border-color: #8ccbc6 ;
+  background: linear-gradient(135deg,#d7ece8,#eef5fa) ;
+}
+#gssf-modal.omr-mode .gssf-import-section-launch.unavailable {
+  border-style: dashed ;
+  background: #f8fafc ;
+}
+#gssf-modal.omr-mode .gssf-import-section-launch.collapsed {
+  padding-bottom: 6px ;
+}
+#gssf-modal.omr-mode .gssf-import-section-launch-head {
+  display: flex ;
+  align-items: center ;
+  justify-content: space-between ;
+  gap: 6px ;
+  cursor: pointer ;
+  user-select: none ;
+}
+#gssf-modal.omr-mode .gssf-import-section-launch-head-main {
+  display: flex ;
+  align-items: center ;
+  gap: 6px ;
+  min-width: 0 ;
+  flex-wrap: wrap ;
+}
+#gssf-modal.omr-mode .gssf-import-section-launch-head strong {
+  font-size: 11px ;
+  letter-spacing: .04em ;
+  text-transform: uppercase ;
+  color: #0c5f64 ;
+}
+#gssf-modal.omr-mode .gssf-import-section-launch-head span {
+  flex: 0 0 auto ;
+  padding: 2px 6px ;
+  border-radius: 999px ;
+  background: #ccfbf1 ;
+  color: #115e59 ;
+  font-size: 9px ;
+  font-weight: 900 ;
+}
+#gssf-modal.omr-mode .gssf-import-section-launch.unavailable .gssf-import-section-launch-head span {
+  background: #e2e8f0 ;
+  color: #475569 ;
+}
+#gssf-modal.omr-mode .gssf-import-section-launch-body {
+  display: grid ;
+  gap: 5px ;
+}
+#gssf-modal.omr-mode .gssf-import-section-launch>div+div>p, #gssf-modal.omr-mode .gssf-import-section-launch-body>p {
+  margin: 0 ;
+  font-size: 9.4px ;
+  line-height: 1.25 ;
+  color: #475569 ;
+}
+#gssf-modal.omr-mode .gssf-import-section-launch-buttons {
+  display: grid ;
+  grid-template-columns: repeat(3,minmax(0,1fr)) ;
+  gap: 4px ;
+  align-items: stretch ;
+}
+#gssf-modal.omr-mode .gssf-import-section-launch .gssf-section-launch-btn {
+  display: grid ;
+  grid-template-columns: minmax(0,1fr) auto ;
+  align-items: center ;
+  gap: 4px ;
+  width: 100% ;
+  min-width: 0 ;
+  max-width: 100% ;
+  min-height: 34px ;
+  padding: 5px 6px ;
+  border-radius: 8px ;
+  background: linear-gradient(135deg,var(--gssf-launch-fill,#fff) 0%,var(--gssf-launch-soft,#f8fafc) 100%) ;
+  border: 1px solid var(--gssf-launch-border,#78bcb6) ;
+  color: var(--gssf-launch-ink,#134e4a) ;
+  box-shadow: 0 2px 6px rgba(15,118,110,.08) ;
+  transition: transform .14s ease,box-shadow .18s ease,filter .18s ease ;
+}
+#gssf-modal.omr-mode .gssf-import-section-launch .gssf-section-launch-btn:hover {
+  transform: translateY(-1px) ;
+  filter: saturate(1.08) brightness(1.02) ;
+  box-shadow: 0 8px 18px rgba(15,23,42,.10) ;
+}
+#gssf-modal.omr-mode .gssf-import-section-launch .gssf-section-launch-btn>span {
+  min-width: 0 ;
+  overflow: hidden ;
+  text-overflow: ellipsis ;
+  white-space: nowrap ;
+  font-size: 8.9px ;
+  line-height: 1.05 ;
+  font-weight: 900 ;
+}
+#gssf-modal.omr-mode .gssf-import-section-launch .gssf-section-launch-btn>small {
+  font-size: 7.7px ;
+  line-height: 1 ;
+  font-weight: 800 ;
+  color: color-mix(in srgb,var(--gssf-launch-ink,#134e4a) 70%,#475569) ;
+  white-space: nowrap ;
+}
+#gssf-modal.omr-mode .gssf-import-list-meta {
+  flex: 0 0 auto ;
+  display: flex ;
+  justify-content: space-between ;
+  gap: 8px ;
+  padding: 0 2px ;
+  font-size: 10px ;
+  color: #64748b ;
+}
+#gssf-modal.omr-mode .gssf-bank-question-list {
+  flex: 1 1 auto ;
+  min-height: 0 ;
+  display: grid ;
+  align-content: start ;
+  grid-template-columns: 1fr ;
+  gap: 7px ;
+  overflow: visible ;
+  overscroll-behavior: auto ;
+  padding: 1px 3px 8px 1px ;
+}
+#gssf-modal.omr-mode .gssf-import-detail-grid {
+  display: grid ;
+  grid-template-columns: 1fr ;
+  gap: 7px ;
+  margin-top: 6px ;
+}
+#gssf-modal.omr-mode .gssf-import-detail-grid section {
+  display: grid ;
+  gap: 3px ;
+  padding: 7px ;
+  border: 1px solid #e2e8f0 ;
+  border-radius: 8px ;
+  background: #f8fafc ;
+}
+#gssf-modal.omr-mode .gssf-import-detail-grid section>strong {
+  font-size: 10.5px ;
+  color: #0f172a ;
+}
+#gssf-modal.omr-mode .gssf-import-detail-grid section>span {
+  font-size: 9.5px ;
+  color: #0369a1 ;
+  font-weight: 700 ;
+}
+#gssf-modal.omr-mode .gssf-import-detail-grid section>p {
+  margin: 0 ;
+  font-size: 10px ;
+  line-height: 1.3 ;
+  color: #475569 ;
+}
+#gssf-modal.omr-mode .gssf-import-detail-grid ul {
+  display: grid ;
+  gap: 2px ;
+  margin: 2px 0 0 ;
+  padding: 0 ;
+  list-style: none ;
+}
+#gssf-modal.omr-mode .gssf-import-detail-grid li {
+  display: grid ;
+  grid-template-columns: 18px minmax(0,1fr) ;
+  gap: 4px ;
+  font-size: 9.5px ;
+  color: #475569 ;
+}
+#gssf-modal.omr-mode .gssf-import-detail-grid li b {
+  color: #047857 ;
+}
+#gssf-modal.omr-mode .gssf-import-detail-empty {
+  font-style: italic ;
+  color: #94a3b8 ;
+}
+#gssf-modal.omr-mode .gssf-clear-imported-panel {
+  display: grid ;
+  gap: 8px ;
+  margin: 0 0 10px ;
+  padding: 10px ;
+  border: 1px solid #fbbf24 ;
+  border-radius: 12px ;
+  background: #fffbeb ;
+}
+#gssf-modal.omr-mode .gssf-clear-imported-head {
+  display: flex ;
+  justify-content: space-between ;
+  gap: 8px ;
+  align-items: flex-start ;
+}
+#gssf-modal.omr-mode .gssf-clear-imported-head>div {
+  display: grid ;
+  gap: 2px ;
+}
+#gssf-modal.omr-mode .gssf-clear-imported-head strong {
+  font-size: 13px ;
+  color: #78350f ;
+}
+#gssf-modal.omr-mode .gssf-clear-imported-head span {
+  font-size: 10.5px ;
+  color: #92400e ;
+}
+#gssf-modal.omr-mode .gssf-clear-imported-actions {
+  display: flex ;
+  gap: 6px ;
+  flex-wrap: wrap ;
+}
+#gssf-modal.omr-mode .gssf-clear-imported-list {
+  display: grid ;
+  grid-template-columns: repeat(auto-fit,minmax(230px,1fr)) ;
+  gap: 6px ;
+  max-height: 210px ;
+  overflow: auto ;
+}
+#gssf-modal.omr-mode .gssf-clear-imported-row {
+  display: grid ;
+  grid-template-columns: 18px auto 1fr ;
+  gap: 5px 7px ;
+  align-items: center ;
+  padding: 7px ;
+  border: 1px solid #fde68a ;
+  border-radius: 8px ;
+  background: #fff ;
+  cursor: pointer ;
+}
+#gssf-modal.omr-mode .gssf-clear-imported-row b {
+  font-size: 11px ;
+  color: #0f172a ;
+}
+#gssf-modal.omr-mode .gssf-clear-imported-row span {
+  font-size: 10.5px ;
+  color: #047857 ;
+  font-weight: 800 ;
+  text-align: right ;
+}
+#gssf-modal.omr-mode .gssf-clear-imported-row em {
+  grid-column: 2/-1 ;
+  font-size: 9.8px ;
+  color: #64748b ;
+  font-style: normal ;
+  white-space: nowrap ;
+  overflow: hidden ;
+  text-overflow: ellipsis ;
+}
+@media (max-width:1100px) {
+  #gssf-modal.omr-mode .gssf-omr-body.gssf-omr-layout {
+    grid-template-columns: minmax(0,62fr) minmax(350px,38fr) ;
+  }
+}
+@media (max-width:840px) {
+  #gssf-modal.omr-mode {
+    padding: 2vh 1.5vw ;
+  }
+  #gssf-modal.omr-mode .gssf-omr-dialog {
+    width: 97vw ;
+    max-width: 97vw ;
+    height: 96vh ;
+    max-height: 96vh ;
+  }
+  #gssf-modal.omr-mode .gssf-omr-body.gssf-omr-layout {
+    grid-template-columns: minmax(0,1fr) ;
+    grid-template-rows: minmax(330px,58fr) minmax(300px,42fr) ;
+  }
+  #gssf-modal.omr-mode .gssf-omr-current-column {
+    border-right: 0 ;
+    border-bottom: 1px solid #cbd5e1 ;
+  }
+  #gssf-modal.omr-mode .gssf-source-card-list {
+    max-height: 128px ;
+  }
+  #gssf-modal.omr-mode .gssf-omr-source-head span {
+    white-space: normal ;
+  }
+}
+@media (max-width:560px) {
+  #gssf-modal.omr-mode .gssf-omr-head {
+    padding: 8px 10px ;
+  }
+  #gssf-modal.omr-mode .gssf-omr-current-scroll, #gssf-modal.omr-mode .gssf-omr-source-pane {
+    padding: 8px ;
+  }
+  #gssf-modal.omr-mode .gssf-source-card-list {
+    grid-template-columns: 1fr ;
+  }
+  #gssf-modal.omr-mode .gssf-import-list-meta {
+    flex-wrap: wrap ;
+  }
+}
+@media (max-width:840px) {
+  #gssf-modal.omr-mode .gssf-omr-head strong {
+    font-size: 24px ;
+  }
+}
+@media (max-width:560px) {
+  #gssf-modal.omr-mode .gssf-omr-head strong {
+    font-size: 18px ;
+  }
+}
+#gssf-modal.omr-mode .gssf-omr-bank-summary {
+  display: none ;
+}
+#gssf-modal.omr-mode .gssf-omr-audit {
+  display: grid ;
+  background: #fff ;
+  border: 1px solid #dbe5f0 ;
+  border-radius: 12px ;
+  margin: 0 0 10px ;
+}
+#gssf-modal.omr-mode .gssf-omr-audit h3 {
+  margin: 0 ;
+  font-size: 14px ;
+  color: #0f172a ;
+}
+#gssf-modal.omr-mode .gssf-audit-card {
+  min-height: 0 ;
+  display: grid ;
+  align-content: center ;
+}
+#gssf-modal.omr-mode .gssf-audit-card b {
+  line-height: 1 ;
+}
+#gssf-modal.omr-mode .gssf-audit-card span {
+  font-weight: 800 ;
+}
+#gssf-modal.omr-mode .gssf-dist-box {
+  height: 100% ;
+  align-content: start ;
+}
+#gssf-modal.omr-mode .gssf-audit-points {
+  display: grid ;
+  height: 100% ;
+  border: 1px solid #f6d365 ;
+  border-radius: 10px ;
+  background: #fff8e8 ;
+  color: #92400e ;
+}
+#gssf-modal.omr-mode .gssf-audit-points strong {
+  font-size: 12px ;
+  color: #9a3412 ;
+}
+#gssf-modal.omr-mode .gssf-audit-points ul {
+  margin: 0 ;
+  padding-left: 18px ;
+}
+#gssf-modal.omr-mode .gssf-audit-points p {
+  margin: 0 ;
+  font-size: 11px ;
+  color: #166534 ;
+}
+#gssf-modal.omr-mode .gssf-audit-points.ok {
+  border-color: #86efac ;
+  background: #effcf4 ;
+}
+.gssf-omr-body .omr-viewport {
+  overflow: hidden ;
+  padding: 10px ;
+}
+.gssf-omr-body .omr-sheet {
+  position: relative ;
+  width: min(100%,1000px) ;
+  aspect-ratio: 1000/485 ;
+  height: auto ;
+  background: #fff ;
+  margin: 0 auto ;
+  font-family: Arial,sans-serif ;
+  color: #111 ;
+  overflow: visible ;
+}
+.gssf-omr-body .omr-template {
+  width: 100% ;
+  height: 100% ;
+}
+#gssf-modal.omr-mode .omr-bubble-glow {
+  position: absolute ;
+  inset: -42% ;
+  border-radius: 999px ;
+  pointer-events: none ;
+  background: radial-gradient(circle,rgba(255,255,255,.98) 0%,rgba(250,204,21,.88) 24%,rgba(34,197,94,.55) 46%,rgba(59,130,246,.28) 64%,rgba(59,130,246,0) 74%) ;
+  mix-blend-mode: screen ;
+  animation: gssfOmrBubbleGlow 1.15s ease-out forwards ;
+}
+@keyframes gssfOmrBubbleGlow {
+  0% {
+    opacity: 0;
+    transform: scale(.45);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  55% {
+    opacity: .95;
+    transform: scale(1.18);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+#gssf-modal.omr-mode .gssf-source-card-list {
+  grid-template-columns: repeat(2,minmax(0,1fr)) ;
+  gap: 5px ;
+  max-height: 170px ;
+}
+@media (max-width:840px) {
+  #gssf-modal.omr-mode .gssf-source-card-list {
+    grid-template-columns: 1fr ;
+  }
+}
+#gssf-modal.omr-mode .gssf-omr-audit {
+  padding: 8px 10px ;
+  gap: 6px ;
+}
+#gssf-modal.omr-mode .gssf-audit-card {
+  padding: 6px 9px ;
+  border-radius: 9px ;
+}
+#gssf-modal.omr-mode .gssf-audit-card b {
+  font-size: 24px ;
+}
+#gssf-modal.omr-mode .gssf-audit-card span {
+  font-size: 10.5px ;
+}
+#gssf-modal.omr-mode .gssf-dist-box {
+  padding: 8px 10px ;
+}
+#gssf-modal.omr-mode .gssf-dist-box strong, #gssf-modal.omr-mode .gssf-audit-points strong {
+  font-size: 11.5px ;
+}
+#gssf-modal.omr-mode .gssf-dist-row {
+  gap: 5px ;
+}
+#gssf-modal.omr-mode .gssf-audit-points {
+  padding: 8px 10px ;
+  gap: 4px ;
+}
+#gssf-modal.omr-mode .gssf-audit-points ul {
+  font-size: 10.4px ;
+  line-height: 1.24 ;
+}
+#gssf-modal.omr-mode .omr-bubble.original-answer, #gssf-modal.omr-mode .gssf-source-message {
+  font-size: 10.5px ;
+}
+.gssf-import-flight-layer {
+  position: fixed ;
+  inset: 0 ;
+  pointer-events: none ;
+  z-index: 2147483646 ;
+  overflow: hidden ;
+}
+.gssf-import-flight-card {
+  position: fixed ;
+  display: flex ;
+  align-items: center ;
+  justify-content: space-between ;
+  gap: 10px ;
+  border: 1px solid #93c5fd ;
+  background: linear-gradient(135deg,#eff6ff,#ffffff) ;
+  transform-origin: center center ;
+  transition: transform .62s cubic-bezier(.18,.82,.22,1),opacity .62s ease,border-radius .62s ease ;
+}
+.gssf-import-flight-card.ok {
+  border-color: #86efac ;
+  background: linear-gradient(135deg,#dcfce7,#ffffff) ;
+}
+.gssf-import-flight-card.danger {
+  border-color: #fca5a5 ;
+  background: linear-gradient(135deg,#ffe4e6,#ffffff) ;
+}
+.gssf-import-flight-card.run {
+  border-radius: 999px ;
+}
+.gssf-import-flight-q, .gssf-import-flight-a {
+  display: inline-flex ;
+  align-items: center ;
+  justify-content: center ;
+  border-radius: 999px ;
+  font-weight: 900 ;
+}
+.gssf-import-flight-q {
+  background: #0f8b8d ;
+  color: #fff ;
+}
+.gssf-import-flight-a {
+  background: #fff7ed ;
+  color: #9a3412 ;
+  border: 1px solid #fdba74 ;
+}
+.gssf-import-flight-trail {
+  position: fixed ;
+  border-radius: 999px ;
+  transform-origin: 0 50% ;
+  opacity: 0 ;
+  box-shadow: 0 0 16px rgba(14,165,233,.24) ;
+  transition: width .5s cubic-bezier(.2,.72,.2,1),opacity .5s ease ;
+}
+.gssf-import-flight-trail.run {
+  opacity: 1 ;
+}
+#gssf-modal.omr-mode .gssf-source-card-list {
+  padding: 6px 6px 10px ;
+  overflow: auto ;
+  overflow-x: hidden ;
+  scroll-padding-top: 8px ;
+}
+.gssf-import-flight-card {
+  padding: 8px 10px ;
+  border-radius: 999px ;
+  backdrop-filter: blur(4px) ;
+  box-shadow: 0 16px 34px rgba(15,23,42,.14) ;
+}
+.gssf-import-flight-q, .gssf-import-flight-a {
+  height: 20px ;
+  padding: 0 8px ;
+  font-size: 10px ;
+}
+.gssf-import-flight-trail {
+  height: 5px ;
+  background: linear-gradient(90deg,rgba(14,165,233,0),rgba(45,212,191,.96),rgba(59,130,246,.82),rgba(250,204,21,.96)) ;
+  filter: blur(.2px) ;
+}
+.gssf-import-flight-pulse {
+  position: fixed ;
+  width: 18px ;
+  height: 18px ;
+  border-radius: 999px ;
+  transform: translate(-50%,-50%) scale(.4) ;
+  background: radial-gradient(circle,rgba(255,255,255,.96) 0%,rgba(250,204,21,.92) 36%,rgba(34,197,94,.64) 68%,rgba(34,197,94,0) 76%) ;
+  opacity: 0 ;
+  pointer-events: none ;
+}
+.gssf-import-flight-pulse.run {
+  animation: gssfImportPulse .9s ease-out forwards ;
+}
+@keyframes gssfImportPulse {
+  0% {
+    opacity: 0;
+    transform: translate(-50%,-50%) scale(.2);
+  }
+  35% {
+    opacity: 0;
+  }
+  55% {
+    opacity: .95;
+    transform: translate(-50%,-50%) scale(.75);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%,-50%) scale(2.2);
+  }
+}
+#gssf-modal.omr-mode .gssf-history-box {
+  display: grid ;
+  gap: 6px ;
+  margin: 10px 0 0 ;
+  padding: 8px 10px 10px ;
+  border: 1px solid #dbe5f0 ;
+  border-radius: 14px ;
+  background: #fff ;
+  box-sizing: border-box ;
+}
+#gssf-modal.omr-mode .gssf-history-title {
+  display: flex ;
+  align-items: center ;
+  flex-wrap: wrap ;
+  gap: 5px ;
+  min-width: 0 ;
+}
+#gssf-modal.omr-mode .gssf-history-title strong {
+  position: static ;
+  display: inline ;
+  margin: 0 ;
+  padding: 0 ;
+  background: transparent ;
+  color: #0f172a ;
+  font-size: 14px ;
+  line-height: 1.15 ;
+  font-weight: 900 ;
+}
+#gssf-modal.omr-mode .gssf-history-title span {
+  color: #64748b ;
+  font-size: 10px ;
+  line-height: 1.15 ;
+}
+#gssf-modal.omr-mode .gssf-history-chips {
+  display: flex ;
+  align-items: center ;
+  flex-wrap: wrap ;
+  gap: 4px ;
+}
+#gssf-modal.omr-mode .gssf-history-chip {
+  display: inline-flex ;
+  align-items: center ;
+  min-height: 18px ;
+  padding: 1px 7px ;
+  border: 1px solid #bfdbfe ;
+  border-radius: 999px ;
+  background: #eff6ff ;
+  color: #1d4ed8 ;
+  font-size: 8.8px ;
+  line-height: 1 ;
+  font-weight: 900 ;
+  text-transform: uppercase ;
+  white-space: nowrap ;
+}
+#gssf-modal.omr-mode .gssf-history-chip.imported {
+  border-color: #fde68a ;
+  background: #fff8db ;
+  color: #a16207 ;
+}
+#gssf-modal.omr-mode .gssf-history-chip.attention {
+  border-color: #fecaca ;
+  background: #fff1f2 ;
+  color: #b42318 ;
+}
+#gssf-modal.omr-mode .gssf-history-chip.cleared {
+  border-color: #bbf7d0 ;
+  background: #ecfdf5 ;
+  color: #166534 ;
+}
+#gssf-modal.omr-mode .gssf-history-grid {
+  display: grid ;
+  grid-template-columns: repeat(auto-fit,minmax(178px,1fr)) ;
+  grid-auto-flow: row ;
+  grid-auto-rows: auto ;
+  align-items: start ;
+  align-content: start ;
+  gap: 5px ;
+  width: 100% ;
+  min-width: 0 ;
+  margin: 0 ;
+  padding: 0 ;
+  list-style: none ;
+  color: #334155 ;
+  font-size: 10px ;
+  line-height: 1.2 ;
+  box-sizing: border-box ;
+}
+#gssf-modal.omr-mode .gssf-history-card {
+  position: relative ;
+  display: grid ;
+  grid-template-columns: 1fr ;
+  grid-template-rows: auto auto auto ;
+  grid-auto-flow: row ;
+  align-items: stretch ;
+  align-content: start ;
+  gap: 0 ;
+  width: auto ;
+  min-width: 0 ;
+  min-height: 0 ;
+  height: auto ;
+  margin: 0 ;
+  padding: 0 ;
+  overflow: hidden ;
+  list-style: none ;
+  border: 1.5px solid #f2cb57 ;
+  border-radius: 11px ;
+  background: #fffdf7 ;
+  color: #334155 ;
+  line-height: 1.2 ;
+  box-sizing: border-box ;
+  box-shadow: none ;
+}
+#gssf-modal.omr-mode .gssf-history-card.manual {
+  border-color: #9fc2ff ;
+  background: #f9fbff ;
+}
+#gssf-modal.omr-mode .gssf-history-card.attention {
+  border-color: #f3a5a5 ;
+  background: #fffafa ;
+}
+#gssf-modal.omr-mode .gssf-history-card.cleared {
+  border-color: #93dfae ;
+  background: #f7fff9 ;
+}
+#gssf-modal.omr-mode .gssf-history-card-head {
+  display: flex ;
+  align-items: center ;
+  justify-content: flex-start ;
+  gap: 7px ;
+  min-width: 0 ;
+  margin: 0 ;
+  padding: 7px 8px 6px ;
+  box-sizing: border-box ;
+}
+#gssf-modal.omr-mode .gssf-history-answer {
+  display: inline-flex ;
+  align-items: center ;
+  justify-content: center ;
+  flex: 0 0 auto ;
+  min-width: 61px ;
+  height: 28px ;
+  margin: 0 ;
+  padding: 0 10px ;
+  border: 0 ;
+  border-radius: 9px ;
+  background: linear-gradient(180deg,#15958f,#0d8985) ;
+  color: #fff ;
+  font-size: 12.5px ;
+  line-height: 1 ;
+  font-weight: 950 ;
+  letter-spacing: .02em ;
+  white-space: nowrap ;
+  box-sizing: border-box ;
+}
+#gssf-modal.omr-mode .gssf-history-status {
+  display: inline-flex ;
+  align-items: center ;
+  justify-content: center ;
+  flex: 0 1 auto ;
+  min-width: 0 ;
+  height: 27px ;
+  margin: 0 ;
+  padding: 0 9px ;
+  overflow: hidden ;
+  border: 1.5px solid #f2ce68 ;
+  border-radius: 9px ;
+  background: #fff4d8 ;
+  color: #ae7600 ;
+  font-size: 9.8px ;
+  line-height: 1 ;
+  font-weight: 950 ;
+  text-overflow: ellipsis ;
+  white-space: nowrap ;
+  box-sizing: border-box ;
+}
+#gssf-modal.omr-mode .gssf-history-card.manual .gssf-history-status {
+  border-color: #adcaff ;
+  background: #edf4ff ;
+  color: #2864d2 ;
+}
+#gssf-modal.omr-mode .gssf-history-card.attention .gssf-history-status {
+  border-color: #f2b0b0 ;
+  background: #fff0f0 ;
+  color: #bd3f3f ;
+}
+#gssf-modal.omr-mode .gssf-history-card.cleared .gssf-history-status {
+  border-color: #a9e2bb ;
+  background: #eefcf3 ;
+  color: #188348 ;
+}
+#gssf-modal.omr-mode .gssf-history-detail {
+  display: grid ;
+  grid-template-columns: 25px 47px 1px minmax(0,1fr) ;
+  grid-template-rows: auto ;
+  align-items: center ;
+  column-gap: 6px ;
+  min-width: 0 ;
+  min-height: 34px ;
+  margin: 0 ;
+  padding: 5px 8px ;
+  box-sizing: border-box ;
+}
+#gssf-modal.omr-mode .gssf-history-detail + .gssf-history-detail {
+  border-top: 1px solid #eee4c7 ;
+}
+#gssf-modal.omr-mode .gssf-history-card.manual .gssf-history-detail + .gssf-history-detail {
+  border-top-color: #dbe7ff ;
+}
+#gssf-modal.omr-mode .gssf-history-card.attention .gssf-history-detail + .gssf-history-detail {
+  border-top-color: #f3d1d1 ;
+}
+#gssf-modal.omr-mode .gssf-history-card.cleared .gssf-history-detail + .gssf-history-detail {
+  border-top-color: #d4eedc ;
+}
+#gssf-modal.omr-mode .gssf-history-icon {
+  display: flex ;
+  align-items: center ;
+  justify-content: center ;
+  width: 25px ;
+  height: 25px ;
+  margin: 0 ;
+  padding: 0 ;
+  border-radius: 999px ;
+  background: #e7f2ef ;
+  color: #138d88 ;
+  box-sizing: border-box ;
+}
+#gssf-modal.omr-mode .gssf-history-icon.compare {
+  background: #eaf1fc ;
+  color: #2869ce ;
+}
+#gssf-modal.omr-mode .gssf-history-icon svg {
+  display: block ;
+  width: 13px ;
+  height: 13px ;
+  flex: none ;
+}
+#gssf-modal.omr-mode .gssf-history-label {
+  display: block ;
+  min-width: 0 ;
+  margin: 0 ;
+  padding: 0 ;
+  color: #138d88 ;
+  font-size: 8.8px ;
+  line-height: 1 ;
+  font-weight: 950 ;
+  letter-spacing: 0 ;
+  white-space: nowrap ;
+}
+

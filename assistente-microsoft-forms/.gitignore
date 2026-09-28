@@ -1,0 +1,12 @@
+/dist/
+/release/
+/reports/
+/node_modules/
+/local/
+/uploads/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db

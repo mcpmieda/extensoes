@@ -1,0 +1,209 @@
+/* ===== 35-response-tools-shell.css ===== */
+/* Fonte modular: shell nativo das Ferramentas de Respostas */
+#gssf-modal.response-tools-mode .gssf-response-tools-dialog {
+  display: flex;
+  flex-direction: column;
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-head {
+  min-height: 68px;
+  padding: 9px 14px;
+  gap: 12px;
+  border-bottom: 1px solid #cbd5e1;
+  background: rgba(255,255,255,.97);
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+#gssf-modal.response-tools-mode .gssf-response-tools-switch {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  max-width: calc(100% - 62px);
+  gap: 5px;
+  padding: 4px;
+  overflow: hidden;
+  border: 1px solid #b9d9df;
+  border-radius: 13px;
+  background: #eef9fa;
+  box-shadow: inset 0 1px 2px rgba(15,23,42,.04);
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-slider {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  z-index: 0;
+  width: 0;
+  border-radius: 9px;
+  background: linear-gradient(90deg,#1d8387,#03787c,#00458a);
+  box-shadow: 0 7px 18px rgba(3,120,124,.25);
+  transform: translateX(0);
+  transition: transform .48s cubic-bezier(.22,1,.36,1),width .48s cubic-bezier(.22,1,.36,1),filter .28s ease;
+  pointer-events: none;
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-tab {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  min-height: 39px;
+  padding: 0 17px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 9px;
+  color: #245b61;
+  background: transparent;
+  font-family: inherit;
+  font-size: 25px;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: -.45px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform .32s cubic-bezier(.22,1,.36,1),color .28s ease,text-shadow .28s ease;
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-tab:hover {
+  transform: translateY(-1px);
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-tab.active {
+  color: #fff;
+  background: transparent;
+  text-shadow: 0 1px 2px rgba(0,0,0,.12);
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-tab:focus-visible {
+  outline: 3px solid rgba(37,99,235,.25);
+  outline-offset: -1px;
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-panels {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #eef3f8;
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(8%);
+  filter: blur(2px);
+  will-change: transform, opacity, filter;
+  transition: transform .48s cubic-bezier(.22,1,.36,1), opacity .34s ease, filter .4s ease;
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-panel.active {
+  z-index: 2;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(0);
+  filter: blur(0);
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-panel.is-enter-left {
+  visibility: visible;
+  transform: translateX(-8%);
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-panel.is-enter-right {
+  visibility: visible;
+  transform: translateX(8%);
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-panel.is-leave-left {
+  z-index: 1;
+  visibility: visible;
+  transform: translateX(-8%);
+  opacity: 0;
+  filter: blur(2px);
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-panel.is-leave-right {
+  z-index: 1;
+  visibility: visible;
+  transform: translateX(8%);
+  opacity: 0;
+  filter: blur(2px);
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-panel[hidden] {
+  display: none;
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-panel > .gssf-omr-layout {
+  width: 100%;
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-placeholder {
+  width: 100%;
+  min-height: 100%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  padding: 28px;
+  color: #475569;
+  background: radial-gradient(circle at 50% 28%,rgba(15,133,136,.1),transparent 34%),#f8fafc;
+  text-align: center;
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-placeholder-icon {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #b8dce0;
+  border-radius: 18px;
+  color: #0f766e;
+  background: #ecfeff;
+  font-size: 30px;
+  font-weight: 900;
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-placeholder strong {
+  color: #0f172a;
+  font-size: 22px;
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-placeholder p {
+  max-width: 520px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+#gssf-modal.response-tools-mode .gssf-response-tools-placeholder span {
+  padding: 5px 9px;
+  border: 1px solid #d7e2ea;
+  border-radius: 999px;
+  color: #64748b;
+  background: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+@media (max-width:900px) {
+  #gssf-modal.response-tools-mode .gssf-response-tools-head { min-height: 61px; padding: 8px 10px; }
+  #gssf-modal.response-tools-mode .gssf-response-tools-switch { gap: 3px; padding: 3px; }
+  #gssf-modal.response-tools-mode .gssf-response-tools-slider { top: 3px; bottom: 3px; left: 3px; }
+  #gssf-modal.response-tools-mode .gssf-response-tools-tab { min-height: 35px; padding: 0 9px; font-size: 17px; letter-spacing: -.25px; }
+}
+@media (max-width:590px) {
+  #gssf-modal.response-tools-mode .gssf-response-tools-head { gap: 7px; padding-inline: 7px; }
+  #gssf-modal.response-tools-mode .gssf-response-tools-switch { max-width: calc(100% - 43px); }
+  #gssf-modal.response-tools-mode .gssf-response-tools-tab { min-height: 33px; padding: 0 6px; font-size: 12px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  #gssf-modal.response-tools-mode .gssf-response-tools-slider,
+  #gssf-modal.response-tools-mode .gssf-response-tools-tab,
+  #gssf-modal.response-tools-mode .gssf-response-tools-panel { transition-duration: .01ms; }
+}
+
+#gssf-modal.response-tools-mode .gssf-native-diagnostic-host { width:100%; height:100%; min-width:0; min-height:0; overflow:hidden; background:#dce8ee; }
+
+#gssf-modal.response-tools-mode .gssf-native-organizer-host { width:100%; height:100%; min-width:0; min-height:0; overflow:hidden; background:#eaf1f6; }
+@media (max-width:1180px) and (min-width:901px) { #gssf-modal.response-tools-mode .gssf-response-tools-tab { padding-inline:12px; font-size:21px; } }
+
