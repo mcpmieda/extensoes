@@ -58,22 +58,64 @@
     return nextText;
   }
 
+  function alternativeStartsWithExpectedLetter(text, optionIndex) {
+    const wanted = escapeRegExp(letter(optionIndex));
+    const raw = cleanText(text).trim();
+    if (!raw) return false;
+    // Inserção é deliberadamente não destrutiva: qualquer alternativa que já comece
+    // com a letra esperada é preservada byte-a-byte (após cleanText), inclusive
+    // símbolos matemáticos como "A - 25", "B +25", "C ± 2" etc.
+    return new RegExp(`^${wanted}(?:\\s|$|[\)\].:,;\-–—−+±×÷=<>≤≥/\\\\|])`, 'i').test(raw);
+  }
+
+  function alternativeInsertionPreservesOriginal(originalText, nextText, optionIndex) {
+    const original = cleanText(originalText).trim();
+    const next = cleanText(nextText).trim();
+    if (!original) return true;
+    if (next === original) return true;
+    const wanted = escapeRegExp(letter(optionIndex));
+    const match = next.match(new RegExp(`^${wanted}\\s+(.*)$`, 'is'));
+    return Boolean(match && cleanText(match[1]).trim() === original);
+  }
+
   function withAlternativeLetter(text, optionIndex, capitalizeBody = false, markerInfo = null) {
     const wanted = letter(optionIndex);
     const raw = cleanText(text).trim();
-    const cleaned = stripAlternativeLetterPrefix(raw, optionIndex, markerInfo);
-    const body = cleanText(capitalizeBody ? capitalizeAlternativeBody(cleaned) : cleaned);
-    let result;
-    if (isAlternativeLetterStandard(raw, optionIndex, markerInfo) && (!capitalizeBody || body === cleanText(stripAlternativeLetterPrefix(raw, optionIndex, markerInfo)))) {
-      result = normalizeAlternativeLetterSpacing(raw, optionIndex, markerInfo, capitalizeBody);
-    } else {
-      result = body ? `${wanted} ${body}` : wanted;
+    if (!raw) return wanted;
+
+    // REGRA DE INTEGRIDADE: inserir letra nunca remove prefixo, separador ou operador
+    // existente. A heurística antiga interpretava "A - 25" como "A" + separador
+    // e transformava a alternativa em "A 25" numa segunda execução. Não há como
+    // distinguir com segurança um separador visual de um operador matemático apenas
+    // pelo texto, então a inserção não faz mais essa inferência destrutiva.
+    if (alternativeStartsWithExpectedLetter(raw, optionIndex)) {
+      if (!capitalizeBody) return raw;
+      const prefix = raw.match(new RegExp(`^${escapeRegExp(wanted)}(\\s+)(.*)$`, 'is'));
+      if (!prefix) return raw;
+      return `${wanted}${prefix[1]}${capitalizeAlternativeBody(prefix[2])}`;
     }
+
+    const body = cleanText(capitalizeBody ? capitalizeAlternativeBody(raw) : raw);
+    const result = body ? `${wanted} ${body}` : wanted;
     return protectVFSequenceAfterLetter(raw, result, optionIndex);
   }
 
+  function stripAlternativeLetterOnly(text, optionIndex) {
+    const raw = cleanText(text).trim();
+    if (!raw) return '';
+    const wanted = escapeRegExp(letter(optionIndex));
+    if (new RegExp(`^${wanted}$`, 'i').test(raw)) return '';
+    // Remoção também é conservadora: retiramos somente a letra e o espaço que a
+    // ferramenta pode ter inserido. Pontuação e operadores nunca são descartados,
+    // porque “A - 25” pode significar letra A seguida do número negativo -25.
+    const spaced = raw.match(new RegExp(`^${wanted}\\s+(.*)$`, 'is'));
+    if (spaced) return cleanText(spaced[1]);
+    if (new RegExp(`^${wanted}(?=\\S)`, 'i').test(raw)) return cleanText(raw.slice(1));
+    return raw;
+  }
+
   function withoutAlternativeLetter(text, optionIndex, capitalizeBody = false, markerInfo = null) {
-    const body = stripAlternativeLetterPrefix(text, optionIndex, markerInfo);
+    const body = stripAlternativeLetterOnly(text, optionIndex);
     return cleanText(capitalizeBody ? capitalizeAlternativeBody(body) : body);
   }
 

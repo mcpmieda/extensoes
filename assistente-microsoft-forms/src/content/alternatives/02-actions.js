@@ -101,7 +101,15 @@
           const nextTexts = currentTexts.map((text, optIndex) => {
             if (isCapitalizing) return capitalizeAlternativeText(text);
             if (isRemoving) return withoutAlternativeLetter(text, optIndex, false, markerInfo);
-            return withAlternativeLetter(text, optIndex, capitalizeWithInsert, markerInfo);
+            const next = withAlternativeLetter(text, optIndex, capitalizeWithInsert, markerInfo);
+            // Cinto de segurança adicional: sem capitalização explícita, a ação Inserir
+            // não pode produzir um texto que deixe de conter integralmente o original.
+            // Se uma futura heurística violar essa regra, a alternativa não é editada.
+            if (!capitalizeWithInsert && !alternativeInsertionPreservesOriginal(text, next, optIndex)) {
+              failures.push(`Q${qn} ${letter(optIndex)}: edição bloqueada para preservar o conteúdo original`);
+              return cleanText(text);
+            }
+            return next;
           });
           if (currentTexts.length && currentTexts.every((text, optIndex) => cleanText(text) === cleanText(nextTexts[optIndex]) && cleanText(fieldTexts[optIndex]) === cleanText(nextTexts[optIndex]))) {
             skipped.push(`Q${qn}`);
