@@ -3,9 +3,11 @@
   "libraries": [
     {
       "name": "SheetJS CE",
-      "version": "0.18.5",
+      "version": "0.20.3",
       "licenseFile": "public/vendor/LICENSE.sheetjs.txt",
-      "securityStatus": "Revisão de atualização pendente; consultar docs/SECURITY.md."
+      "securityStatus": "Atualizado para 0.20.3; supera as correções de CVE-2023-30533 e CVE-2024-22363.",
+      "source": "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js",
+      "officialMd5": "6b3130af1ceadf07caa0ec08af7addff"
     },
     {
       "name": "JSZip",
@@ -28,8 +30,8 @@
       "sha256": "17350c989e79ac0fd2b9e2b040140a7ce41427deb1edf9c3415d24784b8fb876"
     },
     "vendor/xlsx.full.min.js": {
-      "bytes": 881727,
-      "sha256": "c9506197caf809a075b6dee1da0d36fb19da7158ffe8a88e7b0c96c5d8623c99"
+      "bytes": 951904,
+      "md5": "6b3130af1ceadf07caa0ec08af7addff"
     }
   }
 }

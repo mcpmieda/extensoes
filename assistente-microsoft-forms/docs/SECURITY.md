@@ -1,27 +1,41 @@
 # Segurança e publicação pública
 
-## Situação desta migração
+## Estado da 15.9.0
 
-Não foram adicionadas permissões, origens de rede, telemetria, contas de serviço ou dependências. O manifesto e o service worker foram reconstruídos exatamente como no ZIP original. Isso prova preservação, **não ausência de vulnerabilidades**.
+A 15.9.0 corrige os principais achados da auditoria registrada na issue #1 sem ampliar permissões ou adicionar telemetria, servidores ou código remoto. O pacote continua executando dependências vendorizadas localmente.
 
-A checagem procura padrões básicos de tokens e chaves privadas nas fontes textuais usadas pelo build. Essa busca não é uma auditoria completa de segredos. O modelo XLSX incorporado identifica suas linhas como exemplos; não foram adicionadas listas reais de alunos ou resultados.
+## SheetJS CE 0.20.3
 
-Não versionar dados importados, notas, backups, cookies ou arquivos de autenticação. Problemas de segurança com dados reais devem ser descritos sem publicar o dado, o token ou um arquivo explorável desnecessariamente.
+`public/vendor/xlsx.full.min.js` foi atualizado de 0.18.5 para **0.20.3**. O build oficial 0.20.3 tem MD5 `6b3130af1ceadf07caa0ec08af7addff`, checksum publicado pela própria documentação do SheetJS.
 
-## Pendência conhecida: SheetJS CE 0.18.5
+Essa atualização supera as versões corrigidas para:
 
-A versão do arquivo `public/vendor/xlsx.full.min.js` é 0.18.5. O aviso oficial **CVE-2023-30533** informa que versões até 0.19.2 são afetadas por prototype pollution ao ler arquivos especialmente preparados e recomenda 0.19.3 ou posterior. A extensão efetivamente importa arquivos de planilha, portanto a condição não pode ser descartada como se o uso fosse somente exportação.
+- CVE-2023-30533 (prototype pollution): correção a partir de 0.19.3;
+- CVE-2024-22363 (ReDoS): correção a partir de 0.20.2.
 
-Aviso do fornecedor: https://cdn.sheetjs.com/advisories/CVE-2023-30533
+Referências:
 
-Documentação de distribuição: https://docs.sheetjs.com/docs/getting-started/installation/nodejs/
+- https://cdn.sheetjs.com/advisories/CVE-2023-30533
+- https://cdn.sheetjs.com/advisories/CVE-2024-22363
+- https://docs.sheetjs.com/docs/getting-started/installation/standalone/
+- https://docs.sheetjs.com/docs/miscellany/contributing/
 
-A biblioteca não foi atualizada nesta migração para manter a equivalência histórica verificável. A correção deve ser tratada como uma alteração separada e prioritária, usando uma distribuição oficial atual, revisão das demais notificações e validação de importação no ambiente real. O mínimo citado no aviso não é uma afirmação de que aquela versão antiga seja a escolha atual mais segura.
+## Limites de planilha e ZIP
 
-Até essa revisão, não usar a preservação do pacote como autorização para importar planilhas desconhecidas. Não suprimir avisos de segurança simplesmente para deixar uma checagem verde.
+Toda importação passa pelo adaptador compartilhado antes do parser. Os limites atuais são: 25 MiB por arquivo, 1024 entradas ZIP, 32 MiB por entrada descompactada, 128 MiB declarados no ZIP, 128 abas, 100.000 linhas por aba e 1024 colunas por aba. O Organizador também limita cada XML materializado após a descompactação.
 
-## Integridade e licenças
+Esses tetos reduzem risco de travamento e consumo excessivo; não transformam arquivos desconhecidos em conteúdo confiável. Erros de limite devem interromper a importação antes da alteração do formulário.
 
-`config/vendor-lock.json` registra a versão e os hashes dos arquivos locais. `config/baseline-v15.8.1.json` registra todos os arquivos originais. A referência histórica não deve ser alterada quando uma biblioteca for atualizada.
+## Dados pedagógicos
 
-Os arquivos de licença distribuídos pelo autor do ZIP foram preservados em `public/vendor/`. Não foi escolhida uma nova licença para o código autoral da extensão.
+Lotes da Impressão e do Diagnóstico passaram a ser persistidos em IndexedDB no **service worker/origin da extensão**, via mensagens validadas pelo remetente. Os bancos antigos nos origins do Microsoft Forms são migrados uma vez por hostname. O banco legado só é apagado depois que os IDs copiados são confirmados no armazenamento da extensão. Se a migração falhar, o legado é preservado.
+
+Não versionar dados importados, notas, backups, cookies, arquivos de autenticação ou capturas com dados pessoais.
+
+## Integridade das alternativas
+
+A ação **Inserir letras** é não destrutiva: ela não remove separadores nem operadores existentes. A ação **Remover letras** remove apenas a letra esperada e o espaço inserido, preservando pontuação e operadores. Assim, conteúdos como `-25`, `+25`, `±`, `×`, `÷`, `=` ou símbolos não previstos não podem ser descartados por uma heurística de separador.
+
+## Integridade e referência histórica
+
+`config/vendor-lock.json` registra a dependência ativa. `config/baseline-v15.8.1.json` permanece imutável como referência histórica e não deve ser atualizado para fazer a 15.9.0 parecer equivalente ao pacote antigo.

@@ -1,3 +1,17 @@
+# Registro de validação — 15.9.0
+
+Data: 28 de setembro de 2026.
+
+## Verificação técnica desta alteração
+
+Antes da substituição final da dependência vendorizada, o projeto recompilou os 17 arquivos de runtime e passou **348 verificações técnicas** e **61 verificações comportamentais**. Os testes comportamentais cobrem preservação de símbolos em alternativas, idempotência da inserção, remoção conservadora, associação histórica estrita, rejeição de planilhas/ZIPs acima dos limites e ausência de abertura dos bancos principais de Impressão/Diagnóstico no origin do Forms.
+
+O SheetJS 0.20.3 selecionado para a entrega foi verificado separadamente contra o MD5 oficial `6b3130af1ceadf07caa0ec08af7addff`, publicado pelo fornecedor. A substituição muda deliberadamente a baseline; `verify:baseline` não é critério de aprovação da 15.9.0.
+
+**Validação real autenticada no Microsoft Forms não foi executada nesta sessão.** Antes de considerar a issue de auditoria encerrada, testar no Forms real: inserção e remoção em alternativas comuns e matemáticas, importações conhecidas, migração/reabertura dos lotes, diagnóstico histórico, Organizador, impressão e autosave.
+
+---
+
 # Registro de validação — migração V15.8.1
 
 Data: 28 de setembro de 2026. Ambiente técnico: Node.js 22.16.0, Linux.

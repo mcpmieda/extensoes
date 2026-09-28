@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import vm from 'node:vm';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { build, projectRoot, distRoot, walk, readJson, sha256, safeSource } from './build.mjs';
 
@@ -47,7 +48,12 @@ export async function check({ baseline = false } = {}) {
   }
   for (const relative of files.filter((file) => file.startsWith('vendor/'))) {
     const known = vendorLock.files[relative];
-    assert(Boolean(known) && sha256(await fs.readFile(path.join(distRoot, relative))) === known.sha256, `Integridade de dependência e licença: ${relative}.`);
+    const bytes = await fs.readFile(path.join(distRoot, relative));
+    const integrityOk = Boolean(known) && (
+      (known.sha256 && sha256(bytes) === known.sha256) ||
+      (known.md5 && createHash('md5').update(bytes).digest('hex') === known.md5)
+    );
+    assert(integrityOk, `Integridade de dependência e licença: ${relative}.`);
   }
   if (baseline) {
     assert(JSON.stringify([...files].sort()) === JSON.stringify(Object.keys(reference.files).sort()), 'Conjunto de arquivos idêntico ao pacote original.');

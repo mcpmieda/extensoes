@@ -1,10 +1,10 @@
 # Assistente do Microsoft Forms
 
-Fontes organizadas da extensão **15.8.1**, originalmente recebida em `V15.8.1(2).zip`.
+Versão de desenvolvimento **15.9.0**, derivada da referência histórica `V15.8.1(2).zip`.
 
-Esta entrega organiza o desenvolvimento; **não é uma atualização funcional nem uma correção de segurança**. O build de migração reproduz todos os 17 arquivos do pacote original, byte a byte. A versão do manifesto continua 15.8.1.
+A 15.9.0 deixa de ser uma migração byte a byte: corrige riscos de integridade nas letras das alternativas, endurece importação de planilhas, torna conservadora a associação histórica de alunos e move lotes pedagógicos para o armazenamento pertencente à extensão. A referência original 15.8.1 continua preservada em `config/baseline-v15.8.1.json`.
 
-> **Atenção:** a distribuição original inclui SheetJS CE 0.18.5, com vulnerabilidade conhecida na leitura de arquivos especialmente preparados. A biblioteca foi preservada para separar a migração estrutural de uma atualização funcional. Consulte [Segurança](docs/SECURITY.md). Não trate este pacote como uma versão endurecida para arquivos de origem desconhecida.
+> **Segurança:** SheetJS CE foi atualizado para 0.20.3 e planilhas passam por limites compartilhados de tamanho, estrutura ZIP e dimensões antes do processamento. Consulte [Segurança](docs/SECURITY.md).
 
 ## Regra do repositório
 
@@ -18,15 +18,17 @@ Requer Node.js 22 ou superior. Não é necessário baixar dependências para com
 cd assistente-microsoft-forms
 npm run build
 npm run check
-npm run verify:baseline
+npm test
 npm run package
 ```
 
 | Comando | Resultado |
 | --- | --- |
 | `build` | Gera `dist/` a partir de `src/` e `public/`. |
-| `check` / `test` | Verifica o pacote real: sintaxe, caminhos, permissões, recursos, integridade das bibliotecas e estrutura. Não simula o Forms. |
-| `verify:baseline` | Além das verificações, compara cada arquivo com o SHA-256 e o tamanho da V15.8.1 original. Usar para esta migração. |
+| `check` | Verifica build, sintaxe, caminhos, permissões, recursos e integridade das bibliotecas. |
+| `test` | Executa `check` e os testes comportamentais de regressão. |
+| `test:behavior` | Testa invariantes críticos sem depender de uma sessão real do Forms. |
+| `verify:baseline` | Compara com a V15.8.1 histórica. **Deve falhar na 15.9.0**, porque há alterações intencionais. |
 | `package` | Gera ZIP instalável e SHA-256 em `release/`, com conteúdo e metadados determinísticos. |
 
 Depois de uma alteração funcional intencional, `verify:baseline` deve detectar a diferença. **Não reescrever a referência histórica para esconder alterações.** A verificação normal é `check`; a referência original continua registrada para auditoria.

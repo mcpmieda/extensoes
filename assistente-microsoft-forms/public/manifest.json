@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Assistente do Microsoft Forms",
-  "version": "15.8.1",
+  "version": "15.9.0",
   "description": "Assistente para Microsoft Forms com gabarito, cartão-resposta, impressão, diagnóstico e organização de conteúdos.",
   "minimum_chrome_version": "105",
   "permissions": [

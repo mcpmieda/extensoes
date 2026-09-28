@@ -1,10 +1,10 @@
-# Arquitetura da migração 15.8.1
+# Arquitetura — referência 15.8.1 e evolução 15.9.0
 
 ## Objetivo e escopo
 
 Transformar uma distribuição pronta em uma base editável e rastreável sem alterar o programa executado. O ZIP tinha 17 arquivos, incluindo um `content.js` de 2.107.006 bytes com 16.231 linhas. Esse script já continha 18 marcações de módulos, recuperadas nesta estrutura.
 
-A arquitetura em execução permanece a original: o manifesto carrega o armazenamento, SheetJS, JSZip e o content script; o service worker cuida das mensagens, imagens e mídia persistida. O conteúdo do Forms não ganhou um servidor adicional.
+A arquitetura em execução permanece a original: o manifesto carrega o armazenamento, SheetJS, JSZip e o content script; o service worker cuida das mensagens, imagens e mídia persistida. O conteúdo do Forms não ganhou servidor adicional. Na 15.9.0, lotes pedagógicos são persistidos pelo service worker em IndexedDB da própria extensão.
 
 ## Camadas de edição
 
@@ -14,7 +14,7 @@ A arquitetura em execução permanece a original: o manifesto carrega o armazena
 | `forms-dom`, `alternatives`, `math-audit` | Adaptação ao Forms, ações nas alternativas e editor matemático. |
 | `clipboard-word` | Cópia, sanitização, imagens, parágrafos, MathML e Word. |
 | `audit-bank`, `omr-import`, `analysis-dashboard` | Auditoria, banco, gabaritos, correspondências e indicadores. |
-| `response-tools`, `spreadsheet-adapter`, `shared-bridge` | Navegação, biblioteca local e contrato entre ferramentas. |
+| `response-tools`, `spreadsheet-adapter`, `shared-bridge`, `pedagogical-storage` | Navegação, validação central de planilhas, contrato entre ferramentas e ponte de persistência pedagógica. |
 | `answer-card`, `printing`, `diagnostic`, `organizer` | Ferramentas pedagógicas e suas funções internas. |
 | `backup-observer` e `src/storage` | Backup, mesclagem, migração, persistência e observação. |
 | `src/background` | Limites e autorização de mensagens, busca de imagens e mídia IndexedDB. |
@@ -34,7 +34,7 @@ O conjunto de permissões não foi ampliado para viabilizar a extração dos rec
 
 ## Dependências e contratos preservados
 
-Persistem `GSSF_STORAGE`, `GSSFResponseTools`, `GSSFSharedBridge` e as APIs públicas das ferramentas. Persistem as chaves `gssf:`, os caminhos de mensagens e os bancos IndexedDB definidos no original. Não houve troca de esquema ou de identificação de alunos.
+Persistem `GSSF_STORAGE`, `GSSFResponseTools`, `GSSFSharedBridge` e as APIs públicas das ferramentas. A 15.9.0 adiciona `GSSF_PEDAGOGICAL_DATA`: Impressão e Diagnóstico deixam de manter seus lotes no origin do Forms e passam a usar stores no IndexedDB do service worker. Uma migração verificada importa os bancos legados antes de excluí-los. A identidade dos registros e dos alunos não é reescrita pela migração.
 
 As áreas ainda compartilham funções no escopo principal. Esta entrega cria limites de arquivos; **não conclui a eliminação do acoplamento interno**. A próxima etapa técnica é extrair contratos por área, um de cada vez, sem perder o comportamento comprovado desta referência.
 
