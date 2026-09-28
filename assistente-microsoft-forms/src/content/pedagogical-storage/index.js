@@ -65,8 +65,9 @@
     return new Promise((resolve) => {
       try {
         const request = indexedDB.deleteDatabase(databaseName);
-        request.onsuccess = request.onerror = request.onblocked = () => resolve();
-      } catch (_) { resolve(); }
+        request.onsuccess = () => resolve(true);
+        request.onerror = request.onblocked = () => resolve(false);
+      } catch (_) { resolve(false); }
     });
   }
 
@@ -87,7 +88,12 @@
       const ids = new Set(stored.map((record) => String(record?.id || '')));
       if (records.some((record) => !ids.has(String(record?.id || '')))) throw new Error('Migração pedagógica não pôde ser verificada; banco legado preservado.');
     }
-    await gssfDeleteLegacyIndexedDb(databaseName);
-    try { globalThis.GSSF_STORAGE?.setItem?.(markerKey, JSON.stringify({ migratedAt: new Date().toISOString(), count: records.length, host })); } catch (_) {}
+    const legacyRemoved = await gssfDeleteLegacyIndexedDb(databaseName);
+    // Se outro tab ainda mantiver o banco aberto, os dados já copiados continuam
+    // disponíveis no origin da extensão, mas não gravamos o marcador. Assim a limpeza
+    // do legado é tentada novamente numa próxima abertura, sem bloquear o recurso.
+    if (legacyRemoved) {
+      try { globalThis.GSSF_STORAGE?.setItem?.(markerKey, JSON.stringify({ migratedAt: new Date().toISOString(), count: records.length, host })); } catch (_) {}
+    }
     return records.length;
   }
