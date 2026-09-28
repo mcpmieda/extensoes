@@ -156,9 +156,10 @@
     let data = null;
     let workbook = null;
     try {
-      data = await file.arrayBuffer();
+      data = await gssfReadSpreadsheetArrayBuffer(file);
       if (generation !== workbookLoadGeneration) return;
-      workbook = await GSSF_CARD_XLSX.read(data, { type: 'array', raw: false, cellText: true, cellFormula: false, cellDates: false });
+      workbook = GSSF_CARD_XLSX.read(data, { type: 'array', raw: false, cellText: true, cellFormula: false, cellDates: false });
+      gssfAssertWorkbookShape(workbook, GSSF_CARD_XLSX);
       if (generation !== workbookLoadGeneration) return;
       loadWorkbookObject(workbook, file.name);
       setFileUi(file.name, true);

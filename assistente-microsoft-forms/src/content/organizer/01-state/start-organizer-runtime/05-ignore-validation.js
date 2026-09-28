@@ -259,7 +259,7 @@ async function handleFile(file){
   const generation=state.importGeneration;
   try{
     toast('Lendo planilha...');
-    const buffer=await file.arrayBuffer();
+    const buffer=await gssfReadSpreadsheetArrayBuffer(file);
     const rawFileHash=await hashArrayBuffer(buffer);
     const payload=await parseXlsxFile(file, buffer);
     if(generation!==state.importGeneration) return;

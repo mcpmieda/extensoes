@@ -60,7 +60,7 @@
     }
   }
   async function parseLotFile(file){
-    const workbook=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:false,cellNF:false,cellText:true});
+    const workbook=await gssfReadSpreadsheetWorkbook(file,XLSX,{cellDates:false,cellNF:false,cellText:true});
     const sheetName=workbook.SheetNames.includes('Reports')?'Reports':workbook.SheetNames[0];
     const sheet=workbook.Sheets[sheetName];
     const rows=XLSX.utils.sheet_to_json(sheet,{header:1,raw:false,defval:'',blankrows:false});

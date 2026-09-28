@@ -125,16 +125,17 @@ function normalizeTarget(base,target){ target=target.replace(/^\//,''); if(targe
 
 async function parseXlsxFile(file, arrayBuffer){
   if(!window.JSZip) throw new Error('Biblioteca de leitura não carregou. Reabra o app.');
-  const zip = await JSZip.loadAsync(arrayBuffer || await file.arrayBuffer());
+  const buffer=arrayBuffer||await gssfReadSpreadsheetArrayBuffer(file,{preflightZip:false});
+  const zip = gssfAssertZipArchive(await JSZip.loadAsync(buffer));
   const shared=[];
   if(zip.file('xl/sharedStrings.xml')){
-    const ss=xmlDoc(await zip.file('xl/sharedStrings.xml').async('string'));
+    const ss=xmlDoc(await gssfSafeZipEntryText(zip.file('xl/sharedStrings.xml'),'sharedStrings.xml'));
     for(const si of nodesByLocalName(ss, 'si')){
       shared.push(nodesByLocalName(si, 't').map(t=>t.textContent||'').join(''));
     }
   }
-  const wb=xmlDoc(await zip.file('xl/workbook.xml').async('string'));
-  const rels=xmlDoc(await zip.file('xl/_rels/workbook.xml.rels').async('string'));
+  const wb=xmlDoc(await gssfSafeZipEntryText(zip.file('xl/workbook.xml'),'workbook.xml'));
+  const rels=xmlDoc(await gssfSafeZipEntryText(zip.file('xl/_rels/workbook.xml.rels'),'workbook.xml.rels'));
   const relMap={};
   for(const r of nodesByLocalName(rels, 'Relationship')){ relMap[r.getAttribute('Id')] = r.getAttribute('Target'); }
   const sheets=nodesByLocalName(wb, 'sheet');
@@ -144,7 +145,7 @@ async function parseXlsxFile(file, arrayBuffer){
     const target=relMap[rid]; if(!target) continue;
     const path=normalizeTarget('xl', target);
     const f=zip.file(path); if(!f) continue;
-    const rows=parseWorksheet(xmlDoc(await f.async('string')), shared);
+    const rows=parseWorksheet(xmlDoc(await gssfSafeZipEntryText(f,path)), shared);
     const det=detectColumns(rows);
     const score=det.score + Math.min(rows.length,200)/100;
     if(!best || score>best.score) best={sheetName:sh.getAttribute('name')||path, rows, det, score};
