@@ -6,7 +6,6 @@
     const runtimeWindow={
       XLSX:globalThis.XLSX,
       ensureXlsxLibrary:()=>Promise.resolve(Boolean(globalThis.XLSX)),
-      indexedDB:globalThis.indexedDB,
       jspdf:globalThis.jspdf,
       parent:{publish:bridgePublish},
       addEventListener:(type,listener,options)=>{globalThis.addEventListener(type,listener,options);listenerRegistry.push([globalThis,type,listener,options]);}

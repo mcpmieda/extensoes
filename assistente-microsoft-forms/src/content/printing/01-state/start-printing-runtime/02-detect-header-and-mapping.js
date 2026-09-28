@@ -84,32 +84,20 @@
     if(!options.silent)showToast(state.frontContentMode==='performance'?'A área das instruções foi reservada para a devolutiva pedagógica.':'As instruções voltarão a aparecer na frente do cartão.');
     return state.frontContentMode;
   }
-  let lotDbPromise=null;
-  function openLotDb(){
-    if(!('indexedDB' in globalThis))return Promise.reject(new Error('IndexedDB indisponível.'));
-    if(lotDbPromise)return lotDbPromise;
-    lotDbPromise=new Promise((resolve,reject)=>{
-      const request=indexedDB.open(LOT_DB_NAME,1);
-      request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains(LOT_DB_STORE))db.createObjectStore(LOT_DB_STORE,{keyPath:'id'});};
-      request.onsuccess=()=>{const db=request.result;db.onversionchange=()=>db.close();resolve(db);};
-      request.onerror=()=>{lotDbPromise=null;reject(request.error||new Error('Não foi possível abrir o armazenamento de lotes.'));};
-      request.onblocked=()=>{lotDbPromise=null;reject(new Error('O armazenamento de lotes está bloqueado por outra janela.'));};
-    });
-    return lotDbPromise;
+  let lotDbMigrationPromise = null;
+  function ensureLotDbMigrated(){
+    if(!lotDbMigrationPromise){
+      lotDbMigrationPromise=gssfMigrateLegacyPedagogicalDb(GSSF_PEDAGOGICAL_NAMESPACES.printingLots,LOT_DB_NAME,LOT_DB_STORE)
+        .catch(error=>{lotDbMigrationPromise=null;throw error;});
+    }
+    return lotDbMigrationPromise;
   }
-  async function lotDbRun(mode,operation){
-    const db=await openLotDb();
-    return new Promise((resolve,reject)=>{
-      const transaction=db.transaction(LOT_DB_STORE,mode),store=transaction.objectStore(LOT_DB_STORE);let result;
-      transaction.oncomplete=()=>resolve(result);
-      transaction.onerror=()=>reject(transaction.error||new Error('Falha no armazenamento de lotes.'));
-      transaction.onabort=()=>reject(transaction.error||new Error('Operação de lotes cancelada.'));
-      try{const request=operation(store);if(request){request.onsuccess=()=>{result=request.result;};request.onerror=()=>reject(request.error||new Error('Falha na operação de lotes.'));}}catch(error){transaction.abort();reject(error);}
-    });
+  async function lotDbGetAll(){
+    await ensureLotDbMigrated();
+    return gssfPedagogicalDataGetAll(GSSF_PEDAGOGICAL_NAMESPACES.printingLots);
   }
-  function lotDbGetAll(){return lotDbRun('readonly',store=>store.getAll());}
-  function lotDbPut(lot){return lotDbRun('readwrite',store=>store.put(lot));}
-  function lotDbDelete(id){return lotDbRun('readwrite',store=>store.delete(id));}
+  function lotDbPut(lot){return gssfPedagogicalDataPut(GSSF_PEDAGOGICAL_NAMESPACES.printingLots,lot);}
+  function lotDbDelete(id){return gssfPedagogicalDataDelete(GSSF_PEDAGOGICAL_NAMESPACES.printingLots,id);}
   function cleanupObsoleteHistoryStorage(){
     try{GSSF_STORAGE.removeItem('gssf_impressao_historico_v1')}catch(_){}
   }

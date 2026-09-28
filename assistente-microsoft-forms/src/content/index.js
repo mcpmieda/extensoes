@@ -11,6 +11,7 @@
 /* @include ./omr-import/index.js */
 /* @include ./response-tools/index.js */
 /* @include ./spreadsheet-adapter/index.js */
+/* @include ./pedagogical-storage/index.js */
 /* @include ./shared-bridge/index.js */
 /* @include ./answer-card/index.js */
 /* @include ./printing/index.js */

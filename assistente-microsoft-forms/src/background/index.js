@@ -2,3 +2,5 @@
 /* @include ./01-toolbar-action.js */
 /* @include ./02-image-fetch.js */
 /* @include ./03-pedagogical-media.js */
+
+/* @include ./04-pedagogical-data.js */

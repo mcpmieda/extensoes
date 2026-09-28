@@ -49,4 +49,4 @@
     else if(message.type==='context')bridge?.updateSourceContext?.('diagnostic',message.payload,message.reason||'selection');
     else bridge?.register?.('diagnostic',message.payload,message.reason||'registered');
   }
-  async function deleteDiagnosticDatabase(){if(!globalThis.indexedDB)return;await new Promise(resolve=>{const request=indexedDB.deleteDatabase(DIAGNOSTIC_DB_NAME);request.onsuccess=request.onerror=request.onblocked=()=>resolve();});}/* @include ./start-diagnostic-runtime/index.js */
+  async function deleteDiagnosticDatabase(){try{await gssfPedagogicalDataClear(GSSF_PEDAGOGICAL_NAMESPACES.diagnosticBatches);}catch(_){}await gssfDeleteLegacyIndexedDb(DIAGNOSTIC_DB_NAME);}/* @include ./start-diagnostic-runtime/index.js */

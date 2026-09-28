@@ -62,11 +62,6 @@
   }
 
   async function deletePrintLotDatabase() {
-    if (!globalThis.indexedDB) return;
-    await new Promise((resolve) => {
-      const request = indexedDB.deleteDatabase(PRINT_LOT_DB_NAME);
-      request.onsuccess = () => resolve();
-      request.onerror = () => resolve();
-      request.onblocked = () => resolve();
-    });
+    try { await gssfPedagogicalDataClear(GSSF_PEDAGOGICAL_NAMESPACES.printingLots); } catch (_) {}
+    await gssfDeleteLegacyIndexedDb(PRINT_LOT_DB_NAME);
   }/* @include ./start-printing-runtime/index.js */
