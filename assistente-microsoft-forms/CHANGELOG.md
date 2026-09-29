@@ -1,5 +1,14 @@
 # Histórico
 
+## 2026-09-29 — Endurecimento complementar da issue #1
+
+- Migração pedagógica não sobrescreve silenciosamente um registro da extensão quando o banco legado contém o mesmo ID com conteúdo diferente; o conflito preserva o legado.
+- Leituras, gravações e exclusões de lotes aguardam a migração, evitando corrida entre dados antigos e novos.
+- Vínculo histórico automático exige sempre turma + número + nome completo normalizado e único; modos alternativos passam a ordenar apenas sugestões pendentes para revisão humana.
+- Preflight de XLSX mede a expansão real das entradas ZIP em stream, limita o SheetJS durante a leitura e considera `!fullref` para detectar planilhas truncadas pelo teto.
+- Importações rejeitam mais de 500 questões antes de loops dependentes do maior número de questão; o parser XML do Organizador também limita abas, linhas e colunas.
+- Testes comportamentais ampliados para conflito de migração, identidade histórica estrita, expansão ZIP, `sheetRows`, `!fullref` e teto de questões.
+
 ## 2026-09-29 — 15.9.1 — Integridade matemática reforçada
 
 - Removida a reconstrução automática de alternativas matemáticas durante **Inserir letras**.

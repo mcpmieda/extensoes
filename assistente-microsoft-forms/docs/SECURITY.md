@@ -22,13 +22,13 @@ Referências:
 
 ## Limites de planilha e ZIP
 
-Toda importação passa pelo adaptador compartilhado antes do parser. Os limites atuais são: 25 MiB por arquivo, 1024 entradas ZIP, 32 MiB por entrada descompactada, 128 MiB declarados no ZIP, 128 abas, 100.000 linhas por aba e 1024 colunas por aba. O Organizador também limita cada XML materializado após a descompactação.
+Toda importação passa pelo adaptador compartilhado antes do parser. Os limites atuais são: 25 MiB por arquivo, 1024 entradas ZIP, 32 MiB por entrada descompactada, 128 MiB no total descompactado, 128 abas, 100.000 linhas por aba, 1024 colunas por aba e 500 questões. O preflight mede também a expansão real das entradas ZIP em stream antes do parser; o SheetJS recebe um teto de linhas durante a leitura e o `!fullref` é conferido quando disponível. O Organizador também aplica limites no parser XML próprio.
 
 Esses tetos reduzem risco de travamento e consumo excessivo; não transformam arquivos desconhecidos em conteúdo confiável. Erros de limite devem interromper a importação antes da alteração do formulário.
 
 ## Dados pedagógicos
 
-Lotes da Impressão e do Diagnóstico passaram a ser persistidos em IndexedDB no **service worker/origin da extensão**, via mensagens validadas pelo remetente. Os bancos antigos nos origins do Microsoft Forms são migrados uma vez por hostname. O banco legado só é apagado depois que os IDs copiados são confirmados no armazenamento da extensão. Se a migração falhar, o legado é preservado.
+Lotes da Impressão e do Diagnóstico passaram a ser persistidos em IndexedDB no **service worker/origin da extensão**, via mensagens validadas pelo remetente. Os bancos antigos nos origins do Microsoft Forms são migrados uma vez por hostname. O banco legado só é apagado depois que conteúdo e IDs copiados são confirmados no armazenamento da extensão. Se o mesmo ID já existir com conteúdo diferente, a migração é interrompida sem sobrescrever nenhum lado e o legado é preservado.
 
 Não versionar dados importados, notas, backups, cookies, arquivos de autenticação ou capturas com dados pessoais.
 

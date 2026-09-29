@@ -158,8 +158,7 @@
     try {
       data = await gssfReadSpreadsheetArrayBuffer(file);
       if (generation !== workbookLoadGeneration) return;
-      workbook = GSSF_CARD_XLSX.read(data, { type: 'array', raw: false, cellText: true, cellFormula: false, cellDates: false });
-      gssfAssertWorkbookShape(workbook, GSSF_CARD_XLSX);
+      workbook = gssfReadSpreadsheetBuffer(data, GSSF_CARD_XLSX, { raw: false, cellText: true, cellFormula: false, cellDates: false });
       if (generation !== workbookLoadGeneration) return;
       loadWorkbookObject(workbook, file.name);
       setFileUi(file.name, true);

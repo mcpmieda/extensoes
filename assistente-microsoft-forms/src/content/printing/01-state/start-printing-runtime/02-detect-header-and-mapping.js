@@ -96,8 +96,8 @@
     await ensureLotDbMigrated();
     return gssfPedagogicalDataGetAll(GSSF_PEDAGOGICAL_NAMESPACES.printingLots);
   }
-  function lotDbPut(lot){return gssfPedagogicalDataPut(GSSF_PEDAGOGICAL_NAMESPACES.printingLots,lot);}
-  function lotDbDelete(id){return gssfPedagogicalDataDelete(GSSF_PEDAGOGICAL_NAMESPACES.printingLots,id);}
+  async function lotDbPut(lot){await ensureLotDbMigrated();return gssfPedagogicalDataPut(GSSF_PEDAGOGICAL_NAMESPACES.printingLots,lot);}
+  async function lotDbDelete(id){await ensureLotDbMigrated();return gssfPedagogicalDataDelete(GSSF_PEDAGOGICAL_NAMESPACES.printingLots,id);}
   function cleanupObsoleteHistoryStorage(){
     try{GSSF_STORAGE.removeItem('gssf_impressao_historico_v1')}catch(_){}
   }

@@ -71,6 +71,10 @@
     });
   }
 
+  function gssfPedagogicalRecordsEqual(a, b) {
+    try { return JSON.stringify(a) === JSON.stringify(b); } catch (_) { return false; }
+  }
+
   async function gssfMigrateLegacyPedagogicalDb(namespace, databaseName, storeName) {
     if (!globalThis.indexedDB || !databaseName || !storeName) return 0;
     const host = String(globalThis.location?.hostname || 'unknown').replace(/[^a-z0-9.-]/gi, '_');
@@ -82,11 +86,25 @@
       return 0;
     }
     const records = await gssfReadLegacyIndexedDb(databaseName, storeName);
-    for (const record of records) await gssfPedagogicalDataPut(namespace, record);
     if (records.length) {
+      const existing = await gssfPedagogicalDataGetAll(namespace);
+      const existingById = new Map(existing.map((record) => [String(record?.id || ''), record]));
+      const conflicts = records.filter((record) => {
+        const id = String(record?.id || '');
+        return existingById.has(id) && !gssfPedagogicalRecordsEqual(existingById.get(id), record);
+      });
+      if (conflicts.length) {
+        throw new Error(`Migração pedagógica encontrou ${conflicts.length} conflito(s) de ID; nenhum dado foi sobrescrito e o banco legado foi preservado.`);
+      }
+      for (const record of records) {
+        const id = String(record?.id || '');
+        if (!existingById.has(id)) await gssfPedagogicalDataPut(namespace, record);
+      }
       const stored = await gssfPedagogicalDataGetAll(namespace);
-      const ids = new Set(stored.map((record) => String(record?.id || '')));
-      if (records.some((record) => !ids.has(String(record?.id || '')))) throw new Error('Migração pedagógica não pôde ser verificada; banco legado preservado.');
+      const storedById = new Map(stored.map((record) => [String(record?.id || ''), record]));
+      if (records.some((record) => !gssfPedagogicalRecordsEqual(storedById.get(String(record?.id || '')), record))) {
+        throw new Error('Migração pedagógica não pôde ser verificada; banco legado preservado.');
+      }
     }
     const legacyRemoved = await gssfDeleteLegacyIndexedDb(databaseName);
     // Se outro tab ainda mantiver o banco aberto, os dados já copiados continuam

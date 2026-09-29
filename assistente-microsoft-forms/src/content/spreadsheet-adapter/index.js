@@ -14,7 +14,8 @@ const GSSF_SPREADSHEET_LIMITS = Object.freeze({
   maxZipTotalBytes: 128 * 1024 * 1024,
   maxSheets: 128,
   maxRowsPerSheet: 100000,
-  maxColumnsPerSheet: 1024
+  maxColumnsPerSheet: 1024,
+  maxQuestions: 500
 });
 
 function gssfSpreadsheetSizeLabel(bytes) {
@@ -28,6 +29,14 @@ function gssfAssertSpreadsheetFile(file) {
     throw new Error(`A planilha excede o limite de ${gssfSpreadsheetSizeLabel(GSSF_SPREADSHEET_LIMITS.maxFileBytes)}.`);
   }
   return file;
+}
+
+function gssfAssertQuestionCount(value, label = 'planilha') {
+  const count = Math.max(0, Number(value) || 0);
+  if (count > GSSF_SPREADSHEET_LIMITS.maxQuestions) {
+    throw new Error(`${label}: quantidade de questões acima do limite seguro de ${GSSF_SPREADSHEET_LIMITS.maxQuestions}.`);
+  }
+  return count;
 }
 
 function gssfLooksLikeZip(buffer) {
@@ -53,10 +62,55 @@ function gssfAssertZipArchive(zip) {
   return zip;
 }
 
+function gssfMeasureZipEntry(entry, label = 'entrada da planilha') {
+  return new Promise((resolve, reject) => {
+    let stream = null;
+    let total = 0;
+    let settled = false;
+    const fail = (error) => {
+      if (settled) return;
+      settled = true;
+      try { stream?.pause?.(); } catch (_) {}
+      reject(error);
+    };
+    try {
+      if (!entry || typeof entry.internalStream !== 'function') return fail(new Error(`Não foi possível validar ${label} antes da descompactação.`));
+      stream = entry.internalStream('uint8array');
+      stream.on('data', (chunk) => {
+        if (settled) return;
+        total += Math.max(0, Number(chunk?.length ?? chunk?.byteLength) || 0);
+        if (total > GSSF_SPREADSHEET_LIMITS.maxZipEntryBytes) {
+          fail(new Error(`A parte “${label}” excede o limite seguro durante a descompactação.`));
+        }
+      });
+      stream.on('error', (error) => fail(error instanceof Error ? error : new Error(String(error || 'Falha ao validar conteúdo comprimido.'))));
+      stream.on('end', () => {
+        if (settled) return;
+        settled = true;
+        resolve(total);
+      });
+      stream.resume();
+    } catch (error) { fail(error); }
+  });
+}
+
+async function gssfAssertZipArchiveActual(zip) {
+  gssfAssertZipArchive(zip);
+  const entries = Object.values(zip?.files || {}).filter((entry) => entry && !entry.dir);
+  let actualTotal = 0;
+  for (const entry of entries) {
+    actualTotal += await gssfMeasureZipEntry(entry, entry.name || 'entrada');
+    if (actualTotal > GSSF_SPREADSHEET_LIMITS.maxZipTotalBytes) {
+      throw new Error('A planilha excede o limite seguro real de conteúdo descompactado.');
+    }
+  }
+  return zip;
+}
+
 async function gssfPreflightZipBuffer(buffer) {
   if (!gssfLooksLikeZip(buffer) || !globalThis.JSZip?.loadAsync) return null;
   const zip = await globalThis.JSZip.loadAsync(buffer);
-  return gssfAssertZipArchive(zip);
+  return gssfAssertZipArchiveActual(zip);
 }
 
 async function gssfReadSpreadsheetArrayBuffer(file, options = {}) {
@@ -73,7 +127,8 @@ function gssfAssertWorkbookShape(workbook, library = globalThis.XLSX) {
   const decodeRange = library?.utils?.decode_range;
   if (typeof decodeRange !== 'function') return workbook;
   for (const name of names) {
-    const ref = workbook?.Sheets?.[name]?.['!ref'];
+    const sheet = workbook?.Sheets?.[name];
+    const ref = sheet?.['!fullref'] || sheet?.['!ref'];
     if (!ref) continue;
     let range;
     try { range = decodeRange(ref); } catch (_) { continue; }
@@ -85,19 +140,29 @@ function gssfAssertWorkbookShape(workbook, library = globalThis.XLSX) {
   return workbook;
 }
 
-async function gssfReadSpreadsheetWorkbook(file, library = globalThis.XLSX, readOptions = {}) {
+function gssfReadSpreadsheetBuffer(buffer, library = globalThis.XLSX, readOptions = {}) {
   if (!library || typeof library.read !== 'function') throw new Error('O leitor local de planilhas não está disponível.');
-  const buffer = await gssfReadSpreadsheetArrayBuffer(file);
-  const workbook = library.read(buffer, { type: 'array', ...readOptions });
+  const requestedSheetRows = Number(readOptions?.sheetRows);
+  const sheetRows = requestedSheetRows > 0
+    ? Math.min(requestedSheetRows, GSSF_SPREADSHEET_LIMITS.maxRowsPerSheet + 1)
+    : GSSF_SPREADSHEET_LIMITS.maxRowsPerSheet + 1;
+  const workbook = library.read(buffer, { type: 'array', ...readOptions, sheetRows });
   return gssfAssertWorkbookShape(workbook, library);
+}
+
+async function gssfReadSpreadsheetWorkbook(file, library = globalThis.XLSX, readOptions = {}) {
+  const buffer = await gssfReadSpreadsheetArrayBuffer(file);
+  return gssfReadSpreadsheetBuffer(buffer, library, readOptions);
 }
 
 async function gssfSafeZipEntryText(entry, label = 'entrada da planilha') {
   if (!entry) throw new Error(`Parte obrigatória ausente: ${label}.`);
   const declared = gssfZipDeclaredSize(entry);
   if (declared > GSSF_SPREADSHEET_LIMITS.maxZipEntryBytes) throw new Error(`A parte “${label}” excede o limite seguro.`);
+  await gssfMeasureZipEntry(entry, label);
   const text = await entry.async('string');
-  // UTF-16 pode ocupar mais bytes que caracteres; 2x é um teto conservador para o texto materializado.
+  // A medição em stream limita bytes descompactados antes da materialização; esta checagem
+  // adicional limita também o tamanho da string mantida em memória.
   if (text.length > GSSF_SPREADSHEET_LIMITS.maxZipEntryBytes) throw new Error(`A parte “${label}” excede o limite seguro após descompactação.`);
   return text;
 }

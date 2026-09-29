@@ -125,7 +125,7 @@ function normalizeTarget(base,target){ target=target.replace(/^\//,''); if(targe
 
 async function parseXlsxFile(file, arrayBuffer){
   if(!window.JSZip) throw new Error('Biblioteca de leitura não carregou. Reabra o app.');
-  const buffer=arrayBuffer||await gssfReadSpreadsheetArrayBuffer(file,{preflightZip:false});
+  const buffer=arrayBuffer||await gssfReadSpreadsheetArrayBuffer(file);
   const zip = gssfAssertZipArchive(await JSZip.loadAsync(buffer));
   const shared=[];
   if(zip.file('xl/sharedStrings.xml')){
@@ -139,6 +139,7 @@ async function parseXlsxFile(file, arrayBuffer){
   const relMap={};
   for(const r of nodesByLocalName(rels, 'Relationship')){ relMap[r.getAttribute('Id')] = r.getAttribute('Target'); }
   const sheets=nodesByLocalName(wb, 'sheet');
+  if(sheets.length>GSSF_SPREADSHEET_LIMITS.maxSheets) throw new Error(`A planilha contém abas demais (${sheets.length}).`);
   let best=null;
   for(const sh of sheets){
     const rid=sh.getAttribute('r:id') || sh.getAttribute('id') || sh.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id');
@@ -169,10 +170,13 @@ async function parseXlsxFile(file, arrayBuffer){
 function parseWorksheet(doc, shared){
   const rows=[];
   const rowNodes=nodesByLocalName(doc, 'row');
+  if(rowNodes.length>GSSF_SPREADSHEET_LIMITS.maxRowsPerSheet) throw new Error(`A aba excede ${GSSF_SPREADSHEET_LIMITS.maxRowsPerSheet} linhas.`);
   for(const row of rowNodes){
     const vals={}; let max=-1;
     for(const c of nodesByLocalName(row, 'c')){
-      const idx=cellCol(c.getAttribute('r')); max=Math.max(max,idx);
+      const idx=cellCol(c.getAttribute('r'));
+      if(idx>=GSSF_SPREADSHEET_LIMITS.maxColumnsPerSheet) throw new Error(`A aba excede ${GSSF_SPREADSHEET_LIMITS.maxColumnsPerSheet} colunas.`);
+      max=Math.max(max,idx);
       const t=c.getAttribute('t'); let val='';
       if(t==='s') val=shared[Number(getText(c,'v'))] || '';
       else if(t==='inlineStr') val=nodesByLocalName(c, 't').map(x=>x.textContent||'').join('');

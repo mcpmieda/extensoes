@@ -75,6 +75,7 @@
       qMap.get(question)[kind]=index;
     });
     const qCount=qMap.size?Math.max(...qMap.keys()):0,students=[];
+    gssfAssertQuestionCount(Math.max(qCount,qMap.size),file.name);
     for(let rowIndex=headerRow;rowIndex<rows.length;rowIndex++){
       const row=rows[rowIndex]||[],name=clean(row[mapping.nameCol]),roll=clean(row[mapping.rollCol]);
       if(!name&&!roll)continue;
