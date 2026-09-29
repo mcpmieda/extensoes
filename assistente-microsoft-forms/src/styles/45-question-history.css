@@ -1,0 +1,20 @@
+.gssf-history-button{position:fixed;z-index:2147483000;width:28px;height:28px;border:1px solid #64748b;border-radius:50%;background:#fff;color:#334155;opacity:.2;cursor:pointer;font:20px/22px Arial,sans-serif;box-shadow:0 1px 5px #0002}
+.gssf-history-button:hover,.gssf-history-button:focus-visible{opacity:1;outline:2px solid #2563eb;outline-offset:2px}
+.gssf-history-button[hidden]{display:none}
+.gssf-history-all-button{position:fixed;z-index:2147483000;left:12px;bottom:12px;border:1px solid #94a3b8;border-radius:999px;background:#fff;color:#334155;padding:7px 12px;opacity:.35;cursor:pointer;font:12px Arial,sans-serif}
+.gssf-history-all-button:hover,.gssf-history-all-button:focus-visible{opacity:1}
+.gssf-history-overlay{position:fixed;inset:0;z-index:2147483600;background:#0f172a99;display:flex;align-items:center;justify-content:center;padding:20px;font:14px/1.5 Arial,sans-serif;color:#172033}
+.gssf-history-dialog{box-sizing:border-box;width:min(720px,100%);max-height:min(85vh,900px);overflow:auto;background:#fff;border-radius:16px;padding:22px;box-shadow:0 18px 55px #0005}
+.gssf-history-dialog header,.gssf-history-version-bar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.gssf-history-dialog h2{font-size:20px;margin:0}
+.gssf-history-dialog button{border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#172033;padding:6px 10px;cursor:pointer}
+.gssf-history-dialog button:hover{background:#f1f5f9}
+.gssf-history-summary{color:#475569}
+.gssf-history-list{display:grid;gap:12px}
+.gssf-history-version{border:1px solid #dbe3ec;border-radius:10px;padding:14px;background:#f8fafc;overflow-wrap:anywhere}
+.gssf-history-version p{white-space:pre-wrap;margin:10px 0}
+.gssf-history-version ol{margin:8px 0;padding-left:25px}
+.gssf-history-version pre{white-space:pre-wrap;max-height:240px;overflow:auto;font:12px/1.45 Consolas,monospace}
+.gssf-history-media{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.gssf-history-media img{max-width:220px;max-height:180px;object-fit:contain;background:#fff;border:1px solid #dbe3ec;border-radius:6px}
+.gssf-history-clear{margin-top:18px;color:#9f1239!important}
+.gssf-history-form-item{text-align:left;width:100%;padding:12px!important;overflow-wrap:anywhere}

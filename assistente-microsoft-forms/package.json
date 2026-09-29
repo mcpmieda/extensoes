@@ -1,6 +1,6 @@
 {
   "name": "assistente-microsoft-forms",
-  "version": "15.9.2",
+  "version": "15.9.3",
   "private": true,
   "description": "Fontes modulares do Assistente do Microsoft Forms.",
   "engines": {
@@ -12,7 +12,7 @@
     "test": "node scripts/check.mjs && npm run test:behavior",
     "verify:baseline": "node scripts/check.mjs --baseline",
     "package": "node scripts/package.mjs",
-    "test:behavior": "node scripts/behavior-tests.mjs && npm run test:issue2",
+    "test:behavior": "node scripts/behavior-tests.mjs && npm run test:issue2 && node scripts/question-history-tests.mjs",
     "test:issue2": "node scripts/issue2-tests.mjs"
   },
   "repository": {

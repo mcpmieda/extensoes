@@ -1,7 +1,8 @@
 
 
   function mutationTouchesOnlyIgnoredNodes(mutation) {
-    const nodes = [mutation.target, ...(mutation.addedNodes || []), ...(mutation.removedNodes || [])].filter(Boolean);
+    const changed = [...(mutation.addedNodes || []), ...(mutation.removedNodes || [])].filter(Boolean);
+    const nodes = mutation.type === 'childList' && changed.length ? changed : [mutation.target];
     return nodes.length > 0 && nodes.every((node) => {
       const element = node.nodeType === 1 ? node : node.parentElement;
       return Boolean(element && isIgnoredAppNode(element));
@@ -33,7 +34,7 @@
     try {
       APP.autoObserver?.disconnect?.();
       APP.autoObserver = new MutationObserver((mutations) => {
-        if (APP.lifecycle.destroyed || APP.busy || document.hidden || APP.omrModeState?.active || document.getElementById('gssf-root')?.classList.contains('hidden')) return;
+        if (APP.lifecycle.destroyed || APP.busy || document.hidden || APP.omrModeState?.active) return;
         if (!mutations.some((mutation) => !mutationTouchesOnlyIgnoredNodes(mutation))) return;
         const now = Date.now();
         if (now - APP.lastMutationAt < GSSF_TIMING.mutationGuardMs) return;
@@ -81,4 +82,3 @@
     addLifecycleEventListener(window, 'focus', scheduleFocusAnalysis);
     addLifecycleEventListener(document, 'visibilitychange', scheduleVisibilityAnalysis);
   }
-

@@ -1,10 +1,12 @@
-# Arquitetura — referência 15.8.1 e evolução 15.9.2
+# Arquitetura — referência 15.8.1 e evolução 15.9.3
 
 ## Objetivo e escopo
 
 Transformar uma distribuição pronta em uma base editável e rastreável sem alterar o programa executado. O ZIP tinha 17 arquivos, incluindo um `content.js` de 2.107.006 bytes com 16.231 linhas. Esse script já continha 18 marcações de módulos, recuperadas nesta estrutura.
 
 A arquitetura em execução permanece a original: o manifesto carrega o armazenamento, SheetJS, JSZip e o content script; o service worker cuida das mensagens, imagens e mídia persistida. O conteúdo do Forms não ganhou servidor adicional. Na 15.9.2, lotes pedagógicos são persistidos pelo service worker em IndexedDB da própria extensão.
+
+O histórico de questões adiciona o protocolo `GSSF_QUESTION_HISTORY` ao service worker, restrito aos remetentes já autorizados do Forms. O banco `gssf-question-history-v1` armazena metadados e versões separadamente, em transações atômicas. A identidade usa identificadores de questão expostos pelo Forms quando disponíveis e recorre ao número da questão quando não há identificador estável; nesse caso, renumerações podem associar uma versão à posição anterior. O painel oferece uma lista geral para consultar versões de questões removidas.
 
 ## Camadas de edição
 

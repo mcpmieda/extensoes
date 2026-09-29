@@ -218,6 +218,7 @@
     APP.autoObserver = null;
     removeActiveFeatureListeners();
     clearAppTimers();
+    stopQuestionHistory();
     ['gssf-root','gssf-fab','gssf-toast','gssf-modal','gssf-confirm-modal','gssf-work-overlay','gssf-question-focus-marker'].forEach((id) => document.getElementById(id)?.remove());
     document.documentElement.classList.remove('gssf-docked-page', 'gssf-silent-work', 'gssf-omr-open');
     document.body?.classList.remove('gssf-docked-page');
@@ -240,6 +241,7 @@
     APP.lastPrecheck = null;
     APP.lastAnalysisKey = '';
     createPanel();
+    startQuestionHistory();
     startAutoObserver();
     scheduleAutoAnalysis(700);
     ensureInitialAnalysis();

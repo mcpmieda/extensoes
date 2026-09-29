@@ -18,6 +18,7 @@
 /* @include ./diagnostic/index.js */
 /* @include ./organizer/index.js */
 /* @include ./analysis-dashboard/index.js */
+/* @include ./question-history/index.js */
 /* @include ./backup-observer/index.js */
 /* @include ./bootstrap/index.js */
 })();

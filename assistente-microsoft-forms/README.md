@@ -1,8 +1,8 @@
 # Assistente do Microsoft Forms
 
-Versão de desenvolvimento **15.9.2**, derivada da referência histórica `V15.8.1(2).zip`.
+Versão de desenvolvimento **15.9.3**, derivada da referência histórica `V15.8.1(2).zip`.
 
-A 15.9.0 deixou de ser uma migração byte a byte e corrigiu os principais riscos da auditoria. A 15.9.1 reforçou a ação de inserir letras em alternativas matemáticas. A **15.9.2** amplia essa proteção para alternativas textuais, endurece migração/concorrência dos lotes, valida melhor arquivos EvalBee e torna operações de limpeza verificáveis. A referência original 15.8.1 continua preservada em `config/baseline-v15.8.1.json`.
+A 15.9.0 deixou de ser uma migração byte a byte e corrigiu os principais riscos da auditoria. A 15.9.1 reforçou a ação de inserir letras em alternativas matemáticas. A 15.9.2 amplia essa proteção para alternativas textuais, endurece migração/concorrência dos lotes, valida melhor arquivos EvalBee e torna operações de limpeza verificáveis. A **15.9.3** acrescenta o histórico local de questões. A referência original 15.8.1 continua preservada em `config/baseline-v15.8.1.json`.
 
 > **Segurança:** SheetJS CE foi atualizado para 0.20.3 e planilhas passam por limites compartilhados de tamanho, estrutura ZIP e dimensões antes do processamento. Consulte [Segurança](docs/SECURITY.md).
 
@@ -40,6 +40,12 @@ Execute `npm run build`. Em `edge://extensions` ou `chrome://extensions`, ative 
 O ZIP em `release/` contém o manifesto na raiz; ele pode ser extraído para carregar a versão compilada. Distribuição em lojas, assinatura e atualização automática não foram configuradas.
 
 Ao substituir uma instalação existente, use o procedimento de atualização dessa instalação e conserve um backup dos dados. Carregar outra pasta como uma nova extensão pode resultar em outra identidade e outro armazenamento; a migração do código não transfere automaticamente os dados entre instalações.
+
+## Histórico local de questões
+
+Na edição de um questionário, o assistente salva uma primeira versão das questões carregadas e registra novas versões após mudanças de conteúdo. O botão discreto à esquerda de cada questão abre suas versões; **Histórico de questões**, no canto inferior esquerdo, também permite consultar questões que já foram removidas do Forms. Cada versão pode ser apagada separadamente, ou todas as versões de uma questão podem ser excluídas. A exclusão não recria imediatamente o conteúdo apagado; uma nova edição volta a gerar uma versão.
+
+O histórico usa IndexedDB no armazenamento privado da instalação da extensão e permanece após fechar o navegador ou desligar o computador. Ele não é sincronizado entre Chrome e Edge, entre perfis ou entre instalações com identidades diferentes. Apagar dados da extensão no navegador também apaga o histórico. A extensão tenta guardar uma cópia local das imagens permitidas, até 5 MB por imagem e 20 MB por versão; quando não consegue, preserva o endereço e o texto alternativo. Fórmulas são preservadas como representação textual/MathML quando presentes na página. Questões que o Forms não carregou no DOM ainda não podem ser capturadas até aparecerem na edição.
 
 ## Organização
 

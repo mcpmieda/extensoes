@@ -1,6 +1,6 @@
 # Segurança e publicação pública
 
-## Estado da 15.9.2
+## Estado da 15.9.3
 
 A 15.9.0 corrigiu os principais achados da auditoria registrada na issue #1. A 15.9.1 reforçou a integridade das alternativas matemáticas. A 15.9.2 corrige lacunas remanescentes em alternativas textuais, concorrência, migração, limpeza e validação de EvalBee, sem ampliar permissões nem adicionar telemetria, servidores ou código remoto. O pacote continua executando dependências vendorizadas localmente.
 
@@ -31,6 +31,8 @@ Esses tetos reduzem risco de travamento e consumo excessivo; não transformam ar
 Lotes da Impressão e do Diagnóstico são persistidos em IndexedDB no **service worker/origin da extensão**, via mensagens validadas pelo remetente. Cada registro recebe uma revisão interna e gravações/exclusões com revisão obsoleta são rejeitadas. O banco mantém a última revisão por identidade em uma store separada, inclusive depois de excluir ou limpar lotes, para que uma recriação não volte a aceitar uma cópia antiga. Os bancos antigos nos origins do Microsoft Forms são migrados por hostname. A migração não exclui automaticamente o banco legado: ele permanece para recuperação, e seu fingerprint é verificado em cada abertura para detectar alterações de uma aba antiga. Uma alteração conflitante interrompe a migração sem sobrescrever nenhum lado.
 
 Não versionar dados importados, notas, backups, cookies, arquivos de autenticação ou capturas com dados pessoais.
+
+O histórico de questões fica apenas no IndexedDB privado da extensão (`gssf-question-history-v1`). Não há envio a servidores próprios nem sincronização entre navegadores. As mensagens aceitam apenas content scripts do Forms autorizados pelo manifesto; cada captura textual tem limite de 1 milhão de caracteres serializados. Para preservar imagens, o service worker busca apenas domínios de imagem já autorizados, com limite de 5 MB por imagem e 20 MB por versão. O painel apresenta texto com `textContent`, sem executar o HTML guardado. O usuário pode excluir uma versão ou todas as versões de uma questão; o fingerprint permanece para impedir recaptura imediata após a exclusão. A exclusão dos dados da extensão pelo navegador também remove esse banco.
 
 O banco de gabaritos é atualizado por alterações de formulário e de campo de questão enviadas ao service worker. Ele lê o valor mais recente e serializa as gravações de todas as abas; eventos de `chrome.storage.onChanged` atualizam os caches das abas abertas. O `flush` inclui essas gravações e informa falhas pendentes.
 

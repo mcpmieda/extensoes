@@ -90,6 +90,7 @@
         return;
       }
       APP.lastAudit = audit;
+      queueQuestionHistoryCapture();
       resetLetterCapitalizeForNewForm(audit);
       const data = dataFromAudit(audit);
       updateDashboard(data);
