@@ -15,6 +15,22 @@
         return true;
       }
       if (el.isContentEditable || el.getAttribute?.('role') === 'textbox') {
+        const originalText = String(el.textContent || '');
+        const requested = String(value ?? '');
+        const prefix = originalText && requested.endsWith(originalText)
+          ? requested.slice(0, requested.length - originalText.length) : '';
+        if (prefix) {
+          const originalHtml = el.innerHTML;
+          const beforeInput = new InputEvent('beforeinput', { bubbles: true, cancelable: true, inputType: 'insertText', data: prefix });
+          if (!el.dispatchEvent(beforeInput)) return false;
+          el.insertBefore(document.createTextNode(prefix), el.firstChild);
+          el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: prefix }));
+          try { el.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: 'Unidentified' })); } catch (_) {}
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+          return el.textContent === requested && el.innerHTML.endsWith(originalHtml);
+        }
+        // Substituir todo o texto de um campo rico destruiria sup/sub e outros nós.
+        if (el.querySelector?.('*')) return false;
         const selection = window.getSelection();
         const range = document.createRange();
         range.selectNodeContents(el);

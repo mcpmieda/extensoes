@@ -425,3 +425,50 @@ async function testFormsBankAcrossTabs() {
 }
 
 await testFormsBankAcrossTabs();
+
+async function testRichTextPrefixInsertion() {
+  class FakeEvent { constructor(type, options = {}) { this.type = type; Object.assign(this, options); } }
+  const context = vm.createContext({
+    InputEvent: FakeEvent, FocusEvent: FakeEvent, KeyboardEvent: FakeEvent, Event: FakeEvent,
+    document: { createTextNode: value => ({ textContent: value, html: value }) },
+    reportNonFatalError: (_scope, error) => { throw error; }
+  });
+  vm.runInContext(await read('src/content/forms-dom/03-editing.js') + `
+    this.write = setTextLikeUser;
+  `, context);
+  const rich = (first, element, last) => {
+    const original = [
+      { textContent: first, html: first },
+      { textContent: element.text, html: `<${element.tag}>${element.text}</${element.tag}>` },
+      { textContent: last, html: last }
+    ];
+    return {
+      isContentEditable: true,
+      children: [...original],
+      get firstChild() { return this.children[0] || null; },
+      get innerHTML() { return this.children.map(node => node.html).join(''); },
+      get textContent() { return this.children.map(node => node.textContent).join(''); },
+      focus() {}, dispatchEvent() { return true; },
+      querySelector: () => element.tag,
+      insertBefore(node, before) { this.children.splice(this.children.indexOf(before), 0, node); }
+    };
+  };
+  for (const [field, expected] of [
+    [rich('x', { tag: 'sup', text: '2' }, ''), 'A x2'],
+    [rich('H', { tag: 'sub', text: '2' }, 'O'), 'A H2O'],
+    [rich('', { tag: 'strong', text: 'texto' }, ''), 'A texto']
+  ]) {
+    const originalNodes = field.children.slice();
+    const originalHtml = field.innerHTML;
+    assert.equal(context.write(field, expected), true);
+    assert.equal(field.textContent, expected);
+    assert.equal(field.innerHTML, `A ${originalHtml}`);
+    assert.equal(field.children.slice(1).every((node, index) => node === originalNodes[index]), true);
+  }
+  const unsafe = rich('x', { tag: 'sup', text: '2' }, '');
+  assert.equal(context.write(unsafe, 'A x3'), false);
+  assert.equal(unsafe.innerHTML, 'x<sup>2</sup>');
+  console.log('Issue #2 / 01: prefixo em campo rico preserva sup, sub e formatação.');
+}
+
+await testRichTextPrefixInsertion();
