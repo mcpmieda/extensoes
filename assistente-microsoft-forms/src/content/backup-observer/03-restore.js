@@ -7,7 +7,7 @@
     const entries = [];
     if (payload?.storage && typeof payload.storage === 'object') {
       entries.push(...Object.entries(payload.storage)
-        .filter(([key]) => GSSF_STORAGE.isManagedKey(key))
+        .filter(([key]) => isPortableBackupStorageKey(key))
         .map(([key, value]) => {
           const canonicalKey = GSSF_STORAGE.canonicalKey(key);
           const sanitizedValue = sanitizeBackupStorageValue(canonicalKey, value);

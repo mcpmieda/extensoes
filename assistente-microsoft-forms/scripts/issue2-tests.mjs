@@ -102,3 +102,46 @@ async function testSessionOnlyBoundary() {
 }
 
 await testSessionOnlyBoundary();
+
+async function testPortableBackupKeys() {
+  const canonicalKey = (key) => String(key).replace(/^gssf[_-]/, 'gssf:');
+  const stored = [
+    ['gssf:storage_migration_v14:forms.office.com', '{"migrated":1}'],
+    ['gssf_printingLots_idb_migrated_v1:forms.office.com', '{"count":1}'],
+    ['gssf:diagnosticBatches_idb_migrated_v1:forms.office.com', '{"count":1}'],
+    ['gssf:pedagogical:card:settings', '{"layout":"A","selectedClass":"6A"}'],
+    ['gssf:custom_setting', 'keep']
+  ];
+  const context = vm.createContext({
+    GSSF_STORAGE: {
+      NAMESPACE: 'gssf:', canonicalKey,
+      isManagedKey: (key) => /^gssf[:_-]/.test(String(key)),
+      entries: () => stored, flush: async () => {}
+    },
+    APP: { name: 'test', version: '15.9.2' },
+    location: { href: 'https://forms.office.com/test' },
+    document: { title: 'Test' },
+    getFormTitle: () => 'Test', formsBankKey: () => 'gssf:forms_bank',
+    readFormsBank: () => ({ forms: {} }), answerCountFromQuestions: () => 0,
+    parseDateMs: () => 0, storedValueTime: (_value, fallback) => fallback,
+    reportNonFatalError: (scope, error) => { throw new Error(`${scope}: ${error}`); }
+  });
+  vm.runInContext(await read('src/content/backup-observer/01-base.js') +
+    await read('src/content/backup-observer/03-restore.js') + `
+    this.api = { collect: collectAllSavedData, read: readBackupFile };
+  `, context);
+  const backup = await context.api.collect();
+  assert.equal(backup.backupScope.excludedMigrationMarkers, true);
+  assert.equal(Object.keys(backup.storage).some((key) => key.includes('migrat')), false);
+  assert.equal(backup.storage['gssf:custom_setting'], 'keep');
+  assert.equal(JSON.parse(backup.storage['gssf:pedagogical:card:settings']).selectedClass, undefined);
+
+  const oldBackup = { exportedAt: '2026-09-29T00:00:00Z', storage: Object.fromEntries(stored) };
+  const restored = await context.api.read({ name: 'old.json', text: async () => JSON.stringify(oldBackup) });
+  assert.equal(restored.entries.length, 2);
+  assert.deepEqual(Array.from(restored.entries, (entry) => entry.key).sort(),
+    ['gssf:custom_setting', 'gssf:pedagogical:card:settings']);
+  console.log('Issue #2 / 10: exportação e leitura de backup antigo excluem marcadores de migração.');
+}
+
+await testPortableBackupKeys();

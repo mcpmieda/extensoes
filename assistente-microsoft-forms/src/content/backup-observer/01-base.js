@@ -66,10 +66,18 @@
     }
   }
 
+  function isPortableBackupStorageKey(key) {
+    if (!GSSF_STORAGE.isManagedKey(key)) return false;
+    const canonical = GSSF_STORAGE.canonicalKey(key);
+    return !/^gssf:(?:storage_migration_v\d+|(?:printingLots|diagnosticBatches)_idb_migrated_v\d+)(?::|$)/.test(canonical);
+  }
+
   async function collectAllSavedData() {
     await flushBackupState();
     const values = {};
-    GSSF_STORAGE.entries().forEach(([key, value]) => { values[key] = sanitizeBackupStorageValue(key, value); });
+    GSSF_STORAGE.entries().forEach(([key, value]) => {
+      if (isPortableBackupStorageKey(key)) values[GSSF_STORAGE.canonicalKey(key)] = sanitizeBackupStorageValue(key, value);
+    });
     try {
       values[GSSF_STORAGE.canonicalKey(formsBankKey())] = JSON.stringify(readFormsBank());
     } catch (error) {
@@ -101,6 +109,7 @@
         organizerSourceFiles: false,
         excludedDatabases: ['gssf_impressao_lotes_db_v1', 'gssf_pedagogico_db_v1'],
         excludedDatasetReferences: true,
+        excludedMigrationMarkers: true,
         note: 'O backup inclui dados persistentes e preferências do sistema, além das imagens personalizadas do Cartão-resposta e das edições salvas do Organizador. As planilhas originais do Cartão-resposta e do Organizador, os arquivos Excel da Impressão e os registros importados do EvalBee não são incluídos.'
       },
       moduleCoverage: {
