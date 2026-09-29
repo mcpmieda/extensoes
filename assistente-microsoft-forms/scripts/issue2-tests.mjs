@@ -193,3 +193,52 @@ async function testStorageFlushFailure() {
 }
 
 await testStorageFlushFailure();
+
+async function testMixedClassFiles() {
+  const rows = [
+    ['Roll No', 'Name', 'Exam', 'Q1 Options', 'Q1 Key'],
+    ['1', 'Aluno A', '6º ANO A', 'A', 'A'],
+    ['2', 'Aluno B', '6º ANO B', 'B', 'B']
+  ];
+  const workbook = { SheetNames: ['Reports'], Sheets: { Reports: {} } };
+  const common = {
+    XLSX: { utils: { sheet_to_json: () => rows } },
+    gssfReadSpreadsheetWorkbook: async () => workbook,
+    gssfAssertQuestionCount: () => {},
+    clean: (value) => String(value ?? '').trim(),
+    normalizeClass: (value) => String(value ?? '').trim(),
+    normalizeAnswerOption: (value) => String(value ?? '').trim(),
+    normalizeOption: (value) => String(value ?? '').trim(),
+    toNumeric: (value) => Number(value) || 0,
+    toNum: (value) => Number(value) || 0,
+    lotUid: () => 'id', uid: () => 'id',
+    natural: (a, b) => a.localeCompare(b),
+    localDateInputValue: () => '2026-09-29',
+    auditLotIdentities: () => ({ blockingRecords: 0 }),
+    stableLotId: () => 'lot',
+    detectHeaderAndMapping: () => ({ headerRow: 1, mapping: { rollCol: 0, nameCol: 1, classCol: 2 } }),
+    state: { columns: { roll: 'Roll No', name: 'Name', exam: 'Exam' } },
+    findHeader: (headers, label) => headers.indexOf(label)
+  };
+  const printing = vm.createContext({ ...common });
+  vm.runInContext(await read('src/content/printing/01-state/start-printing-runtime/03-update-lot-form-state.js') + `
+    this.api = { parse: parseLotFile, build: buildLot };
+  `, printing);
+  const diagnostic = vm.createContext({ ...common });
+  vm.runInContext(await read('src/content/diagnostic/01-state/start-diagnostic-runtime/01-state-modules/09-report-export-selected-pdfs.js') + `
+    this.api = { parse: parseEvalbeeFile, build: buildBatch };
+  `, diagnostic);
+  const file = { name: 'turma.xlsx' };
+  await assert.rejects(printing.api.parse(file), /turmas diferentes/);
+  await assert.rejects(diagnostic.api.parse(file), /turmas diferentes/);
+  const mixed = { fileName: file.name, className: '6º ANO A', classCode: '6º ANO A', questionCount: 1,
+    students: [{ className: '6º ANO A' }, { className: '6º ANO B' }] };
+  assert.throws(() => printing.api.build('Teste', '2026-09-29', [mixed]), /turmas diferentes/);
+  assert.throws(() => diagnostic.api.build('Teste', '2026-09-29', [mixed]), /turmas diferentes/);
+  rows[2][2] = '6º ANO A';
+  assert.equal((await printing.api.parse(file)).students.length, 2);
+  assert.equal((await diagnostic.api.parse(file)).students.length, 2);
+  console.log('Issue #2 / 11: arquivos mistos rejeitados nas duas importações; turma única aceita.');
+}
+
+await testMixedClassFiles();

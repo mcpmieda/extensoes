@@ -107,11 +107,13 @@
       students.push({id:lotUid(),className,roll,name,total,correct,incorrect,blank,questionCount:totalQuestions,questions,fileName:file.name});
     }
     const className=students[0]?.className||normalizeClass(file.name.replace(/\.[^.]+$/,''));
+    if(students.some(student=>student.className!==className))throw new Error(`${file.name}: arquivo contém alunos de turmas diferentes. Separe um arquivo por turma.`);
     return{fileName:file.name,sheetName,className,questionCount:Math.max(qCount,...students.map(item=>item.questionCount||0)),students,headers};
   }
   function buildLot(name,date,files){
     const classMap=new Map();
     for(const file of files){
+      if(file.students.some(student=>student.className!==file.className))throw new Error(`${file.fileName}: arquivo contém alunos de turmas diferentes.`);
       if(!classMap.has(file.className))classMap.set(file.className,{name:file.className,questionCount:file.questionCount,students:[],files:[]});
       const group=classMap.get(file.className);
       group.students.push(...file.students.map(student=>({...student,className:file.className})));
