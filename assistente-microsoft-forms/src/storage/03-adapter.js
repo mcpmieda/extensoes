@@ -1,12 +1,17 @@
   function createGssfStorageAdapter({ backend, legacyStorage = null, origin = '' } = {}) {
     if (!backend) throw new Error('Backend de armazenamento obrigatório.');
     const cache = new Map();
+    const confirmed = new Map();
+    const latestWrite = new Map();
+    const pendingErrors = [];
     let initialized = false;
     let suspended = false;
     let writeQueue = Promise.resolve();
 
     function enqueue(operation) {
-      writeQueue = writeQueue.then(operation, operation);
+      writeQueue = writeQueue.then(operation).catch((error) => {
+        pendingErrors.push(error);
+      });
       return writeQueue;
     }
 
@@ -67,6 +72,8 @@
       if (Object.keys(canonicalUpdates).length) await backend.set(canonicalUpdates);
       if (obsoleteKeys.length) await backend.remove(obsoleteKeys);
       await migrateLegacyStorage();
+      confirmed.clear();
+      cache.forEach((value, key) => confirmed.set(key, value));
       initialized = true;
     }
 
@@ -80,15 +87,44 @@
       const nextKey = canonicalKey(key);
       if (!isManagedKey(nextKey)) throw new Error(`Chave fora do namespace GSSF: ${key}`);
       const nextValue = String(value ?? '');
+      const token = {};
+      latestWrite.set(nextKey, token);
       cache.set(nextKey, nextValue);
-      enqueue(() => backend.set({ [nextKey]: nextValue }));
+      enqueue(async () => {
+        try {
+          await backend.set({ [nextKey]: nextValue });
+          confirmed.set(nextKey, nextValue);
+          if (latestWrite.get(nextKey) === token) latestWrite.delete(nextKey);
+        } catch (error) {
+          if (latestWrite.get(nextKey) === token) {
+            if (confirmed.has(nextKey)) cache.set(nextKey, confirmed.get(nextKey));
+            else cache.delete(nextKey);
+            latestWrite.delete(nextKey);
+          }
+          throw error;
+        }
+      });
     }
 
     function removeItem(key) {
       if (suspended) return;
       const nextKey = canonicalKey(key);
+      const token = {};
+      latestWrite.set(nextKey, token);
       cache.delete(nextKey);
-      enqueue(() => backend.remove([nextKey]));
+      enqueue(async () => {
+        try {
+          await backend.remove([nextKey]);
+          confirmed.delete(nextKey);
+          if (latestWrite.get(nextKey) === token) latestWrite.delete(nextKey);
+        } catch (error) {
+          if (latestWrite.get(nextKey) === token) {
+            if (confirmed.has(nextKey)) cache.set(nextKey, confirmed.get(nextKey));
+            latestWrite.delete(nextKey);
+          }
+          throw error;
+        }
+      });
     }
 
     function key(index) {
@@ -102,13 +138,19 @@
     async function clearManaged() {
       await flush();
       const keys = entries().map(([key]) => key);
-      cache.clear();
       if (keys.length) await backend.remove(keys);
+      cache.clear();
+      confirmed.clear();
+      latestWrite.clear();
       return keys;
     }
 
     async function flush() {
       await writeQueue;
+      if (pendingErrors.length) {
+        const errors = pendingErrors.splice(0);
+        throw new AggregateError(errors, 'Uma ou mais gravações do armazenamento falharam.');
+      }
     }
 
     return {
@@ -129,4 +171,3 @@
       get length() { return cache.size; }
     };
   }
-

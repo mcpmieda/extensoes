@@ -145,3 +145,51 @@ async function testPortableBackupKeys() {
 }
 
 await testPortableBackupKeys();
+
+async function testStorageFlushFailure() {
+  const values = new Map([['gssf:existing', 'old']]);
+  let failNextSet = false;
+  let failNextRemove = false;
+  const backend = {
+    getAll: async () => Object.fromEntries(values),
+    set: async (entries) => {
+      if (failNextSet) { failNextSet = false; throw new Error('set failed'); }
+      Object.entries(entries).forEach(([key, value]) => values.set(key, value));
+    },
+    remove: async (keys) => {
+      if (failNextRemove) { failNextRemove = false; throw new Error('remove failed'); }
+      keys.forEach((key) => values.delete(key));
+    }
+  };
+  const context = vm.createContext({ console });
+  vm.runInContext(await read('src/storage/00-index-start.js') +
+    await read('src/storage/03-adapter.js') + `
+    global.createAdapter = createGssfStorageAdapter;
+    })(this);
+  `, context);
+  const adapter = context.createAdapter({ backend });
+  await adapter.init();
+
+  failNextSet = true;
+  adapter.setItem('gssf:first', 'lost');
+  adapter.setItem('gssf:second', 'saved');
+  await assert.rejects(adapter.flush(), /gravações.*falharam/);
+  assert.equal(adapter.getItem('gssf:first'), null);
+  assert.equal(adapter.getItem('gssf:second'), 'saved');
+  assert.equal(values.has('gssf:first'), false);
+  assert.equal(values.get('gssf:second'), 'saved');
+
+  failNextSet = true;
+  adapter.setItem('gssf:existing', 'new');
+  await assert.rejects(adapter.flush());
+  assert.equal(adapter.getItem('gssf:existing'), 'old');
+  failNextRemove = true;
+  adapter.removeItem('gssf:existing');
+  await assert.rejects(adapter.flush());
+  assert.equal(adapter.getItem('gssf:existing'), 'old');
+  assert.equal(values.get('gssf:existing'), 'old');
+  await adapter.flush();
+  console.log('Issue #2 / 08: flush propaga falhas anteriores e reverte o cache afetado.');
+}
+
+await testStorageFlushFailure();
