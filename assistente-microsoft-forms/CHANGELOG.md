@@ -1,5 +1,14 @@
 # Histórico
 
+## 2026-09-29 — 15.9.1 — Integridade matemática reforçada
+
+- Removida a reconstrução automática de alternativas matemáticas durante **Inserir letras**.
+- A inserção matemática faz no máximo uma tentativa e nunca usa select-all para reescrever a fórmula inteira.
+- Letras A/B/C/D/E no final de expressões deixam de ser removidas por heurística de reparo legado.
+- Casos ambíguos como `A+25`, `A−25` e `E = E` são preservados sem nova edição.
+- A confirmação matemática agora exige preservação do corpo da expressão; presença visual da letra, sozinha, não basta.
+- Testes de regressão ampliados para 51 operadores/símbolos e casos matemáticos terminais.
+
 ## 2026-09-28 — 15.9.0 — Integridade e segurança
 
 - Inserção de letras nas alternativas tornou-se não destrutiva: operadores e símbolos existentes são preservados, inclusive em segunda execução.

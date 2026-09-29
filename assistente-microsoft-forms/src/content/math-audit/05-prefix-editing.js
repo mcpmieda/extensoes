@@ -7,6 +7,42 @@
       .replace(/[​-‍﻿]/g, '');
   }
 
+  function mathFingerprintsCompatible(a, b) {
+    if (!a || !b) return false;
+    return a === b || a.includes(b) || b.includes(a);
+  }
+
+  function mathIntegrityFingerprints(optionContainer, field) {
+    return Array.from(new Set(mathOptionTextSamples(optionContainer, field)
+      .map((sample) => mathBodyFingerprint(sample))
+      .filter(Boolean)));
+  }
+
+  function mathBodyFingerprintAfterInsertedPrefix(sample, optIndex) {
+    const wanted = escapeRegExp(letter(optIndex));
+    const value = collapseRepeatedMathText(sample || '').replace(new RegExp('^\\s*' + wanted + '\\s+', 'i'), '');
+    return mathBodyFingerprint(value);
+  }
+
+  function mathBodyWasPreservedAfterInsertion(beforeFingerprints, optionContainer, field, optIndex) {
+    if (!Array.isArray(beforeFingerprints) || !beforeFingerprints.length) return false;
+    const current = mathOptionTextSamples(optionContainer, field)
+      .map((sample) => mathBodyFingerprintAfterInsertedPrefix(sample, optIndex))
+      .filter(Boolean);
+    return beforeFingerprints.some((before) => current.some((after) => mathFingerprintsCompatible(before, after)));
+  }
+
+  function mathExpectedBodyWasPreserved(expected, optionContainer, field, optIndex) {
+    const wanted = escapeRegExp(letter(optIndex));
+    const expectedText = collapseRepeatedMathText(expected || '').replace(new RegExp('^\\s*' + wanted + '\\s+', 'i'), '');
+    const expectedFingerprint = mathBodyFingerprint(expectedText);
+    if (!expectedFingerprint) return false;
+    return mathOptionTextSamples(optionContainer, field)
+      .map((sample) => mathBodyFingerprintAfterInsertedPrefix(sample, optIndex))
+      .filter(Boolean)
+      .some((current) => mathFingerprintsCompatible(expectedFingerprint, current));
+  }
+
   function mathBodyWasPreserved(beforeBody, optionContainer, field, optIndex) {
     const expected = mathBodyFingerprint(beforeBody);
     if (!expected) return true;
@@ -68,30 +104,8 @@
     return false;
   }
 
-  async function replaceMathOptionWithPrefix(field, optionContainer, block, optIndex) {
-    const wanted = letter(optIndex);
-    const body = mathBodyForLetter(optionContainer, field, optIndex);
-    if (!body) return false;
-    const attempts = [`${wanted} ${body}`, `\\text{${wanted} }${body}`];
-    for (const value of attempts) {
-      const editor = await activateMathEditorAtStart(field, optionContainer);
-      if (!editor) continue;
-      await selectAllMathEditor(editor);
-      await sleep(120);
-      await sendTextToMathTextarea(editor, value);
-      await sleep(280);
-      const ok = mathCommitButtonNear(editor) || mathCommitButtonNear(field);
-      if (ok) {
-        fireRealClick(ok);
-        await sleep(360);
-      }
-      await commitEditedOptionField(editor, block || optionContainer || field);
-      await waitForFormsAutosaveAfterEdits(9800);
-      await sleep(700);
-      if (mathOptionAlreadyHasLetter(optionContainer, field, optIndex)) return true;
-    }
-    return false;
-  }
+  // Não há mais reconstrução automática de expressão matemática na ação Inserir letras.
+  // Falha de confirmação encerra a tentativa sem uma segunda edição destrutiva.
 
   function firstMathVisualTarget(optionContainer, field) {
     return optionContainer?.querySelector?.('.mq-editable-field, .mq-math-mode, .MathJax, [class*="MathJax"], [data-mathml], math, mjx-container') || field;
@@ -125,53 +139,33 @@
   }
 
   async function insertMathOptionLetterOnly(field, optionContainer, block, optIndex) {
-    // PROTEÇÃO PERMANENTE — FUNÇÃO SENSÍVEL AO DOM E AO TEMPO INTERNO DO MICROSOFT FORMS.
-    // NUNCA "CORRIGIR", REFATORAR, SIMPLIFICAR OU SUBSTITUIR ESTA FUNÇÃO, MESMO QUE UMA
-    // ANÁLISE ESTÁTICA INDIQUE ERROS APARENTES. O COMPORTAMENTO DEPENDE DA PÁGINA REAL.
-    // Só alterar mediante pedido explícito do responsável pelo projeto, reprodução no Forms
-    // real e testes específicos que comprovem a necessidade. Fora disso, preserve byte a byte.
-    if (mathOptionHasRepeatedLeadingLetter(optionContainer, field, optIndex)) {
-      return replaceMathOptionWithPrefix(field, optionContainer, block, optIndex);
-    }
-    if (mathOptionAlreadyHasLetter(optionContainer, field, optIndex)) return true;
+    // Uma única inserção, sem select-all, sem reconstrução e sem remoção de conteúdo.
+    if (mathOptionAlreadyHasLetter(optionContainer, field, optIndex) || mathOptionHasWantedLoosePrefix(optionContainer, field, optIndex)) return true;
+    const beforeFingerprints = mathIntegrityFingerprints(optionContainer, field);
+    if (!beforeFingerprints.length) return false;
     const wanted = letter(optIndex);
-
-    // V11: fazer somente UMA digitação por alternativa matemática.
-    // Na V10, quando o Forms demorava a refletir o resultado salvo, a segunda tentativa
-    // podia gerar "A A 64". Agora a segunda etapa é só correção/reconstrução, nunca nova digitação.
     const editor = await activateMathEditorAtStart(field, optionContainer);
-    if (editor) {
-      await moveMathCursorToStart(editor);
-      await typeCharIntoMathTextarea(editor, wanted);
-      await typeCharIntoMathTextarea(editor, ' ');
+    if (!editor) return false;
+
+    await moveMathCursorToStart(editor);
+    await typeCharIntoMathTextarea(editor, wanted);
+    await typeCharIntoMathTextarea(editor, ' ');
+    await sleep(360);
+    const ok = mathCommitButtonNear(editor) || mathCommitButtonNear(field);
+    if (ok) {
+      fireRealClick(ok);
       await sleep(360);
-      const ok = mathCommitButtonNear(editor) || mathCommitButtonNear(field);
-      if (ok) {
-        fireRealClick(ok);
-        await sleep(360);
-      }
-      await commitEditedOptionField(editor, block || optionContainer || field);
-      const letterConfirmed = await waitForMathOptionLetter(optionContainer, field, optIndex, 2600);
-      if (mathOptionHasRepeatedLeadingLetter(optionContainer, field, optIndex)) {
-        return replaceMathOptionWithPrefix(field, optionContainer, block, optIndex);
-      }
-      if (letterConfirmed || mathOptionAlreadyHasLetter(optionContainer, field, optIndex) || mathOptionHasWantedLoosePrefix(optionContainer, field, optIndex)) {
-        // M2 Matemática: depois que a letra aparece visualmente no editor, não esperar
-        // o autosave completo em cada alternativa. A espera final da questão continua
-        // ativa no fluxo principal, preservando segurança sem travar em A/B/C/D.
-        await sleep(180);
-        return true;
-      }
-      // Se a letra ainda não apareceu, volta ao modo conservador antes de tentar reconstruir.
+    }
+    await commitEditedOptionField(editor, block || optionContainer || field);
+
+    let letterConfirmed = await waitForMathOptionLetter(optionContainer, field, optIndex, 2600);
+    if (!letterConfirmed && !mathOptionAlreadyHasLetter(optionContainer, field, optIndex) && !mathOptionHasWantedLoosePrefix(optionContainer, field, optIndex)) {
       await waitForFormsAutosaveAfterEdits(6200);
       await sleep(360);
-      if (mathOptionHasRepeatedLeadingLetter(optionContainer, field, optIndex)) {
-        return replaceMathOptionWithPrefix(field, optionContainer, block, optIndex);
-      }
-      if (mathOptionAlreadyHasLetter(optionContainer, field, optIndex) || mathOptionHasWantedLoosePrefix(optionContainer, field, optIndex)) return true;
+      letterConfirmed = mathOptionAlreadyHasLetter(optionContainer, field, optIndex) || mathOptionHasWantedLoosePrefix(optionContainer, field, optIndex);
     }
-
-    // Se a tentativa salvou no fim da fórmula, não repetir a letra: reconstruir a alternativa inteira
-    // preservando o corpo matemático original e deixando uma única letra no começo.
-    return replaceMathOptionWithPrefix(field, optionContainer, block, optIndex);
+    if (!letterConfirmed) return false;
+    if (!mathBodyWasPreservedAfterInsertion(beforeFingerprints, optionContainer, field, optIndex)) return false;
+    await sleep(180);
+    return true;
   }

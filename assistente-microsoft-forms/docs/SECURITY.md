@@ -1,8 +1,8 @@
 # Segurança e publicação pública
 
-## Estado da 15.9.0
+## Estado da 15.9.1
 
-A 15.9.0 corrige os principais achados da auditoria registrada na issue #1 sem ampliar permissões ou adicionar telemetria, servidores ou código remoto. O pacote continua executando dependências vendorizadas localmente.
+A 15.9.0 corrigiu os principais achados da auditoria registrada na issue #1. A 15.9.1 reforça a integridade das alternativas matemáticas, sem ampliar permissões nem adicionar telemetria, servidores ou código remoto. O pacote continua executando dependências vendorizadas localmente.
 
 ## SheetJS CE 0.20.3
 
@@ -34,7 +34,11 @@ Não versionar dados importados, notas, backups, cookies, arquivos de autentica�
 
 ## Integridade das alternativas
 
-A ação **Inserir letras** é não destrutiva: ela não remove separadores nem operadores existentes. A ação **Remover letras** remove apenas a letra esperada e o espaço inserido, preservando pontuação e operadores. Assim, conteúdos como `-25`, `+25`, `±`, `×`, `÷`, `=` ou símbolos não previstos não podem ser descartados por uma heurística de separador.
+A ação **Inserir letras** é não destrutiva: ela não remove separadores nem operadores existentes. A ação **Remover letras** remove apenas a letra esperada, preservando pontuação e operadores.
+
+Na rota matemática, a 15.9.1 elimina o reparo que reconstruía a expressão inteira. A inserção faz uma única tentativa de prefixo e só é considerada bem-sucedida quando o corpo original continua reconhecível. Se a posição ou o conteúdo não puderem ser confirmados, a ação reporta falha e não executa uma segunda correção. Casos ambíguos como `A+25`, `A−25` e `E = E` são deixados intactos.
+
+Com isso, conteúdos como `-25`, `+25`, `±`, `×`, `÷`, `=`, letras terminais legítimas e símbolos não previstos não devem ser descartados por heurísticas de separador ou de reparo.
 
 ## Integridade e referência histórica
 

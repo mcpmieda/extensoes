@@ -23,15 +23,15 @@
     const current = optionVisibleTextForLetterAction(field, optionContainer);
     if (alternativeTextEquivalentForEdit(current, expected)) return true;
     const expectedHasPrefix = alternativeTextHasVisualPrefix(expected, optIndex);
-    if (alternativeTextHasVisualPrefix(current, optIndex) && expectedHasPrefix) return true;
-    if (mathLike || isMathOptionField(field, optionContainer, null)) {
-      const visualHasPrefix = mathAlternativeVisuallyHasLetter(optionContainer, field, optIndex);
-      if (visualHasPrefix && expectedHasPrefix) return true;
-      if (!visualHasPrefix && !expectedHasPrefix) {
-        const expectedBody = mathBodyFingerprint(expected);
-        const currentBody = mathBodyFingerprint(mathBodyForLetter(optionContainer, field, optIndex) || current);
-        return Boolean(currentBody && (!expectedBody || currentBody === expectedBody || currentBody.includes(expectedBody) || expectedBody.includes(currentBody)));
-      }
+    const mathField = Boolean(mathLike || isMathOptionField(field, optionContainer, null));
+    if (!mathField) return false;
+
+    const visualHasPrefix = mathAlternativeVisuallyHasLetter(optionContainer, field, optIndex);
+    if (visualHasPrefix && expectedHasPrefix) return mathExpectedBodyWasPreserved(expected, optionContainer, field, optIndex);
+    if (!visualHasPrefix && !expectedHasPrefix) {
+      const expectedBody = mathBodyFingerprint(expected);
+      const currentBody = mathBodyFingerprint(mathOptionTextSamples(optionContainer, field)[0] || current);
+      return mathFingerprintsCompatible(expectedBody, currentBody);
     }
     return false;
   }

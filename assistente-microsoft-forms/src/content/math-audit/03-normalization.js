@@ -55,10 +55,9 @@
     if (!value) return '';
     // Remove uma ou mais letras já inseridas no começo: "A 64" / "A A 64" -> "64".
     value = value.replace(new RegExp(`^(?:\\s*${wanted}\\s+)+`, 'i'), '').trim();
-    // Remove o erro da V9/V10 no final: "64A A", "64 A A", "64A" -> "64".
-    value = value.replace(new RegExp(`(?:\\s+${wanted})+\\s*$`, 'i'), '').trim();
-    value = value.replace(new RegExp(`([^\\s])${wanted}(?:\\s+${wanted})*\\s*$`, 'i'), '$1').trim();
-    value = value.replace(new RegExp(`^${wanted}\\s*$`, 'i'), '').trim();
+    // Nunca remover letras no fim da expressão: elas podem ser conteúdo matemático legítimo.
+    // A limpeza só isola o prefixo no início quando o chamador realmente precisa dele.
+    if (new RegExp('^' + wanted + '\\s*$', 'i').test(value)) return '';
     // Em leituras MathJax, às vezes a mesma expressão aparece duas vezes depois da limpeza.
     value = collapseRepeatedMathText(value);
     return value;
@@ -78,8 +77,11 @@
   }
 
   function mathOptionAlreadyHasLetter(optionContainer, field, optIndex) {
-    const wanted = letter(optIndex);
-    const prefix = new RegExp(`^\\s*${escapeRegExp(wanted)}(?:\\s+|$)`, 'i');
+    const wanted = escapeRegExp(letter(optIndex));
+    // Política conservadora: se a expressão já começa com a letra esperada seguida de
+    // espaço OU de um operador/separador, não alteramos. É melhor deixar um caso ambíguo
+    // intocado do que duplicar a letra ou reescrever uma fórmula sem Undo confiável.
+    const prefix = new RegExp('^\\s*' + wanted + '(?:\\s+|$|[\\)\\].:,;\\-–—−+±×÷=<>≤≥/\\\\|])', 'i');
     return mathOptionTextSamples(optionContainer, field).some((sample) => prefix.test(collapseRepeatedMathText(sample)));
   }
 

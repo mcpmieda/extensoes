@@ -1,3 +1,31 @@
+# Registro de validação — 15.9.1
+
+Data: 29 de setembro de 2026.
+
+## Regressão de integridade das alternativas
+
+A 15.9.1 foi criada após uma segunda revisão da ação **Inserir letras**, especialmente da rota matemática.
+
+Validações focadas executadas nesta sessão em Node.js 22:
+
+- **3.005 verificações** sobre alternativas comuns, cobrindo operadores e símbolos em diferentes posições, preservação do texto original e idempotência da segunda execução;
+- **521 verificações adicionais** sobre a política conservadora de símbolos e casos matemáticos;
+- nenhuma das verificações focadas removeu conteúdo original.
+
+A suíte `scripts/behavior-tests.mjs` foi ampliada de 61 para **586 asserções comportamentais** quando executada integralmente. Esta sessão não executou `npm test` completo sobre um clone local do repositório porque o ambiente de terminal não possui acesso de rede ao GitHub; as verificações focadas acima foram executadas diretamente contra a lógica revisada antes da publicação.
+
+A rota matemática agora segue estes invariantes:
+
+1. nunca usa `select-all` para reconstruir a alternativa durante **Inserir letras**;
+2. nunca executa uma segunda edição destrutiva para “reparar” a primeira;
+3. não remove A/B/C/D/E no fim de uma expressão;
+4. considera casos ambíguos já iniciados pela letra esperada como intocáveis;
+5. só confirma sucesso se a letra e o corpo original forem preservados.
+
+**A validação real autenticada no Microsoft Forms continua pendente.** Testar em formulário descartável/controlado antes de usar em avaliação importante, especialmente alternativas normais e matemáticas, autosave e segunda execução da ação.
+
+---
+
 # Registro de validação — 15.9.0
 
 Data: 28 de setembro de 2026.

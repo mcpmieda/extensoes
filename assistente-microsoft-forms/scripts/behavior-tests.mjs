@@ -38,10 +38,46 @@ async function testAlternativeInsertionIntegrity() {
   for (const [index, already] of [[0, 'A - 25'], [1, 'B +25'], [2, 'C ± 2'], [3, 'D ÷ 4'], [4, 'E = 0']]) {
     assert(withAlternativeLetter(already, index, false, null) === already, `Prefixo existente deve ser intocável: ${already}.`);
   }
+  const stressSymbols = ['−','–','—','+','±','∓','×','÷','=','≠','≈','≡','<','>','≤','≥','/','|','%','√','∛','∞','∑','∏','∫','∂','∆','∈','∉','∪','∩','∧','∨','→','←','↔','°','′','″','!','?','~','^','_','*','·','•','⊕','⊗','⌈','⌊'];
+  for (let index = 0; index < 5; index += 1) {
+    for (const symbol of stressSymbols) {
+      const before = `${symbol}25`;
+      const after = withAlternativeLetter(before, index, false, null);
+      assert(alternativeInsertionPreservesOriginal(before, after, index), `Símbolo desconhecido não pode ser apagado: “${before}” -> “${after}”.`);
+      assert(withAlternativeLetter(after, index, false, null) === after, `Segunda execução deve ser idempotente para “${after}”.`);
+    }
+  }
+
   const removalCases = [[0, 'A - 25', '- 25'], [1, 'B +25', '+25'], [2, 'C ± 2', '± 2'], [3, 'D ÷ 4', '÷ 4'], [0, 'A) texto', ') texto']];
   for (const [index, before, expected] of removalCases) {
     assert(withoutAlternativeLetter(before, index, false, null) === expected, `Remoção não pode apagar símbolo em “${before}”.`);
   }
+}
+
+async function testMathInsertionIntegrity() {
+  const source = await read('src/content/math-audit/03-normalization.js');
+  const context = {
+    cleanText: (value) => String(value ?? '').replace(/\\s+/g, ' ').trim(),
+    normalizeText: (value) => String(value ?? '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().trim(),
+    letter: (index) => String.fromCharCode(65 + index),
+    escapeRegExp: (value) => String(value || ''),
+    textOf: (el) => String(el?.text || ''),
+    document: { activeElement: null, querySelectorAll: () => [] }
+  };
+  vm.createContext(context);
+  vm.runInContext(source + '\\nthis.__math={cleanMathBodyForLetter,mathOptionAlreadyHasLetter};', context);
+  const { cleanMathBodyForLetter, mathOptionAlreadyHasLetter } = context.__math;
+  const terminalCases = [[0, '25 A'], [0, '64A'], [1, 'x + B'], [2, 'x^2 + C'], [3, '20 D'], [4, 'x + E']];
+  for (const [index, value] of terminalCases) assert(cleanMathBodyForLetter(value, index) === value, `Conteúdo terminal legítimo foi alterado em “${value}”.`);
+  assert(cleanMathBodyForLetter('A 64', 0) === '64', 'Prefixo A no início deve ser isolado quando o chamador o trata como prefixo.');
+  assert(cleanMathBodyForLetter('A A 64', 0) === '64', 'Prefixos A repetidos no início devem ser isolados sem tocar o fim.');
+  const fake = (text) => ({ text, getAttribute: () => '', querySelectorAll: () => [] });
+  for (const [index, value] of [[0,'A+25'],[0,'A−25'],[1,'B ± 2'],[3,'D÷4'],[4,'E = E']]) assert(mathOptionAlreadyHasLetter(fake(value), null, index), `Caso ambíguo deve ser preservado sem nova edição: “${value}”.`);
+
+  const insertion = await read('src/content/math-audit/05-prefix-editing.js');
+  const insertSource = insertion.slice(insertion.indexOf('async function insertMathOptionLetterOnly'));
+  assert(!insertSource.includes('replaceMathOptionWithPrefix'), 'Inserção matemática não pode reconstruir a expressão inteira.');
+  assert(!insertSource.includes('selectAllMathEditor'), 'Inserção matemática não pode selecionar toda a expressão.');
 }
 
 async function testHistoricalMatchingIsStrict() {
@@ -101,6 +137,7 @@ async function testPedagogicalStorageBoundary() {
 }
 
 await testAlternativeInsertionIntegrity();
+await testMathInsertionIntegrity();
 await testHistoricalMatchingIsStrict();
 await testSpreadsheetLimits();
 await testPedagogicalStorageBoundary();
