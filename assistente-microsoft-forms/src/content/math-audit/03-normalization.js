@@ -39,14 +39,9 @@
 
   function collapseRepeatedMathText(text) {
     let value = cleanText(asciiMathLetters(text || '')).replace(/[​-‍﻿]/g, '').trim();
-    value = value.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ');
-    value = cleanText(value);
-    const parts = value.split(/\s+/).filter(Boolean);
-    if (parts.length >= 2 && parts.length % 2 === 0) {
-      const half = parts.length / 2;
-      if (parts.slice(0, half).join(' ') === parts.slice(half).join(' ')) value = parts.slice(0, half).join(' ');
-    }
-    return value;
+    // As amostras são texto ou atributos, não HTML a ser analisado aqui.
+    // "x < 2 e x > -2" deve conservar todos os operadores e termos.
+    return cleanText(value.replace(/&nbsp;/gi, ' '));
   }
 
   function cleanMathBodyForLetter(text, optIndex) {

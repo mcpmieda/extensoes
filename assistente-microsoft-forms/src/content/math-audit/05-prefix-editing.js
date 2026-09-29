@@ -1,15 +1,14 @@
 
 
   function mathBodyFingerprint(value) {
-    return normalizeText(collapseRepeatedMathText(value || ''))
-      .replace(/\\(?:text|mathrm|mathbf|mathit)\s*/g, '')
-      .replace(/[{}\s]/g, '')
+    return collapseRepeatedMathText(value || '')
+      .replace(/\s/g, '')
       .replace(/[​-‍﻿]/g, '');
   }
 
   function mathFingerprintsCompatible(a, b) {
     if (!a || !b) return false;
-    return a === b || a.includes(b) || b.includes(a);
+    return a === b;
   }
 
   function mathIntegrityFingerprints(optionContainer, field) {
@@ -20,8 +19,9 @@
 
   function mathBodyFingerprintAfterInsertedPrefix(sample, optIndex) {
     const wanted = escapeRegExp(letter(optIndex));
-    const value = collapseRepeatedMathText(sample || '').replace(new RegExp('^\\s*' + wanted + '\\s+', 'i'), '');
-    return mathBodyFingerprint(value);
+    const value = collapseRepeatedMathText(sample || '');
+    const prefix = new RegExp('^\\s*' + wanted + '\\s+', 'i');
+    return prefix.test(value) ? mathBodyFingerprint(value.replace(prefix, '')) : '';
   }
 
   function mathBodyWasPreservedAfterInsertion(beforeFingerprints, optionContainer, field, optIndex) {
@@ -29,7 +29,8 @@
     const current = mathOptionTextSamples(optionContainer, field)
       .map((sample) => mathBodyFingerprintAfterInsertedPrefix(sample, optIndex))
       .filter(Boolean);
-    return beforeFingerprints.some((before) => current.some((after) => mathFingerprintsCompatible(before, after)));
+    const longest = Math.max(...beforeFingerprints.map((fingerprint) => fingerprint.length));
+    return beforeFingerprints.some((before) => before.length === longest && current.some((after) => mathFingerprintsCompatible(before, after)));
   }
 
   function mathExpectedBodyWasPreserved(expected, optionContainer, field, optIndex) {
@@ -48,7 +49,7 @@
     if (!expected) return true;
     const current = mathBodyFingerprint(mathBodyForLetter(optionContainer, field, optIndex));
     if (!current) return false;
-    return current === expected || current.includes(expected) || expected.includes(current);
+    return current === expected;
   }
 
   async function waitForMathOptionLetterRemoved(optionContainer, field, optIndex, timeout = 5200) {

@@ -472,3 +472,34 @@ async function testRichTextPrefixInsertion() {
 }
 
 await testRichTextPrefixInsertion();
+
+async function testCompleteMathBodyVerification() {
+  const context = vm.createContext({
+    cleanText: value => String(value ?? '').replace(/\s+/g, ' ').trim(),
+    normalizeText: value => String(value ?? '').toLowerCase().trim(),
+    textOf: element => element?.text || '',
+    escapeRegExp: value => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+    letter: index => 'ABCDE'[index]
+  });
+  vm.runInContext(await read('src/content/math-audit/03-normalization.js') +
+    await read('src/content/math-audit/05-prefix-editing.js') + `
+    this.api = { collapse: collapseRepeatedMathText, fingerprint: mathBodyFingerprint,
+      compatible: mathFingerprintsCompatible, preserved: mathBodyWasPreservedAfterInsertion };
+  `, context);
+  const field = text => ({ text, getAttribute: () => '', querySelectorAll: () => [] });
+  for (const [before, after, expected] of [
+    ['-5', 'A 5', false], ['-5', 'A -5', true],
+    ['125', 'A 25', false], ['x+2', 'A x', false],
+    ['5', 'A 500', false], ['x<2 e x>-2', 'A x<2 e x>-2', true],
+    ['x<2 e x>-2', 'A x-2', false], ['x x', 'A x', false]
+  ]) {
+    const beforeFingerprint = context.api.fingerprint(before);
+    assert.equal(context.api.preserved([beforeFingerprint], null, field(after), 0), expected,
+      `${before} → ${after}`);
+  }
+  assert.equal(context.api.collapse('x < 2 e x > -2'), 'x < 2 e x > -2');
+  assert.equal(context.api.compatible('5', '500'), false);
+  console.log('Issue #2 / 02: corpo matemático completo exigido, inclusive sinais e desigualdades.');
+}
+
+await testCompleteMathBodyVerification();
