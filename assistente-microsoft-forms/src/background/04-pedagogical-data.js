@@ -1,6 +1,7 @@
 // Armazenamento de lotes pedagógicos no origin da própria extensão.
 const GSSF_PEDAGOGICAL_DATA_DB = 'gssf-pedagogical-data-v1';
-const GSSF_PEDAGOGICAL_DATA_VERSION = 1;
+const GSSF_PEDAGOGICAL_DATA_VERSION = 2;
+const GSSF_PEDAGOGICAL_REVISION_STORE = 'recordRevisions';
 const GSSF_PEDAGOGICAL_DATA_STORES = Object.freeze({
   printingLots: 'printingLots',
   diagnosticBatches: 'diagnosticBatches'
@@ -18,6 +19,7 @@ function gssfOpenPedagogicalDataDb() {
       Object.values(GSSF_PEDAGOGICAL_DATA_STORES).forEach((storeName) => {
         if (!database.objectStoreNames.contains(storeName)) database.createObjectStore(storeName, { keyPath: 'id' });
       });
+      if (!database.objectStoreNames.contains(GSSF_PEDAGOGICAL_REVISION_STORE)) database.createObjectStore(GSSF_PEDAGOGICAL_REVISION_STORE);
     };
     request.onsuccess = () => {
       const database = request.result;
@@ -94,8 +96,9 @@ async function gssfPedagogicalDataPut(namespace, value, expectedRevision = null,
   const id = String(validated.id || '');
   const normalizedExpected = expectedRevision == null ? null : Math.max(0, Number(expectedRevision) || 0);
   return new Promise((resolve, reject) => {
-    const transaction = database.transaction(storeName, 'readwrite');
+    const transaction = database.transaction([storeName, GSSF_PEDAGOGICAL_REVISION_STORE], 'readwrite');
     const store = transaction.objectStore(storeName);
+    const revisions = transaction.objectStore(GSSF_PEDAGOGICAL_REVISION_STORE);
     let nextRevision = 0;
     let settled = false;
     const fail = (error) => {
@@ -124,11 +127,18 @@ async function gssfPedagogicalDataPut(namespace, value, expectedRevision = null,
       } else if (normalizedExpected != null && normalizedExpected > 0) {
         return fail(gssfPedagogicalConflict('O registro esperado não existe mais. Recarregue os dados antes de salvar novamente.'));
       }
-      nextRevision = currentRevision + 1;
-      const next = { ...validated, _gssfRevision: nextRevision };
-      delete next.sessionOnly;
-      const putRequest = store.put(next);
-      putRequest.onerror = () => fail(putRequest.error || new Error('Falha ao gravar registro pedagógico.'));
+      const revisionRequest = revisions.get(`${namespace}:${id}`);
+      revisionRequest.onerror = () => fail(revisionRequest.error || new Error('Falha ao verificar histórico do registro pedagógico.'));
+      revisionRequest.onsuccess = () => {
+        const historicalRevision = Math.max(0, Number(revisionRequest.result) || 0);
+        nextRevision = Math.max(currentRevision, historicalRevision) + 1;
+        const next = { ...validated, _gssfRevision: nextRevision };
+        delete next.sessionOnly;
+        const putRequest = store.put(next);
+        putRequest.onerror = () => fail(putRequest.error || new Error('Falha ao gravar registro pedagógico.'));
+        const historyRequest = revisions.put(nextRevision, `${namespace}:${id}`);
+        historyRequest.onerror = () => fail(historyRequest.error || new Error('Falha ao gravar histórico do registro pedagógico.'));
+      };
     };
   });
 }
@@ -139,8 +149,9 @@ async function gssfPedagogicalDataDelete(namespace, id, expectedRevision = null)
   const key = String(id || '');
   const normalizedExpected = expectedRevision == null ? null : Math.max(0, Number(expectedRevision) || 0);
   return new Promise((resolve, reject) => {
-    const transaction = database.transaction(storeName, 'readwrite');
+    const transaction = database.transaction([storeName, GSSF_PEDAGOGICAL_REVISION_STORE], 'readwrite');
     const store = transaction.objectStore(storeName);
+    const revisions = transaction.objectStore(GSSF_PEDAGOGICAL_REVISION_STORE);
     let settled = false;
     const fail = (error) => {
       if (settled) return;
@@ -158,13 +169,33 @@ async function gssfPedagogicalDataDelete(namespace, id, expectedRevision = null)
       if (!current) return;
       const currentRevision = Math.max(0, Number(current?._gssfRevision) || 0);
       if (normalizedExpected != null && currentRevision !== normalizedExpected) return fail(gssfPedagogicalConflict('Este registro foi alterado em outra aba e não foi excluído.'));
+      const historyRequest = revisions.put(currentRevision, `${namespace}:${key}`);
+      historyRequest.onerror = () => fail(historyRequest.error || new Error('Falha ao preservar histórico do registro pedagógico.'));
       const deleteRequest = store.delete(key);
       deleteRequest.onerror = () => fail(deleteRequest.error || new Error('Falha ao excluir registro pedagógico.'));
     };
   });
 }
-function gssfPedagogicalDataClear(namespace) {
-  return gssfPedagogicalDataRun(namespace, 'readwrite', (store) => store.clear());
+async function gssfPedagogicalDataClear(namespace) {
+  const database = await gssfOpenPedagogicalDataDb();
+  const storeName = gssfPedagogicalStoreName(namespace);
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction([storeName, GSSF_PEDAGOGICAL_REVISION_STORE], 'readwrite');
+    const store = transaction.objectStore(storeName);
+    const revisions = transaction.objectStore(GSSF_PEDAGOGICAL_REVISION_STORE);
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error || new Error('Falha ao limpar registros pedagógicos.'));
+    transaction.onabort = () => reject(transaction.error || new Error('Limpeza pedagógica cancelada.'));
+    const getAll = store.getAll();
+    getAll.onerror = () => reject(getAll.error || new Error('Falha ao preservar revisões antes da limpeza.'));
+    getAll.onsuccess = () => {
+      for (const record of getAll.result || []) {
+        const revision = Math.max(0, Number(record?._gssfRevision) || 0);
+        if (revision) revisions.put(revision, `${namespace}:${record.id}`);
+      }
+      store.clear();
+    };
+  });
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

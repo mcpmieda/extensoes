@@ -11,22 +11,32 @@ async function testSessionOnlyBoundary() {
   const records = new Map([
     ['legacy', { id: 'legacy', sessionOnly: true, _gssfRevision: 3, questions: { 1: { correct: true } } }]
   ]);
+  const revisions = new Map();
   const database = {
     transaction() {
-      const transaction = { abort() {}, objectStore: () => store };
+      let pending = 0;
+      const transaction = { abort() {}, objectStore: (name) => name === 'recordRevisions' ? revisionStore : store };
       const request = (operation) => {
         const result = {};
+        pending += 1;
         queueMicrotask(() => {
           result.result = operation();
           result.onsuccess?.();
-          queueMicrotask(() => transaction.oncomplete?.());
+          pending -= 1;
+          if (!pending) queueMicrotask(() => transaction.oncomplete?.());
         });
         return result;
       };
       const store = {
         get: (id) => request(() => structuredClone(records.get(id))),
         getAll: () => request(() => structuredClone([...records.values()])),
-        put: (value) => request(() => { records.set(value.id, structuredClone(value)); return value.id; })
+        put: (value) => request(() => { records.set(value.id, structuredClone(value)); return value.id; }),
+        delete: (id) => request(() => records.delete(id)),
+        clear: () => request(() => records.clear())
+      };
+      const revisionStore = {
+        get: (key) => request(() => revisions.get(key)),
+        put: (value, key) => request(() => { revisions.set(key, value); return key; })
       };
       return transaction;
     }
@@ -34,7 +44,8 @@ async function testSessionOnlyBoundary() {
   const context = vm.createContext({ chrome: { runtime: { onMessage: { addListener() {} } } }, database });
   vm.runInContext(await read('src/background/04-pedagogical-data.js') + `
     gssfOpenPedagogicalDataDb = async () => database;
-    this.api = { getAll: gssfPedagogicalDataGetAll, put: gssfPedagogicalDataPut };
+    this.api = { getAll: gssfPedagogicalDataGetAll, put: gssfPedagogicalDataPut,
+      delete: gssfPedagogicalDataDelete, clear: gssfPedagogicalDataClear };
   `, context);
   const [loaded] = await context.api.getAll('printingLots');
   assert.equal(Object.hasOwn(loaded, 'sessionOnly'), false);
@@ -51,6 +62,17 @@ async function testSessionOnlyBoundary() {
   await context.api.put('printingLots', loaded, loaded._gssfRevision, false);
   assert.equal(Object.hasOwn(records.get('legacy'), 'sessionOnly'), false, 'A próxima escrita confirmada deve limpar registros antigos.');
   assert.equal(records.get('legacy')._gssfRevision, 4);
+
+  const stale = { ...records.get('new') };
+  await context.api.delete('printingLots', 'new', 1);
+  assert.equal(await context.api.put('printingLots', { id: 'new', name: 'recreated' }, null, false), 2);
+  await assert.rejects(context.api.put('printingLots', stale, stale._gssfRevision, false),
+    (error) => error.code === 'CONFLICT');
+  await context.api.clear('printingLots');
+  assert.equal(await context.api.put('printingLots', { id: 'new', name: 'after clear' }, null, false), 3);
+  await assert.rejects(context.api.put('printingLots', stale, stale._gssfRevision, false),
+    (error) => error.code === 'CONFLICT');
+  console.log('Issue #2 / 06: revisão não é reutilizada após excluir, recriar e limpar.');
 
   let reply = { ok: true, revision: 1 };
   const bridge = vm.createContext({ chrome: { runtime: {
