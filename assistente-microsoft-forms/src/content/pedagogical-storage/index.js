@@ -38,7 +38,10 @@
       expectedRevision: hasExpected ? expectedRevision : null,
       allowReplace: Boolean(options.allowReplace)
     }).then((response) => {
-      if (value && typeof value === 'object' && Number.isInteger(response.revision)) value._gssfRevision = response.revision;
+      if (value && typeof value === 'object' && Number.isInteger(response.revision)) {
+        value._gssfRevision = response.revision;
+        delete value.sessionOnly;
+      }
       return undefined;
     });
   }
@@ -105,7 +108,13 @@
   }
 
   function gssfPedagogicalRecordsEqual(a, b) {
-    return gssfPedagogicalStableJson(a) === gssfPedagogicalStableJson(b);
+    const comparable = (value) => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+      const record = { ...value };
+      delete record.sessionOnly;
+      return record;
+    };
+    return gssfPedagogicalStableJson(comparable(a)) === gssfPedagogicalStableJson(comparable(b));
   }
 
   function gssfPedagogicalRecordsFingerprint(records) {
@@ -175,7 +184,7 @@
       }
       for (const record of records) {
         const id = String(record?.id || '');
-        if (!existingById.has(id)) await gssfPedagogicalDataPut(namespace, record);
+        if (!existingById.has(id)) await gssfPedagogicalDataPut(namespace, { ...record });
       }
       const stored = await gssfPedagogicalDataGetAll(namespace);
       const storedById = new Map(stored.map((record) => [String(record?.id || ''), record]));

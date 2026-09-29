@@ -73,7 +73,12 @@ async function gssfPedagogicalDataRun(namespace, mode, operation) {
 
 async function gssfPedagogicalDataGetAll(namespace) {
   const values = await gssfPedagogicalDataRun(namespace, 'readonly', (store) => store.getAll());
-  return (values || []).map((value) => ({ ...value, _gssfRevision: Math.max(0, Number(value?._gssfRevision) || 0) }));
+  return (values || []).map((value) => {
+    const record = { ...value, _gssfRevision: Math.max(0, Number(value?._gssfRevision) || 0) };
+    // Registros antigos podem ter salvo uma marca que pertence apenas à interface.
+    delete record.sessionOnly;
+    return record;
+  });
 }
 
 function gssfPedagogicalConflict(message) {
@@ -121,6 +126,7 @@ async function gssfPedagogicalDataPut(namespace, value, expectedRevision = null,
       }
       nextRevision = currentRevision + 1;
       const next = { ...validated, _gssfRevision: nextRevision };
+      delete next.sessionOnly;
       const putRequest = store.put(next);
       putRequest.onerror = () => fail(putRequest.error || new Error('Falha ao gravar registro pedagógico.'));
     };

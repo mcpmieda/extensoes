@@ -9,10 +9,11 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "check": "node scripts/check.mjs",
-    "test": "node scripts/check.mjs && node scripts/behavior-tests.mjs",
+    "test": "node scripts/check.mjs && npm run test:behavior",
     "verify:baseline": "node scripts/check.mjs --baseline",
     "package": "node scripts/package.mjs",
-    "test:behavior": "node scripts/behavior-tests.mjs"
+    "test:behavior": "node scripts/behavior-tests.mjs && npm run test:issue2",
+    "test:issue2": "node scripts/issue2-tests.mjs"
   },
   "repository": {
     "type": "git",
