@@ -57,6 +57,19 @@
     return false;
   }
 
+  function removeProvenRichTextPrefix(el, proof, optionIndex) {
+    if (!el?.isContentEditable || !proof || el.textContent !== proof.insertedText) return false;
+    const prefix = `${letter(optionIndex)} `;
+    const first = el.firstChild;
+    if (first?.nodeType !== 3 || !first.textContent.startsWith(prefix)) return false;
+    const originalElements = Array.from(el.querySelectorAll('*'));
+    first.deleteData(0, prefix.length);
+    if (!first.textContent) first.remove();
+    el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'deleteContentBackward' }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    return el.textContent === proof.originalText && originalElements.every((node, index) => el.querySelectorAll('*')[index] === node);
+  }
+
   function visibleCommitButtonLabel(el) {
     return normalizeText(`${textOf(el)} ${el?.getAttribute?.('aria-label') || ''} ${el?.getAttribute?.('title') || ''}`);
   }

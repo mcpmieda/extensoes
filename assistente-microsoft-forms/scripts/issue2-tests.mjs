@@ -503,3 +503,34 @@ async function testCompleteMathBodyVerification() {
 }
 
 await testCompleteMathBodyVerification();
+
+async function testProvenPrefixRemoval() {
+  const context = vm.createContext({
+    cleanText: value => String(value ?? '').replace(/\s+/g, ' ').trim(),
+    normalizeText: value => String(value ?? '').toLowerCase().trim(),
+    letter: index => 'ABCDE'[index],
+    globalThis: { location: { href: 'https://forms.office.com/test' } }
+  });
+  vm.runInContext(await read('src/content/alternatives/01-base.js') + `
+    this.api = { remove: withoutAlternativeLetter, record: recordAlternativePrefixOrigin,
+      proof: provenAlternativePrefixOrigin, forget: forgetAlternativePrefixOrigin };
+  `, context);
+  for (const [index, text] of [[0, 'A x + 5'], [1, 'B y - 3'], [0, 'A']]) {
+    assert.equal(context.api.remove(text, index), text, `Sem prova: ${text}`);
+  }
+  context.api.record(1, 0, 'x + 5', 'A x + 5');
+  const proof = context.api.proof(1, 0, 'A x + 5');
+  assert.ok(proof);
+  assert.equal(context.api.remove('A x + 5', 0, false, null, proof), 'x + 5');
+  assert.equal(context.api.proof(1, 0, 'A x + 6'), null, 'Alteração posterior invalida a prova.');
+  context.api.forget(1, 0);
+  assert.equal(context.api.proof(1, 0, 'A x + 5'), null);
+  context.api.record(2, 0, '', 'A');
+  assert.equal(context.api.remove('A', 0, false, null, context.api.proof(2, 0, 'A')), '');
+  context.api.record(3, 0, 'x+5', 'A x+5', ['x+5'], ['Ax+5']);
+  assert.ok(context.api.proof(3, 0, 'texto renderizado', ['Ax+5']));
+  assert.equal(context.api.proof(3, 0, 'texto renderizado', ['Ax+6']), null);
+  console.log('Issue #2 / 04: remoção ambígua exige origem comprovada e texto inalterado.');
+}
+
+await testProvenPrefixRemoval();

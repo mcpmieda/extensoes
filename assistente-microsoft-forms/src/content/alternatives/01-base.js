@@ -108,17 +108,44 @@
     return /^(?:[0-9⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉]|[([+\-−–—±∓×÷=≠≈≡<>≤≥/\\|%√∛∞∑∏∫∂∆∈∉∪∩∧∨→←↔°′″~^_*·•⊕⊗⌈⌊])/u.test(body);
   }
 
-  function stripAlternativeLetterOnly(text, optionIndex) {
+  const alternativePrefixOrigins = new Map();
+
+  function alternativePrefixOriginKey(questionNumber, optionIndex) {
+    return `${globalThis.location?.href || ''}|${questionNumber}|${optionIndex}`;
+  }
+
+  function recordAlternativePrefixOrigin(questionNumber, optionIndex, originalText, insertedText, mathBefore = null, mathAfter = null) {
+    alternativePrefixOrigins.set(alternativePrefixOriginKey(questionNumber, optionIndex), {
+      originalText: cleanText(originalText), insertedText: cleanText(insertedText), mathBefore, mathAfter
+    });
+  }
+
+  function provenAlternativePrefixOrigin(questionNumber, optionIndex, currentText, mathFingerprints = null) {
+    const proof = alternativePrefixOrigins.get(alternativePrefixOriginKey(questionNumber, optionIndex));
+    if (!proof) return null;
+    if (mathFingerprints) {
+      const longest = Math.max(0, ...(proof.mathAfter || []).map(value => value.length));
+      return longest && (proof.mathAfter || []).some(value => value.length === longest && mathFingerprints.includes(value)) ? proof : null;
+    }
+    return cleanText(currentText) === proof.insertedText ? proof : null;
+  }
+
+  function forgetAlternativePrefixOrigin(questionNumber, optionIndex) {
+    alternativePrefixOrigins.delete(alternativePrefixOriginKey(questionNumber, optionIndex));
+  }
+
+  function stripAlternativeLetterOnly(text, optionIndex, proof = null) {
     const raw = cleanText(text).trim();
     if (!raw) return '';
     const wanted = escapeRegExp(letter(optionIndex));
-    if (new RegExp(`^${wanted}$`, 'i').test(raw)) return '';
+    if (proof && raw === proof.insertedText && raw === `${letter(optionIndex)} ${proof.originalText}`) return proof.originalText;
+    if (new RegExp(`^${wanted}$`, 'i').test(raw)) return proof?.insertedText === raw && proof?.originalText === '' ? '' : raw;
 
     const spaced = raw.match(new RegExp(`^${wanted}\\s+(.*)$`, 'is'));
     if (spaced) {
-      const body = cleanText(spaced[1]);
-      if (alternativeBodyLooksMathSensitive(body)) return raw;
-      return body;
+      // Uma letra seguida de palavra pode ser uma variável. Sem a fotografia da
+      // inserção feita nesta sessão, não existe prova para apagá-la.
+      return raw;
     }
 
     // Separadores tipográficos inequivocamente visuais continuam removíveis.
@@ -128,8 +155,8 @@
     return raw;
   }
 
-  function withoutAlternativeLetter(text, optionIndex, capitalizeBody = false, markerInfo = null) {
-    const body = stripAlternativeLetterOnly(text, optionIndex);
+  function withoutAlternativeLetter(text, optionIndex, capitalizeBody = false, markerInfo = null, proof = null) {
+    const body = stripAlternativeLetterOnly(text, optionIndex, proof);
     return cleanText(capitalizeBody ? capitalizeAlternativeBody(body) : body);
   }
 

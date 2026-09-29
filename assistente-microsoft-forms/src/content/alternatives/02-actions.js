@@ -98,9 +98,14 @@
             continue;
           }
           const markerInfo = detectManualOptionMarkers(currentTexts);
+          const removalProofs = isRemoving ? currentTexts.map((text, optIndex) =>
+            provenAlternativePrefixOrigin(qn, optIndex, text)
+              || provenAlternativePrefixOrigin(qn, optIndex, text, mathIntegrityFingerprints(optionContainers[optIndex] || null, fields[optIndex]))) : [];
           const nextTexts = currentTexts.map((text, optIndex) => {
             if (isCapitalizing) return capitalizeAlternativeText(text);
-            if (isRemoving) return withoutAlternativeLetter(text, optIndex, false, markerInfo);
+            if (isRemoving) return removalProofs[optIndex]?.mathAfter
+              ? removalProofs[optIndex].originalText
+              : withoutAlternativeLetter(text, optIndex, false, markerInfo, removalProofs[optIndex]);
             const next = withAlternativeLetter(text, optIndex, capitalizeWithInsert, markerInfo);
             // Cinto de segurança adicional: sem capitalização explícita, a ação Inserir
             // não pode produzir um texto que deixe de conter integralmente o original.
@@ -132,6 +137,7 @@
               hadMathInRun = true;
             }
             let applied = false;
+            let mathBefore = null;
 
             if (mathLike) {
               const fresh = await freshOptionTargetForLetterAction(qn, optIndex, activeBlock);
@@ -145,16 +151,19 @@
               }
 
               if (isRemoving) {
-                applied = await removeMathOptionLetterOnly(activeField, optionContainer, activeBlock, optIndex, qn);
+                if (removalProofs[optIndex]?.mathAfter) applied = await removeMathOptionLetterOnly(activeField, optionContainer, activeBlock, optIndex, qn, removalProofs[optIndex].mathBefore);
               } else if (!isCapitalizing) {
                 // ÚNICA mudança em relação à V7: rota especial para campo matemático.
+                mathBefore = mathIntegrityFingerprints(optionContainer, activeField);
                 applied = await insertMathOptionLetterOnly(activeField, optionContainer, activeBlock, optIndex);
               } else {
                 applied = await setMathOptionTextLikeUser(activeField, next, optionContainer, activeBlock);
               }
             } else {
               // Campos normais seguem o comportamento estável da V7.
-              applied = setTextLikeUser(activeField, next);
+              applied = isRemoving && removalProofs[optIndex]?.mathAfter ? false : isRemoving && removalProofs[optIndex]
+                ? (removeProvenRichTextPrefix(activeField, removalProofs[optIndex], optIndex) || setTextLikeUser(activeField, next))
+                : setTextLikeUser(activeField, next);
             }
 
             if (applied && mathLike) {
@@ -162,6 +171,13 @@
             }
 
             if (applied) {
+              if (isRemoving) forgetAlternativePrefixOrigin(qn, optIndex);
+              else if (!isCapitalizing && !capitalizeWithInsert && next === `${letter(optIndex)} ${cleanText(currentTexts[optIndex])}`) {
+                const mathAfter = mathLike ? mathIntegrityFingerprints(optionContainer, activeField) : null;
+                if (mathLike ? mathBefore?.length && mathAfter?.length : alternativeTextEquivalentForEdit(optionCurrentText(activeField), next)) {
+                  recordAlternativePrefixOrigin(qn, optIndex, currentTexts[optIndex], next, mathBefore, mathAfter);
+                }
+              }
               qChanged += 1;
               changed += 1;
               if (!mathLike && (looksLikeMathEditorOpen() || /matem[aá]tica|math|equation|latex/i.test(blockedOptionFieldLabel(activeField)))) {
@@ -170,6 +186,7 @@
             } else {
               const visuallyApplied = await confirmAlternativeEditVisually(qn, optIndex, next, activeField, optionContainer, activeBlock, mathLike);
               if (visuallyApplied) {
+                if (isRemoving) forgetAlternativePrefixOrigin(qn, optIndex);
                 qChanged += 1;
                 changed += 1;
               } else {
@@ -234,4 +251,3 @@
       }
     });
   }
-

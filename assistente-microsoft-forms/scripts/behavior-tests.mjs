@@ -55,7 +55,8 @@ async function testAlternativeInsertionIntegrity() {
   const removalCases = [
     [0, 'A - 25', 'A - 25'], [1, 'B +25', 'B +25'], [2, 'C ± 2', 'C ± 2'], [3, 'D ÷ 4', 'D ÷ 4'],
     [0, 'A+5', 'A+5'], [1, 'B-3', 'B-3'], [2, 'C√25', 'C√25'], [3, 'D^2', 'D^2'], [4, 'E·x', 'E·x'],
-    [0, 'A 25', 'A 25'], [0, 'A (x+1)', 'A (x+1)'], [0, 'A) texto', ') texto'], [0, 'A texto comum', 'texto comum']
+    [0, 'A 25', 'A 25'], [0, 'A (x+1)', 'A (x+1)'], [0, 'A) texto', ') texto'], [0, 'A texto comum', 'A texto comum'],
+    [0, 'A x + 5', 'A x + 5'], [1, 'B y - 3', 'B y - 3'], [0, 'A', 'A']
   ];
   for (const [index, before, expected] of removalCases) {
     assert(withoutAlternativeLetter(before, index, false, null) === expected, `Remoção não pode apagar símbolo em “${before}”.`);

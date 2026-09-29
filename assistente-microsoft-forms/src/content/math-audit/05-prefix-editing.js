@@ -75,7 +75,7 @@
     return true;
   }
 
-  async function removeMathOptionLetterOnly(field, optionContainer, block, optIndex, qn = 0) {
+  async function removeMathOptionLetterOnly(field, optionContainer, block, optIndex, qn = 0, expectedBeforeFingerprints = null) {
     if (!mathAlternativeVisuallyHasLetter(optionContainer, field, optIndex)) return true;
     const beforeBody = mathBodyForLetter(optionContainer, field, optIndex);
     if (!beforeBody) return false;
@@ -100,7 +100,14 @@
       await sleep(420);
 
       const removed = await waitForMathOptionLetterRemoved(optionContainer, field, optIndex, 1800);
-      if (removed) return mathBodyWasPreserved(beforeBody, optionContainer, field, optIndex);
+      if (removed) {
+        if (expectedBeforeFingerprints?.length) {
+          const current = mathIntegrityFingerprints(optionContainer, field);
+          const longest = Math.max(...expectedBeforeFingerprints.map(value => value.length));
+          return expectedBeforeFingerprints.some(value => value.length === longest && current.includes(value));
+        }
+        return mathBodyWasPreserved(beforeBody, optionContainer, field, optIndex);
+      }
     }
     return false;
   }

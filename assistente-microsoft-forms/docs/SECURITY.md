@@ -38,9 +38,9 @@ O banco de gabaritos é atualizado por alterações de formulário e de campo de
 
 A ação **Inserir letras** é não destrutiva: ela não remove separadores nem operadores existentes. A ação **Remover letras** remove apenas a letra esperada, preservando pontuação e operadores.
 
-Na rota matemática, a 15.9.1 elimina o reparo que reconstruía a expressão inteira. A inserção faz uma única tentativa de prefixo e só é considerada bem-sucedida quando o corpo original continua reconhecível. Se a posição ou o conteúdo não puderem ser confirmados, a ação reporta falha e não executa uma segunda correção. Casos ambíguos como `A+25`, `A−25` e `E = E` são deixados intactos.
+Na rota matemática, a 15.9.1 elimina o reparo que reconstruía a expressão inteira. A inserção faz uma única tentativa de prefixo e só é considerada bem-sucedida quando o corpo completo original continua reconhecível. Se a posição ou o conteúdo não puderem ser confirmados, a ação reporta falha e não executa uma segunda correção. Casos ambíguos como `A+25`, `A−25` e `E = E` são deixados intactos.
 
-Com isso, conteúdos como `-25`, `+25`, `A+5`, `B-3`, `A√25`, `B∑x`, `C%5`, `D^2`, `E·x`, letras terminais legítimas e símbolos não previstos não devem ser descartados ou receber letra duplicada por heurísticas de separador ou reparo. **Remover letras** não remove um prefixo quando o restante começa por número, agrupador ou símbolo matemático.
+Com isso, conteúdos como `-25`, `+25`, `A+5`, `B-3`, `A√25`, `B∑x`, `C%5`, `D^2`, `E·x`, letras terminais legítimas e símbolos não previstos não devem ser descartados ou receber letra duplicada por heurísticas de separador ou reparo. **Remover letras** só retira prefixos ambíguos quando há registro, nesta sessão, da inserção feita pela extensão e o conteúdo ainda corresponde ao registrado. Sem essa prova, a possível variável permanece intacta.
 
 ## Integridade e referência histórica
 
