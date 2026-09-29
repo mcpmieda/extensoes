@@ -256,7 +256,6 @@ async function testPedagogicalMigrationConflict() {
   const legacy=[{id:'lot-2',name:'Simulado',manualMatches:{}}];
   const extension=[];
   const clone=(value)=>JSON.parse(JSON.stringify(value));
-  const deleteResults=[false,true];
   const deps={
     exists:async()=>true,
     readLegacy:async()=>clone(legacy),
@@ -267,15 +266,15 @@ async function testPedagogicalMigrationConflict() {
       const index=extension.findIndex(item=>item.id===next.id);
       if(index>=0)extension[index]=next;else extension.push(next);
     },
-    deleteLegacy:async()=>{deletes++;return deleteResults.shift()??true;}
+    deleteLegacy:async()=>{deletes++;return true;}
   };
   await context.__runMigrationTest(deps);
-  assert(puts===1 && deletes===1, 'Primeira migração deve copiar uma vez mesmo se a limpeza ficar bloqueada.');
+  assert(puts===1 && deletes===0, 'Primeira migração deve copiar sem iniciar exclusão nativa do legado.');
   extension[0].manualMatches.aluno={status:'matched'};
   await context.__runMigrationTest(deps);
-  assert(puts===1 && deletes===2, 'Retry de limpeza não pode recopiar o legado sobre dados já editados.');
+  assert(puts===1 && deletes===0, 'Nova abertura não pode recopiar o legado sobre dados já editados.');
   const marker=[...markerStore.values()].map(value=>JSON.parse(value)).at(-1);
-  assert(marker && marker.cleanupPending===false, 'Marcador deve concluir a limpeza pendente após o desbloqueio.');
+  assert(marker && marker.legacyRetained===true && marker.cleanupPending===false, 'Marcador deve registrar o legado retido para recuperação.');
 }
 
 async function assertDatabaseClearPropagatesFailure(source, name) {

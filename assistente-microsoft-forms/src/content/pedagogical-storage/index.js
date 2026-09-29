@@ -147,31 +147,14 @@
       if (rawMarker) marker = JSON.parse(rawMarker);
     } catch (_) {}
 
-    if (marker?.cleanupPending) {
-      const exists = await gssfLegacyDatabaseExists(databaseName);
-      if (!exists) {
-        await gssfWritePedagogicalMigrationMarker(markerKey, { ...marker, cleanupPending: false, migratedAt: marker.migratedAt || new Date().toISOString(), cleanedAt: new Date().toISOString() });
-        return 0;
-      }
-      const pendingRecords = await gssfReadLegacyIndexedDb(databaseName, storeName);
-      const fingerprint = gssfPedagogicalRecordsFingerprint(pendingRecords);
-      if (marker.legacyFingerprint && fingerprint !== marker.legacyFingerprint) {
-        throw new Error('O banco legado mudou depois da cópia inicial; ele foi preservado para evitar perda de alterações feitas por outra aba.');
-      }
-      const removed = await gssfDeleteLegacyIndexedDb(databaseName);
-      if (removed) {
-        await gssfWritePedagogicalMigrationMarker(markerKey, { ...marker, cleanupPending: false, cleanedAt: new Date().toISOString() });
-      }
-      return 0;
-    }
-    if (marker) return 0;
-
     const exists = await gssfLegacyDatabaseExists(databaseName);
     if (!exists) {
-      await gssfWritePedagogicalMigrationMarker(markerKey, { migratedAt: new Date().toISOString(), count: 0, host, cleanupPending: false });
+      await gssfWritePedagogicalMigrationMarker(markerKey, { migratedAt: marker?.migratedAt || new Date().toISOString(), count: marker?.count || 0, host, cleanupPending: false, legacyRetained: false });
       return 0;
     }
     const records = await gssfReadLegacyIndexedDb(databaseName, storeName);
+    const legacyFingerprint = gssfPedagogicalRecordsFingerprint(records);
+    if (marker?.legacyFingerprint === legacyFingerprint && !marker.cleanupPending) return 0;
     if (records.length) {
       const existing = await gssfPedagogicalDataGetAll(namespace);
       const existingById = new Map(existing.map((record) => [String(record?.id || ''), record]));
@@ -192,19 +175,19 @@
         throw new Error('Migração pedagógica não pôde ser verificada; banco legado preservado.');
       }
     }
-    const legacyFingerprint = gssfPedagogicalRecordsFingerprint(records);
-    const legacyRemoved = await gssfDeleteLegacyIndexedDb(databaseName);
-    // A cópia verificada e a limpeza física são etapas diferentes. Se outra aba ainda
-    // mantiver o banco aberto, registramos a impressão digital do legado copiado e,
-    // na próxima abertura, tentamos somente a limpeza. Alterações novas no legado
-    // são detectadas e preservadas, em vez de criarem conflito com dados já editados.
+    if (gssfPedagogicalRecordsFingerprint(await gssfReadLegacyIndexedDb(databaseName, storeName)) !== legacyFingerprint) {
+      throw new Error('O banco legado mudou durante a migração; ele foi preservado e será verificado novamente na próxima abertura.');
+    }
+    // Não emitir deleteDatabase automaticamente: uma solicitação bloqueada pode
+    // concluir depois de novas gravações da aba antiga, sem nova verificação.
+    // O legado permanece para recuperação e é reexaminado em cada abertura.
     await gssfWritePedagogicalMigrationMarker(markerKey, {
-      migratedAt: new Date().toISOString(),
+      migratedAt: marker?.migratedAt || new Date().toISOString(),
       count: records.length,
       host,
-      cleanupPending: !legacyRemoved,
-      legacyFingerprint,
-      ...(legacyRemoved ? { cleanedAt: new Date().toISOString() } : {})
+      cleanupPending: false,
+      legacyRetained: true,
+      legacyFingerprint
     });
     return records.length;
   }

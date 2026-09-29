@@ -97,6 +97,7 @@ async function testSessionOnlyBoundary() {
   const legacy = [{ id: 'legacy', sessionOnly: true }];
   const migrated = [];
   const markers = new Map();
+  let deletionRequests = 0;
   const migration = vm.createContext({
     legacy,
     indexedDB: {},
@@ -113,14 +114,27 @@ async function testSessionOnlyBoundary() {
   vm.runInContext(await read('src/content/pedagogical-storage/index.js') + `
     gssfLegacyDatabaseExists = async () => true;
     gssfReadLegacyIndexedDb = async () => legacy;
-    gssfDeleteLegacyIndexedDb = async () => false;
+    gssfDeleteLegacyIndexedDb = async () => { deletionRequests += 1; return false; };
     this.migrate = () => gssfMigrateLegacyPedagogicalDb('printingLots', 'legacy', 'lots');
   `, migration);
   await migration.migrate();
   assert.equal(legacy[0].sessionOnly, true, 'Migrar não deve alterar a fotografia usada no fingerprint do legado.');
   assert.equal(Object.hasOwn(migrated[0], 'sessionOnly'), false);
   assert.equal(JSON.parse([...markers.values()][0]).legacyFingerprint, '1:cfff087f');
+  assert.equal(JSON.parse([...markers.values()][0]).legacyRetained, true);
+  assert.equal(deletionRequests, 0, 'A migração não pode iniciar exclusão nativa pendente.');
+  await migration.migrate();
+  assert.equal(deletionRequests, 0);
+  legacy.push({ id: 'new-from-old-tab' });
+  await migration.migrate();
+  assert.equal(migrated.length, 2, 'Novos registros do legado devem ser copiados na próxima abertura.');
+  assert.equal(deletionRequests, 0);
+  legacy[0].name = 'Alterado na aba antiga';
+  await assert.rejects(migration.migrate(), /conflito/);
+  assert.equal(deletionRequests, 0);
+  assert.equal(migrated[0].name, undefined, 'Conflito não deve sobrescrever a cópia no service worker.');
   console.log('Issue #2 / 09: representação persistida, leitura legada, confirmação e falha aprovadas.');
+  console.log('Issue #2 / 05: legado retido, reexaminado e nunca excluído automaticamente.');
 }
 
 await testSessionOnlyBoundary();

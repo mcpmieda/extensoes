@@ -28,7 +28,7 @@ Esses tetos reduzem risco de travamento e consumo excessivo; não transformam ar
 
 ## Dados pedagógicos
 
-Lotes da Impressão e do Diagnóstico são persistidos em IndexedDB no **service worker/origin da extensão**, via mensagens validadas pelo remetente. Cada registro recebe uma revisão interna e gravações/exclusões com revisão obsoleta são rejeitadas. O banco mantém a última revisão por identidade em uma store separada, inclusive depois de excluir ou limpar lotes, para que uma recriação não volte a aceitar uma cópia antiga. Os bancos antigos nos origins do Microsoft Forms são migrados por hostname. Se a exclusão do legado ficar bloqueada, a cópia verificada é marcada como `cleanupPending` com uma impressão digital do legado; a próxima abertura tenta somente a limpeza se o legado estiver inalterado. Conflitos reais preservam os dois lados.
+Lotes da Impressão e do Diagnóstico são persistidos em IndexedDB no **service worker/origin da extensão**, via mensagens validadas pelo remetente. Cada registro recebe uma revisão interna e gravações/exclusões com revisão obsoleta são rejeitadas. O banco mantém a última revisão por identidade em uma store separada, inclusive depois de excluir ou limpar lotes, para que uma recriação não volte a aceitar uma cópia antiga. Os bancos antigos nos origins do Microsoft Forms são migrados por hostname. A migração não exclui automaticamente o banco legado: ele permanece para recuperação, e seu fingerprint é verificado em cada abertura para detectar alterações de uma aba antiga. Uma alteração conflitante interrompe a migração sem sobrescrever nenhum lado.
 
 Não versionar dados importados, notas, backups, cookies, arquivos de autenticação ou capturas com dados pessoais.
 
