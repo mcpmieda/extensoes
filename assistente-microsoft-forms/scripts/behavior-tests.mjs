@@ -35,8 +35,12 @@ async function testAlternativeInsertionIntegrity() {
     const rerun = withAlternativeLetter(after, index, false, null);
     assert(rerun === after, `Segunda execução não pode alterar “${after}”: obtido “${rerun}”.`);
   }
-  for (const [index, already] of [[0, 'A - 25'], [1, 'B +25'], [2, 'C ± 2'], [3, 'D ÷ 4'], [4, 'E = 0']]) {
-    assert(withAlternativeLetter(already, index, false, null) === already, `Prefixo existente deve ser intocável: ${already}.`);
+  for (const [index, already] of [
+    [0, 'A - 25'], [1, 'B +25'], [2, 'C ± 2'], [3, 'D ÷ 4'], [4, 'E = 0'],
+    [0, 'A+25'], [1, 'B-3'], [0, 'A√25'], [1, 'B∑x'], [2, 'C%5'],
+    [3, 'D^2'], [4, 'E·x'], [0, 'A²'], [1, 'B(x+1)']
+  ]) {
+    assert(withAlternativeLetter(already, index, false, null) === already, `Prefixo ambíguo existente deve ser intocável: ${already}.`);
   }
   const stressSymbols = ['−','–','—','+','±','∓','×','÷','=','≠','≈','≡','<','>','≤','≥','/','|','%','√','∛','∞','∑','∏','∫','∂','∆','∈','∉','∪','∩','∧','∨','→','←','↔','°','′','″','!','?','~','^','_','*','·','•','⊕','⊗','⌈','⌊'];
   for (let index = 0; index < 5; index += 1) {
@@ -48,7 +52,11 @@ async function testAlternativeInsertionIntegrity() {
     }
   }
 
-  const removalCases = [[0, 'A - 25', '- 25'], [1, 'B +25', '+25'], [2, 'C ± 2', '± 2'], [3, 'D ÷ 4', '÷ 4'], [0, 'A) texto', ') texto']];
+  const removalCases = [
+    [0, 'A - 25', 'A - 25'], [1, 'B +25', 'B +25'], [2, 'C ± 2', 'C ± 2'], [3, 'D ÷ 4', 'D ÷ 4'],
+    [0, 'A+5', 'A+5'], [1, 'B-3', 'B-3'], [2, 'C√25', 'C√25'], [3, 'D^2', 'D^2'], [4, 'E·x', 'E·x'],
+    [0, 'A 25', 'A 25'], [0, 'A (x+1)', 'A (x+1)'], [0, 'A) texto', ') texto'], [0, 'A texto comum', 'texto comum']
+  ];
   for (const [index, before, expected] of removalCases) {
     assert(withoutAlternativeLetter(before, index, false, null) === expected, `Remoção não pode apagar símbolo em “${before}”.`);
   }
@@ -72,7 +80,10 @@ async function testMathInsertionIntegrity() {
   assert(cleanMathBodyForLetter('A 64', 0) === '64', 'Prefixo A no início deve ser isolado quando o chamador o trata como prefixo.');
   assert(cleanMathBodyForLetter('A A 64', 0) === '64', 'Prefixos A repetidos no início devem ser isolados sem tocar o fim.');
   const fake = (text) => ({ text, getAttribute: () => '', querySelectorAll: () => [] });
-  for (const [index, value] of [[0,'A+25'],[0,'A−25'],[1,'B ± 2'],[3,'D÷4'],[4,'E = E']]) assert(mathOptionAlreadyHasLetter(fake(value), null, index), `Caso ambíguo deve ser preservado sem nova edição: “${value}”.`);
+  for (const [index, value] of [
+    [0,'A+25'],[0,'A−25'],[1,'B ± 2'],[3,'D÷4'],[4,'E = E'],
+    [0,'A√25'],[1,'B∑x'],[2,'C%5'],[3,'D^2'],[4,'E·x'],[0,'A²'],[1,'B(x+1)']
+  ]) assert(mathOptionAlreadyHasLetter(fake(value), null, index), `Caso matemático ambíguo deve ser preservado sem nova edição: “${value}”.`);
 
   const insertion = await read('src/content/math-audit/05-prefix-editing.js');
   const insertSource = insertion.slice(insertion.indexOf('async function insertMathOptionLetterOnly'));
@@ -180,18 +191,25 @@ async function testPedagogicalStorageBoundary() {
   assert(/await ensureLotDbMigrated\(\)/.test(printing), 'Leituras e escritas da Impressão devem aguardar a migração.');
   assert(/await ensureDiagnosticDbMigrated\(\)/.test(diagnostic), 'Leituras e escritas do Diagnóstico devem aguardar a migração.');
   assert(/gssfPedagogicalRecordsEqual/.test(bridge), 'Migração deve verificar conteúdo, não apenas presença do ID.');
-  assert(/conflito\(s\) de ID/.test(bridge), 'Migração deve tratar colisão de IDs explicitamente.');
+  assert(/cleanupPending/.test(bridge) && /legacyFingerprint/.test(bridge), 'Migração bloqueada deve registrar limpeza pendente sem recopiá-la.');
+  assert(/expectedRevision/.test(background) && /CONFLICT/.test(background), 'Service worker deve rejeitar gravação obsoleta de outra aba.');
 }
 
 async function testPedagogicalMigrationConflict() {
   const source = await read('src/content/pedagogical-storage/index.js');
+  const markerStore = new Map();
   const context = {
     indexedDB:{},
     location:{hostname:'forms.office.com'},
-    GSSF_STORAGE:{getItem:()=>null,setItem(){}}
+    GSSF_STORAGE:{
+      getItem:(key)=>markerStore.get(key)||null,
+      setItem:(key,value)=>markerStore.set(key,value),
+      flush:async()=>{}
+    }
   };
   vm.createContext(context);
   vm.runInContext(source + `
+    this.__equal=gssfPedagogicalRecordsEqual;
     this.__runMigrationTest = async function(deps){
       gssfLegacyDatabaseExists=deps.exists;
       gssfReadLegacyIndexedDb=deps.readLegacy;
@@ -202,29 +220,65 @@ async function testPedagogicalMigrationConflict() {
     };
   `, context);
 
+  assert(context.__equal(
+    {id:'x',a:1,b:{z:2,y:3},_gssfRevision:1},
+    {b:{y:3,z:2},a:1,id:'x',_gssfRevision:9}
+  ), 'Comparação de migração deve ignorar ordem de propriedades e revisão interna.');
+
   let puts=0,deletes=0;
   let rejected=false;
   try {
     await context.__runMigrationTest({
       exists:async()=>true,
       readLegacy:async()=>[{id:'lot-1',value:'legado'}],
-      getAll:async()=>[{id:'lot-1',value:'novo'}],
+      getAll:async()=>[{id:'lot-1',value:'novo',_gssfRevision:2}],
       put:async()=>{puts++;},
       deleteLegacy:async()=>{deletes++;return true;}
     });
   } catch (_) { rejected=true; }
-  assert(rejected && puts===0 && deletes===0, 'Conflito de mesmo ID deve preservar os dois lados sem sobrescrever nem apagar o legado.');
+  assert(rejected && puts===0 && deletes===0, 'Conflito real de mesmo ID deve preservar os dois lados.');
 
-  puts=0;deletes=0;
-  const identical={id:'lot-1',value:'igual'};
-  await context.__runMigrationTest({
+  markerStore.clear();puts=0;deletes=0;
+  const legacy=[{id:'lot-2',name:'Simulado',manualMatches:{}}];
+  const extension=[];
+  const clone=(value)=>JSON.parse(JSON.stringify(value));
+  const deleteResults=[false,true];
+  const deps={
     exists:async()=>true,
-    readLegacy:async()=>[identical],
-    getAll:async()=>[identical],
-    put:async()=>{puts++;},
-    deleteLegacy:async()=>{deletes++;return true;}
-  });
-  assert(puts===0 && deletes===1, 'Retry de migração já copiada deve apenas concluir a limpeza do legado.');
+    readLegacy:async()=>clone(legacy),
+    getAll:async()=>clone(extension),
+    put:async(_namespace,value)=>{
+      puts++;
+      const next=clone(value);
+      const index=extension.findIndex(item=>item.id===next.id);
+      if(index>=0)extension[index]=next;else extension.push(next);
+    },
+    deleteLegacy:async()=>{deletes++;return deleteResults.shift()??true;}
+  };
+  await context.__runMigrationTest(deps);
+  assert(puts===1 && deletes===1, 'Primeira migração deve copiar uma vez mesmo se a limpeza ficar bloqueada.');
+  extension[0].manualMatches.aluno={status:'matched'};
+  await context.__runMigrationTest(deps);
+  assert(puts===1 && deletes===2, 'Retry de limpeza não pode recopiar o legado sobre dados já editados.');
+  const marker=[...markerStore.values()].map(value=>JSON.parse(value)).at(-1);
+  assert(marker && marker.cleanupPending===false, 'Marcador deve concluir a limpeza pendente após o desbloqueio.');
+}
+
+async function testAuditHardeningRegressions() {
+  const printingParser = await read('src/content/printing/01-state/start-printing-runtime/03-update-lot-form-state.js');
+  const printingApi = await read('src/content/printing/01-state/start-printing-runtime/11-save-settings.js');
+  const printingIndex = await read('src/content/printing/01-state/index.js');
+  const diagnosticIndex = await read('src/content/diagnostic/01-state/index.js');
+  const printingMatches = await read('src/content/printing/01-state/start-printing-runtime/05-summarize-matches.js');
+  const diagnosticMatches = await read('src/content/diagnostic/01-state/start-diagnostic-runtime/01-state-modules/10-open-match-review.js');
+
+  assert(/colunas incompletas nas questões/.test(printingParser) && /sequência de questões incompleta/.test(printingParser), 'Impressão deve rejeitar EvalBee com questões incompletas ou puladas.');
+  assert(!/\blotDbPromise\b/.test(printingApi) && /lotDbMigrationPromise=null/.test(printingApi), 'Destroy da Impressão não pode referenciar o IndexedDB antigo.');
+  assert(!/gssfPedagogicalDataClear[^\n]*catch\s*\(_\)/.test(printingIndex), 'Limpeza da Impressão não pode engolir falha do banco novo.');
+  assert(!/gssfPedagogicalDataClear[^\n]*catch\s*\(_\)/.test(diagnosticIndex), 'Limpeza do Diagnóstico não pode engolir falha do banco novo.');
+  assert(/cloneLotManualMatches/.test(printingMatches), 'Impressão deve reverter vínculo manual que falhou ao persistir.');
+  assert(/cloneDiagnosticManualMatches/.test(diagnosticMatches), 'Diagnóstico deve reverter vínculo manual que falhou ao persistir.');
+  assert(!/lotDbDelete\(conflict\.id\)/.test(printingParser), 'Substituição de lote não pode apagar o mesmo ID recém-gravado.');
 }
 
 await testAlternativeInsertionIntegrity();
@@ -233,4 +287,5 @@ await testHistoricalMatchingIsStrict();
 await testSpreadsheetLimits();
 await testPedagogicalStorageBoundary();
 await testPedagogicalMigrationConflict();
+await testAuditHardeningRegressions();
 console.log(`${passed} verificações comportamentais aprovadas.`);

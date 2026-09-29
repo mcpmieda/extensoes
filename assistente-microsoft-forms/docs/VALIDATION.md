@@ -1,3 +1,25 @@
+# Registro de validação — 15.9.2
+
+Data: 29 de setembro de 2026.
+
+## Auditoria complementar
+
+A 15.9.2 adiciona regressões para:
+
+- alternativas textuais compactas com operador/símbolo após A/B/C/D/E;
+- remoção conservadora em expressões e alternativas numéricas;
+- rota matemática com símbolos fora da lista original;
+- migração com limpeza legada bloqueada e retry posterior;
+- comparação canônica de registros migrados;
+- proteção contra gravação obsoleta em outra aba;
+- rejeição de EvalBee com questões incompletas/puladas na Impressão;
+- rollback de correspondência manual que não pôde ser persistida;
+- limpeza verificável e encerramento da Impressão sem referências ao IndexedDB antigo.
+
+A validação real autenticada no Microsoft Forms continua sendo o teste final para comportamento de DOM/autosave.
+
+---
+
 # Registro de validação — 15.9.1
 
 Data: 29 de setembro de 2026.

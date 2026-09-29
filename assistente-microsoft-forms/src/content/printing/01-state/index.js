@@ -62,6 +62,14 @@
   }
 
   async function deletePrintLotDatabase() {
-    try { await gssfPedagogicalDataClear(GSSF_PEDAGOGICAL_NAMESPACES.printingLots); } catch (_) {}
-    await gssfDeleteLegacyIndexedDb(PRINT_LOT_DB_NAME);
+    const legacyRemoved = await gssfDeleteLegacyIndexedDb(PRINT_LOT_DB_NAME);
+    if (!legacyRemoved && await gssfLegacyDatabaseExists(PRINT_LOT_DB_NAME)) {
+      throw new Error('O banco legado de lotes está em uso por outra aba e não pôde ser removido.');
+    }
+    await gssfPedagogicalDataClear(GSSF_PEDAGOGICAL_NAMESPACES.printingLots);
+    const host = String(globalThis.location?.hostname || 'unknown').replace(/[^a-z0-9.-]/gi, '_');
+    try {
+      globalThis.GSSF_STORAGE?.removeItem?.(`gssf_${GSSF_PEDAGOGICAL_NAMESPACES.printingLots}_idb_migrated_v1:${host}`);
+      await globalThis.GSSF_STORAGE?.flush?.();
+    } catch (_) {}
   }/* @include ./start-printing-runtime/index.js */

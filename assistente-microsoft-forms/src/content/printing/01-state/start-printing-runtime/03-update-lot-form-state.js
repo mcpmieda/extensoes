@@ -47,7 +47,11 @@
       const existing=state.lots.find(item=>item.id===lot.id);
       if(existing&&!confirm(`Já existe o lote “${existing.name}” na data ${formatDateLabel(existing.date)}. Deseja substituí-lo?`))return;
       let persisted=true;
-      try{await lotDbPut(lot)}catch(error){persisted=false;lot.sessionOnly=true;console.warn('Persistência indisponível; lote mantido somente nesta sessão.',error)}
+      if(existing)lot._gssfRevision=Math.max(0,Number(existing._gssfRevision)||0);
+      try{await lotDbPut(lot)}catch(error){
+        if(existing){console.warn(error);return showToast(error?.code==='CONFLICT'?'Este lote mudou em outra aba. Reabra a Impressão antes de substituí-lo.':'Não foi possível substituir o lote salvo.')}
+        persisted=false;lot.sessionOnly=true;console.warn('Persistência indisponível; lote mantido somente nesta sessão.',error);
+      }
       state.lots=state.lots.filter(item=>item.id!==lot.id);
       state.lots.push(lot);sortLots();clearLotForm();
       const latestInsertedReference=visibleLots().slice().sort(compareLotsByDate).at(-1)||lot;
@@ -74,8 +78,13 @@
       if(!qMap.has(question))qMap.set(question,{});
       qMap.get(question)[kind]=index;
     });
-    const qCount=qMap.size?Math.max(...qMap.keys()):0,students=[];
+    if(!qMap.size)throw new Error(`${file.name}: nenhuma coluna de questão foi reconhecida. Verifique se existem cabeçalhos como “Q1 Options” e “Q1 Key”.`);
+    const incomplete=[...qMap].filter(([,columns])=>columns.options==null||columns.key==null).map(([question])=>question).sort((a,b)=>a-b);
+    if(incomplete.length)throw new Error(`${file.name}: colunas incompletas nas questões ${incomplete.slice(0,12).map(question=>`Q${question}`).join(', ')}${incomplete.length>12?'…':''}. Cada questão precisa de Options e Key.`);
+    const qCount=Math.max(...qMap.keys()),missing=[],students=[];
     gssfAssertQuestionCount(Math.max(qCount,qMap.size),file.name);
+    for(let question=1;question<=qCount;question++)if(!qMap.has(question))missing.push(question);
+    if(missing.length)throw new Error(`${file.name}: sequência de questões incompleta. Não foram encontradas ${missing.slice(0,12).map(question=>`Q${question}`).join(', ')}${missing.length>12?'…':''}.`);
     for(let rowIndex=headerRow;rowIndex<rows.length;rowIndex++){
       const row=rows[rowIndex]||[],name=clean(row[mapping.nameCol]),roll=clean(row[mapping.rollCol]);
       if(!name&&!roll)continue;
@@ -172,11 +181,23 @@
     const date=parseDateLabel(typedDate);if(!date)return showToast('Informe uma data válida no formato DD/MM/AAAA.');
     const newId=stableLotId(name,date),conflict=state.lots.find(item=>item.id===newId&&item.id!==id);
     if(conflict&&!confirm(`Já existe o lote “${conflict.name}” nessa data. Deseja substituí-lo?`))return;
-    const updated={...lot,id:newId,name,date};
+    const sourceRevision=Math.max(0,Number(lot._gssfRevision)||0),updated={...lot,id:newId,name,date};
+    if(newId!==id){if(conflict)updated._gssfRevision=Math.max(0,Number(conflict._gssfRevision)||0);else delete updated._gssfRevision;}
     try{
       await lotDbPut(updated);
-      if(id!==newId&&!lot.sessionOnly)await lotDbDelete(id);
-      if(conflict&&conflict.id!==id&&!conflict.sessionOnly)await lotDbDelete(conflict.id);
-    }catch(error){console.warn(error);updated.sessionOnly=true;showToast('A edição foi aplicada nesta sessão, mas não pôde ser salva permanentemente.');}
+      if(id!==newId&&!lot.sessionOnly){
+        try{await lotDbDelete(id,sourceRevision)}
+        catch(deleteError){
+          try{
+            if(conflict){
+              const restoreConflict={...conflict,_gssfRevision:updated._gssfRevision};
+              await lotDbPut(restoreConflict);
+            }else await lotDbDelete(newId,updated._gssfRevision);
+          }catch(rollbackError){console.warn('Falha ao reverter destino após erro na renomeação.',rollbackError)}
+          throw deleteError;
+        }
+      }
+      // conflict.id === newId: o put já realizou a substituição confirmada.
+    }catch(error){console.warn(error);return showToast(error?.code==='CONFLICT'?'O lote foi alterado em outra aba. Reabra a Impressão antes de editar novamente.':'Não foi possível salvar a edição do lote.')}
     const wasActive=state.activeLotId===id,wasComparison=state.compareLotId===id;state.lots=state.lots.filter(item=>item.id!==id&&item.id!==newId);state.lots.push(updated);sortLots();if(wasActive)state.activeLotId=newId;if(wasComparison)state.compareLotId=newId;if(wasActive)activateLot(newId,{silent:true,preserveStudent:true});else{renderLotSelectionControls();renderStageMappings();renderLots();renderPreview();saveSettings();}showToast('Lote atualizado.');
   }

@@ -4,7 +4,7 @@
   async function unmount(){resizeObserver?.disconnect?.();resizeObserver=null;const currentRuntime=runtime;runtime=null;shadowRoot=null;hostPanel=null;mounted=false;try{await currentRuntime?.destroy?.();}catch(error){console.warn('Falha ao encerrar Diagnóstico:',error);}}
   async function flushBackupState(){runtime?.flushBackupState?.();await globalThis.GSSF_STORAGE?.flush?.();}
   async function reloadBackupState(){runtime?.reloadBackupState?.();}
-  async function clearStoredData({resetRuntime=true}={}){const panel=hostPanel;if(mounted)await unmount();await deleteDiagnosticDatabase();DIAGNOSTIC_SETTINGS_KEYS.forEach(key=>{try{globalThis.GSSF_STORAGE?.removeItem?.(key)}catch(_){}});if(resetRuntime&&panel?.isConnected)await mount(panel);}
+  async function clearStoredData({resetRuntime=true}={}){const panel=hostPanel;if(mounted)await unmount();try{await deleteDiagnosticDatabase()}catch(error){if(resetRuntime&&panel?.isConnected){try{await mount(panel)}catch(_){}}throw error}DIAGNOSTIC_SETTINGS_KEYS.forEach(key=>{try{globalThis.GSSF_STORAGE?.removeItem?.(key)}catch(_){}});if(resetRuntime&&panel?.isConnected)await mount(panel);}
   const publicApi=Object.freeze({workspaceHtml,mount,activate,unmount,clearStoredData,flushBackupState,reloadBackupState,isMounted:()=>mounted,getSourceVersion:()=>DIAGNOSTIC_SOURCE_VERSION,getSourceHashes:()=>({...DIAGNOSTIC_SOURCE_HASHES}),getSharedSnapshot:()=>runtime?.getSnapshot?.()||null,handleSharedQuery:(action,params)=>runtime?.handleQuery?.(action,params)});
   globalThis.GSSFDiagnostic=publicApi;
   globalThis.DiagnosticoPedagogicoApp=publicApi;

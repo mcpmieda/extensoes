@@ -1,7 +1,7 @@
 
   async function deleteLot(id){
     const lot=state.lots.find(item=>item.id===id);if(!lot||!confirm(`Excluir o lote “${lot.name}”?`))return;
-    if(!lot.sessionOnly){try{await lotDbDelete(id)}catch(error){console.warn(error);return showToast('Não foi possível excluir o lote do armazenamento.');}}
+    if(!lot.sessionOnly||Object.prototype.hasOwnProperty.call(lot,'_gssfRevision')){try{await lotDbDelete(id,Math.max(0,Number(lot._gssfRevision)||0))}catch(error){console.warn(error);return showToast(error?.code==='CONFLICT'?'Este lote mudou em outra aba e não foi excluído. Reabra a Impressão.':'Não foi possível excluir o lote do armazenamento.');}}
     const wasActive=state.activeLotId===id;state.lots=state.lots.filter(item=>item.id!==id);state.hiddenLotIds=(state.hiddenLotIds||[]).filter(hiddenId=>hiddenId!==id);if(state.compareLotId===id)state.compareLotId='';if(wasActive)clearActiveLot({silent:true});else{renderLotSelectionControls();renderStageMappings();renderLots();renderPreview();saveSettings();}showToast(`Lote “${lot.name}” excluído.`);
   }
   function stableLotId(name,date){return `lot_${slugifyLot(name)}__${date||'sem-data'}`;}

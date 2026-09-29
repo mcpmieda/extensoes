@@ -62,10 +62,10 @@
     const wanted = escapeRegExp(letter(optionIndex));
     const raw = cleanText(text).trim();
     if (!raw) return false;
-    // Inserção é deliberadamente não destrutiva: qualquer alternativa que já comece
-    // com a letra esperada é preservada byte-a-byte (após cleanText), inclusive
-    // símbolos matemáticos como "A - 25", "B +25", "C ± 2" etc.
-    return new RegExp(`^${wanted}(?:\\s|$|[\)\].:,;\-–—−+±×÷=<>≤≥/\\\\|])`, 'i').test(raw);
+    // Se a alternativa já começa pela letra esperada e o próximo caractere não é
+    // uma letra de palavra, o caso é ambíguo (marcador ou variável matemática).
+    // Não editar é mais seguro do que duplicar a letra ou alterar uma expressão.
+    return new RegExp(`^${wanted}(?:\\s+|$|(?=[^\\p{L}]))`, 'iu').test(raw);
   }
 
   function alternativeInsertionPreservesOriginal(originalText, nextText, optionIndex) {
@@ -100,17 +100,31 @@
     return protectVFSequenceAfterLetter(raw, result, optionIndex);
   }
 
+  function alternativeBodyLooksMathSensitive(text) {
+    const body = cleanText(text).trim();
+    if (!body) return false;
+    // Números, agrupadores e operadores/símbolos matemáticos tornam o prefixo
+    // A/B/C/D/E ambíguo. Nesses casos, Remover letras não toca no conteúdo.
+    return /^(?:[0-9⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉]|[([+\-−–—±∓×÷=≠≈≡<>≤≥/\\|%√∛∞∑∏∫∂∆∈∉∪∩∧∨→←↔°′″~^_*·•⊕⊗⌈⌊])/u.test(body);
+  }
+
   function stripAlternativeLetterOnly(text, optionIndex) {
     const raw = cleanText(text).trim();
     if (!raw) return '';
     const wanted = escapeRegExp(letter(optionIndex));
     if (new RegExp(`^${wanted}$`, 'i').test(raw)) return '';
-    // Remoção também é conservadora: retiramos somente a letra e o espaço que a
-    // ferramenta pode ter inserido. Pontuação e operadores nunca são descartados,
-    // porque “A - 25” pode significar letra A seguida do número negativo -25.
+
     const spaced = raw.match(new RegExp(`^${wanted}\\s+(.*)$`, 'is'));
-    if (spaced) return cleanText(spaced[1]);
-    if (new RegExp(`^${wanted}(?=\\S)`, 'i').test(raw)) return cleanText(raw.slice(1));
+    if (spaced) {
+      const body = cleanText(spaced[1]);
+      if (alternativeBodyLooksMathSensitive(body)) return raw;
+      return body;
+    }
+
+    // Separadores tipográficos inequivocamente visuais continuam removíveis.
+    // Hífen/sinal, operadores, números e quaisquer outros casos compactos ficam intactos.
+    const explicit = raw.match(new RegExp(`^${wanted}([\\)\\].:,])(.*)$`, 'is'));
+    if (explicit) return cleanText(`${explicit[1]}${explicit[2]}`);
     return raw;
   }
 

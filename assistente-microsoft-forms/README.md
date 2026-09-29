@@ -1,8 +1,8 @@
 # Assistente do Microsoft Forms
 
-Versão de desenvolvimento **15.9.1**, derivada da referência histórica `V15.8.1(2).zip`.
+Versão de desenvolvimento **15.9.2**, derivada da referência histórica `V15.8.1(2).zip`.
 
-A 15.9.0 deixou de ser uma migração byte a byte e corrigiu os principais riscos da auditoria. A **15.9.1** reforça a ação de inserir letras em alternativas matemáticas: não reconstrói a fórmula inteira, não executa reparo destrutivo e preserva casos ambíguos. A referência original 15.8.1 continua preservada em `config/baseline-v15.8.1.json`.
+A 15.9.0 deixou de ser uma migração byte a byte e corrigiu os principais riscos da auditoria. A 15.9.1 reforçou a ação de inserir letras em alternativas matemáticas. A **15.9.2** amplia essa proteção para alternativas textuais, endurece migração/concorrência dos lotes, valida melhor arquivos EvalBee e torna operações de limpeza verificáveis. A referência original 15.8.1 continua preservada em `config/baseline-v15.8.1.json`.
 
 > **Segurança:** SheetJS CE foi atualizado para 0.20.3 e planilhas passam por limites compartilhados de tamanho, estrutura ZIP e dimensões antes do processamento. Consulte [Segurança](docs/SECURITY.md).
 
@@ -28,7 +28,7 @@ npm run package
 | `check` | Verifica build, sintaxe, caminhos, permissões, recursos e integridade das bibliotecas. |
 | `test` | Executa `check` e os testes comportamentais de regressão. |
 | `test:behavior` | Testa invariantes críticos sem depender de uma sessão real do Forms. |
-| `verify:baseline` | Compara com a V15.8.1 histórica. **Deve falhar na 15.9.1**, porque há alterações intencionais. |
+| `verify:baseline` | Compara com a V15.8.1 histórica. **Deve falhar na 15.9.2**, porque há alterações intencionais. |
 | `package` | Gera ZIP instalável e SHA-256 em `release/`, com conteúdo e metadados determinísticos. |
 
 Depois de uma alteração funcional intencional, `verify:baseline` deve detectar a diferença. **Não reescrever a referência histórica para esconder alterações.** A verificação normal é `check`; a referência original continua registrada para auditoria.

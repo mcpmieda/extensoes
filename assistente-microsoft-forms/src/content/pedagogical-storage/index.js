@@ -10,7 +10,11 @@
         chrome.runtime.sendMessage(message, (response) => {
           const lastError = chrome.runtime.lastError;
           if (lastError) return reject(new Error(lastError.message || 'Falha de comunicação com a extensão.'));
-          if (!response?.ok) return reject(new Error(response?.error || 'Operação não concluída.'));
+          if (!response?.ok) {
+            const error = new Error(response?.error || 'Operação não concluída.');
+            if (response?.code) error.code = response.code;
+            return reject(error);
+          }
           resolve(response);
         });
       } catch (error) { reject(error); }
@@ -21,11 +25,25 @@
     const response = await gssfRuntimeRequest({ type: 'GSSF_PEDAGOGICAL_DATA', namespace, action: 'getAll' });
     return Array.isArray(response.values) ? response.values : [];
   }
-  function gssfPedagogicalDataPut(namespace, value) {
-    return gssfRuntimeRequest({ type: 'GSSF_PEDAGOGICAL_DATA', namespace, action: 'put', value }).then(() => undefined);
+  function gssfPedagogicalDataPut(namespace, value, options = {}) {
+    const hasExpected = Object.prototype.hasOwnProperty.call(options, 'expectedRevision') || Object.prototype.hasOwnProperty.call(value || {}, '_gssfRevision');
+    const expectedRevision = Object.prototype.hasOwnProperty.call(options, 'expectedRevision')
+      ? options.expectedRevision
+      : (hasExpected ? Number(value?._gssfRevision) || 0 : null);
+    return gssfRuntimeRequest({
+      type: 'GSSF_PEDAGOGICAL_DATA',
+      namespace,
+      action: 'put',
+      value,
+      expectedRevision: hasExpected ? expectedRevision : null,
+      allowReplace: Boolean(options.allowReplace)
+    }).then((response) => {
+      if (value && typeof value === 'object' && Number.isInteger(response.revision)) value._gssfRevision = response.revision;
+      return undefined;
+    });
   }
-  function gssfPedagogicalDataDelete(namespace, id) {
-    return gssfRuntimeRequest({ type: 'GSSF_PEDAGOGICAL_DATA', namespace, action: 'delete', id }).then(() => undefined);
+  function gssfPedagogicalDataDelete(namespace, id, expectedRevision = null) {
+    return gssfRuntimeRequest({ type: 'GSSF_PEDAGOGICAL_DATA', namespace, action: 'delete', id, expectedRevision }).then(() => undefined);
   }
   function gssfPedagogicalDataClear(namespace) {
     return gssfRuntimeRequest({ type: 'GSSF_PEDAGOGICAL_DATA', namespace, action: 'clear' }).then(() => undefined);
@@ -71,18 +89,77 @@
     });
   }
 
+  function gssfStablePedagogicalValue(value) {
+    if (Array.isArray(value)) return value.map(gssfStablePedagogicalValue);
+    if (value && typeof value === 'object') {
+      return Object.fromEntries(Object.keys(value)
+        .filter((key) => key !== '_gssfRevision')
+        .sort()
+        .map((key) => [key, gssfStablePedagogicalValue(value[key])]));
+    }
+    return value;
+  }
+
+  function gssfPedagogicalStableJson(value) {
+    try { return JSON.stringify(gssfStablePedagogicalValue(value)); } catch (_) { return ''; }
+  }
+
   function gssfPedagogicalRecordsEqual(a, b) {
-    try { return JSON.stringify(a) === JSON.stringify(b); } catch (_) { return false; }
+    return gssfPedagogicalStableJson(a) === gssfPedagogicalStableJson(b);
+  }
+
+  function gssfPedagogicalRecordsFingerprint(records) {
+    const source = (records || []).slice()
+      .sort((a, b) => String(a?.id || '').localeCompare(String(b?.id || '')))
+      .map(gssfPedagogicalStableJson)
+      .join('\n');
+    let hash = 2166136261;
+    for (let index = 0; index < source.length; index += 1) {
+      hash ^= source.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    return `${(records || []).length}:${(hash >>> 0).toString(16).padStart(8, '0')}`;
+  }
+
+  async function gssfWritePedagogicalMigrationMarker(markerKey, marker) {
+    try {
+      globalThis.GSSF_STORAGE?.setItem?.(markerKey, JSON.stringify(marker));
+      await globalThis.GSSF_STORAGE?.flush?.();
+    } catch (_) {}
   }
 
   async function gssfMigrateLegacyPedagogicalDb(namespace, databaseName, storeName) {
     if (!globalThis.indexedDB || !databaseName || !storeName) return 0;
     const host = String(globalThis.location?.hostname || 'unknown').replace(/[^a-z0-9.-]/gi, '_');
     const markerKey = `gssf_${namespace}_idb_migrated_v1:${host}`;
-    try { if (globalThis.GSSF_STORAGE?.getItem?.(markerKey)) return 0; } catch (_) {}
+    let marker = null;
+    try {
+      const rawMarker = globalThis.GSSF_STORAGE?.getItem?.(markerKey);
+      if (rawMarker) marker = JSON.parse(rawMarker);
+    } catch (_) {}
+
+    if (marker?.cleanupPending) {
+      const exists = await gssfLegacyDatabaseExists(databaseName);
+      if (!exists) {
+        await gssfWritePedagogicalMigrationMarker(markerKey, { ...marker, cleanupPending: false, migratedAt: marker.migratedAt || new Date().toISOString(), cleanedAt: new Date().toISOString() });
+        return 0;
+      }
+      const pendingRecords = await gssfReadLegacyIndexedDb(databaseName, storeName);
+      const fingerprint = gssfPedagogicalRecordsFingerprint(pendingRecords);
+      if (marker.legacyFingerprint && fingerprint !== marker.legacyFingerprint) {
+        throw new Error('O banco legado mudou depois da cópia inicial; ele foi preservado para evitar perda de alterações feitas por outra aba.');
+      }
+      const removed = await gssfDeleteLegacyIndexedDb(databaseName);
+      if (removed) {
+        await gssfWritePedagogicalMigrationMarker(markerKey, { ...marker, cleanupPending: false, cleanedAt: new Date().toISOString() });
+      }
+      return 0;
+    }
+    if (marker) return 0;
+
     const exists = await gssfLegacyDatabaseExists(databaseName);
     if (!exists) {
-      try { globalThis.GSSF_STORAGE?.setItem?.(markerKey, JSON.stringify({ migratedAt: new Date().toISOString(), count: 0, host })); } catch (_) {}
+      await gssfWritePedagogicalMigrationMarker(markerKey, { migratedAt: new Date().toISOString(), count: 0, host, cleanupPending: false });
       return 0;
     }
     const records = await gssfReadLegacyIndexedDb(databaseName, storeName);
@@ -106,12 +183,19 @@
         throw new Error('Migração pedagógica não pôde ser verificada; banco legado preservado.');
       }
     }
+    const legacyFingerprint = gssfPedagogicalRecordsFingerprint(records);
     const legacyRemoved = await gssfDeleteLegacyIndexedDb(databaseName);
-    // Se outro tab ainda mantiver o banco aberto, os dados já copiados continuam
-    // disponíveis no origin da extensão, mas não gravamos o marcador. Assim a limpeza
-    // do legado é tentada novamente numa próxima abertura, sem bloquear o recurso.
-    if (legacyRemoved) {
-      try { globalThis.GSSF_STORAGE?.setItem?.(markerKey, JSON.stringify({ migratedAt: new Date().toISOString(), count: records.length, host })); } catch (_) {}
-    }
+    // A cópia verificada e a limpeza física são etapas diferentes. Se outra aba ainda
+    // mantiver o banco aberto, registramos a impressão digital do legado copiado e,
+    // na próxima abertura, tentamos somente a limpeza. Alterações novas no legado
+    // são detectadas e preservadas, em vez de criarem conflito com dados já editados.
+    await gssfWritePedagogicalMigrationMarker(markerKey, {
+      migratedAt: new Date().toISOString(),
+      count: records.length,
+      host,
+      cleanupPending: !legacyRemoved,
+      legacyFingerprint,
+      ...(legacyRemoved ? { cleanedAt: new Date().toISOString() } : {})
+    });
     return records.length;
   }

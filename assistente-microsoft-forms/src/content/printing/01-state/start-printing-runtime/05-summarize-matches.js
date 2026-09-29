@@ -61,11 +61,23 @@
     const groups=`${suggestionOptions?`<optgroup label="Sugestões por nome e número">${suggestionOptions}</optgroup>`:''}${otherOptions?`<optgroup label="Todos os alunos da etapa ${escapeAttr(currentStage||'configurada')}">${otherOptions}</optgroup>`:''}`;
     return `<select data-manual-candidate="${escapeAttr(item.currentKey)}" data-target-lot="${escapeAttr(lot.id)}"><option value="" ${preferredId?'':'selected'}>Selecione a turma e o aluno correspondente…</option>${groups}</select>`;
   }
-  async function persistLotAfterManualChange(lot,message){
-    try{await lotDbPut(lot);delete lot.sessionOnly;}catch(error){console.warn(error);lot.sessionOnly=true;showToast('A correspondência foi aplicada nesta sessão, mas não pôde ser salva permanentemente.');}
+  function cloneLotManualMatches(lot){try{return JSON.parse(JSON.stringify(lot?.manualMatches||{}))}catch(_){return{...(lot?.manualMatches||{})}}}
+  async function persistLotAfterManualChange(lot,message,beforeManualMatches){
+    try{
+      await lotDbPut(lot);
+      delete lot.sessionOnly;
+    }catch(error){
+      console.warn(error);
+      lot.manualMatches=beforeManualMatches||{};
+      showToast(error?.code==='CONFLICT'?'Este lote mudou em outra aba. A alteração local foi desfeita; reabra a Impressão.':'A correspondência não pôde ser salva e foi desfeita.');
+      renderLots();renderStageMappings();renderPreview();
+      if(!els.excludedLayer.hidden)renderExcludedStudents(els.excludedLayer.dataset.filter||'all');
+      return false;
+    }
     renderLots();renderStageMappings();renderPreview();
     if(!els.excludedLayer.hidden)renderExcludedStudents(els.excludedLayer.dataset.filter||'all');
     if(message)showToast(message);
+    return true;
   }
   async function saveManualMatchFromRow(currentKey,lotId){
     const lot=state.lots.find(item=>item.id===lotId);if(!lot)return;
@@ -75,15 +87,16 @@
     if(!target||!detail)return showToast('A correspondência escolhida não está mais disponível.');
     const currentStage=getClassStage(detail.className),targetStage=getClassStage(target.groupName);
     if(currentStage&&targetStage&&currentStage!==targetStage&&!confirm(`A turma atual pertence à etapa “${currentStage}” e o aluno escolhido pertence à etapa “${targetStage}”. Deseja vincular mesmo assim?`))return;
+    const beforeManualMatches=cloneLotManualMatches(lot);
     lot.manualMatches=lot.manualMatches&&typeof lot.manualMatches==='object'?lot.manualMatches:{};
     lot.manualMatches[currentKey]={status:'matched',targetStudentId:target.student.id,targetClassName:target.groupName,targetRoll:clean(target.student.roll),targetName:clean(target.student.name),updatedAt:new Date().toISOString()};
-    await persistLotAfterManualChange(lot,`Correspondência manual salva em “${lot.name}”.`);
+    await persistLotAfterManualChange(lot,`Correspondência manual salva em “${lot.name}”.`,beforeManualMatches);
   }
   async function removeManualMatch(currentKey,lotId){
-    const lot=state.lots.find(item=>item.id===lotId);if(!lot?.manualMatches?.[currentKey])return;delete lot.manualMatches[currentKey];await persistLotAfterManualChange(lot,`Correspondência manual removida de “${lot.name}”.`);
+    const lot=state.lots.find(item=>item.id===lotId);if(!lot?.manualMatches?.[currentKey])return;const beforeManualMatches=cloneLotManualMatches(lot);delete lot.manualMatches[currentKey];await persistLotAfterManualChange(lot,`Correspondência manual removida de “${lot.name}”.`,beforeManualMatches);
   }
   async function ignoreManualMatch(currentKey,lotId){
-    const lot=state.lots.find(item=>item.id===lotId);if(!lot)return;lot.manualMatches=lot.manualMatches&&typeof lot.manualMatches==='object'?lot.manualMatches:{};lot.manualMatches[currentKey]={status:'ignored',updatedAt:new Date().toISOString()};await persistLotAfterManualChange(lot,`Aluno ignorado em “${lot.name}”.`);
+    const lot=state.lots.find(item=>item.id===lotId);if(!lot)return;const beforeManualMatches=cloneLotManualMatches(lot);lot.manualMatches=lot.manualMatches&&typeof lot.manualMatches==='object'?lot.manualMatches:{};lot.manualMatches[currentKey]={status:'ignored',updatedAt:new Date().toISOString()};await persistLotAfterManualChange(lot,`Aluno ignorado em “${lot.name}”.`,beforeManualMatches);
   }
   function renderExcludedStudents(filter='all'){
     if(!els.excludedLayer)return;const reference=state.lots.find(item=>item.id===els.excludedLayer.dataset.referenceLotId)||conferenceReferenceLot(),targets=conferenceHistoricalLots(reference);if(!reference||!targets.length)return closeExcludedStudents();

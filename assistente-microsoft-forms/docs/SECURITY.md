@@ -1,8 +1,8 @@
 # Segurança e publicação pública
 
-## Estado da 15.9.1
+## Estado da 15.9.2
 
-A 15.9.0 corrigiu os principais achados da auditoria registrada na issue #1. A 15.9.1 reforça a integridade das alternativas matemáticas, sem ampliar permissões nem adicionar telemetria, servidores ou código remoto. O pacote continua executando dependências vendorizadas localmente.
+A 15.9.0 corrigiu os principais achados da auditoria registrada na issue #1. A 15.9.1 reforçou a integridade das alternativas matemáticas. A 15.9.2 corrige lacunas remanescentes em alternativas textuais, concorrência, migração, limpeza e validação de EvalBee, sem ampliar permissões nem adicionar telemetria, servidores ou código remoto. O pacote continua executando dependências vendorizadas localmente.
 
 ## SheetJS CE 0.20.3
 
@@ -28,7 +28,7 @@ Esses tetos reduzem risco de travamento e consumo excessivo; não transformam ar
 
 ## Dados pedagógicos
 
-Lotes da Impressão e do Diagnóstico passaram a ser persistidos em IndexedDB no **service worker/origin da extensão**, via mensagens validadas pelo remetente. Os bancos antigos nos origins do Microsoft Forms são migrados uma vez por hostname. O banco legado só é apagado depois que conteúdo e IDs copiados são confirmados no armazenamento da extensão. Se o mesmo ID já existir com conteúdo diferente, a migração é interrompida sem sobrescrever nenhum lado e o legado é preservado.
+Lotes da Impressão e do Diagnóstico são persistidos em IndexedDB no **service worker/origin da extensão**, via mensagens validadas pelo remetente. Cada registro recebe uma revisão interna e gravações/exclusões com revisão obsoleta são rejeitadas, impedindo que uma aba antiga sobrescreva silenciosamente outra aba. Os bancos antigos nos origins do Microsoft Forms são migrados por hostname. Se a exclusão do legado ficar bloqueada, a cópia verificada é marcada como `cleanupPending` com uma impressão digital do legado; a próxima abertura tenta somente a limpeza se o legado estiver inalterado. Conflitos reais preservam os dois lados.
 
 Não versionar dados importados, notas, backups, cookies, arquivos de autenticação ou capturas com dados pessoais.
 
@@ -38,7 +38,7 @@ A ação **Inserir letras** é não destrutiva: ela não remove separadores nem 
 
 Na rota matemática, a 15.9.1 elimina o reparo que reconstruía a expressão inteira. A inserção faz uma única tentativa de prefixo e só é considerada bem-sucedida quando o corpo original continua reconhecível. Se a posição ou o conteúdo não puderem ser confirmados, a ação reporta falha e não executa uma segunda correção. Casos ambíguos como `A+25`, `A−25` e `E = E` são deixados intactos.
 
-Com isso, conteúdos como `-25`, `+25`, `±`, `×`, `÷`, `=`, letras terminais legítimas e símbolos não previstos não devem ser descartados por heurísticas de separador ou de reparo.
+Com isso, conteúdos como `-25`, `+25`, `A+5`, `B-3`, `A√25`, `B∑x`, `C%5`, `D^2`, `E·x`, letras terminais legítimas e símbolos não previstos não devem ser descartados ou receber letra duplicada por heurísticas de separador ou reparo. **Remover letras** não remove um prefixo quando o restante começa por número, agrupador ou símbolo matemático.
 
 ## Integridade e referência histórica
 

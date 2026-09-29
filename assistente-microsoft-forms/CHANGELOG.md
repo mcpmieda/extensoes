@@ -1,5 +1,18 @@
 # Histórico
 
+## 2026-09-29 — 15.9.2 — Auditoria complementar e consistência de dados
+
+- Corrigida a detecção textual de alternativas que já começam por A/B/C/D/E seguida de operador ou símbolo: casos como `A+5`, `B-3`, `A√25`, `B∑x`, `C%5`, `D^2`, `E·x` deixam de receber letra duplicada.
+- **Remover letras** tornou-se conservador diante de corpo matemático: números, agrupadores e operadores preservam o prefixo ambíguo em vez de apagar uma possível variável.
+- A rota matemática reconhece qualquer caractere não-letra após a letra esperada como caso ambíguo e não executa nova inserção.
+- Persistência pedagógica ganhou revisão otimista por registro: alterações obsoletas de outra aba são rejeitadas com conflito em vez de sobrescrever dados silenciosamente.
+- Migração com exclusão legada bloqueada grava estado `cleanupPending` e impressão digital do legado; a próxima abertura tenta apenas concluir a limpeza se o legado não mudou.
+- Comparação de registros migrados passou a ser canônica, ignorando ordem de propriedades e a revisão interna.
+- Impressão rejeita EvalBee sem `Options/Key` completos ou com sequência de questões quebrada, como já fazia o Diagnóstico.
+- Corrigidos fluxos de edição/exclusão de lotes, rollback de correspondências manuais, referência residual a `lotDbPromise` e substituição por nome/data já existente.
+- Redefinição/limpeza de dados só conclui quando o banco legado e o banco atual são efetivamente removidos; falhas não são mais silenciadas.
+- Testes comportamentais ampliados para os cenários acima.
+
 ## 2026-09-29 — Endurecimento complementar da issue #1
 
 - Migração pedagógica não sobrescreve silenciosamente um registro da extensão quando o banco legado contém o mesmo ID com conteúdo diferente; o conflito preserva o legado.

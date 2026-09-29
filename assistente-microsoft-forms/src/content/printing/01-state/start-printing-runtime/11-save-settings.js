@@ -39,7 +39,7 @@
     flushBackupState:()=>{clearTimeout(saveSettings.t);saveSettings.t=0;persistSettingsNow();},
     reloadBackupState:()=>{restoreSettings();restoreSharedAnalysisConfig();renderPerformanceSections();renderStageMappings();syncPerformanceAnalysisControls();syncLayoutControls();syncFrontContentControls();populateDatasets();populateStudents();renderLotSelectionControls();renderLots();renderPreview();publishSharedPrintSnapshot('backup-restored');requestAnimationFrame(()=>scalePreview({resetPosition:false}));},
     clearRuntime:()=>{state.datasets=[];state.datasetIndex=0;state.studentIndex=0;state.lots=[];state.hiddenLotIds=[];state.activeLotId='';state.compareLotId='';state.preferredClassName='';state.preferredStudentRoll='';state.preferredStudentName='';clearActiveLot({silent:true});renderLotSelectionControls();renderLots();renderStageMappings();renderPreview();},
-    destroy:()=>{cleanupRuntimeWindowListeners();clearTimeout(sharedPrintTimer);clearTimeout(saveSettings.t);try{lotDbPromise?.then?.(db=>db.close()).catch(()=>{});}catch(_){}lotDbPromise=null;},
+    destroy:()=>{cleanupRuntimeWindowListeners();clearTimeout(sharedPrintTimer);clearTimeout(saveSettings.t);lotDbMigrationPromise=null;},
     getSnapshot:getSharedPrintSnapshot,
     handleQuery:handleSharedPrintQuery
   };

@@ -56,7 +56,14 @@
   async function clearStoredData({ resetRuntime = true } = {}) {
     const panel = printHostPanel;
     if (mounted) unmount();
-    await deletePrintLotDatabase();
+    try {
+      await deletePrintLotDatabase();
+    } catch (error) {
+      if (resetRuntime && panel?.isConnected) {
+        try { await mount(panel); } catch (_) {}
+      }
+      throw error;
+    }
     if (resetRuntime && panel?.isConnected) await mount(panel, { skipStoredState: true });
   }
 

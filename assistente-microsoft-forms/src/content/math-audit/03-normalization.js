@@ -78,10 +78,10 @@
 
   function mathOptionAlreadyHasLetter(optionContainer, field, optIndex) {
     const wanted = escapeRegExp(letter(optIndex));
-    // Política conservadora: se a expressão já começa com a letra esperada seguida de
-    // espaço OU de um operador/separador, não alteramos. É melhor deixar um caso ambíguo
-    // intocado do que duplicar a letra ou reescrever uma fórmula sem Undo confiável.
-    const prefix = new RegExp('^\\s*' + wanted + '(?:\\s+|$|[\\)\\].:,;\\-–—−+±×÷=<>≤≥/\\\\|])', 'i');
+    // Em fórmulas, qualquer caractere não-letra imediatamente após A/B/C/D/E pode
+    // pertencer à própria expressão (A√25, B∑x, C%5, D², E(x+1), etc.).
+    // O caso é considerado ambíguo e fica intocado.
+    const prefix = new RegExp('^\\s*' + wanted + '(?:\\s+|$|(?=[^\\p{L}]))', 'iu');
     return mathOptionTextSamples(optionContainer, field).some((sample) => prefix.test(collapseRepeatedMathText(sample)));
   }
 

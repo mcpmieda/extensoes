@@ -1,10 +1,10 @@
-# Arquitetura — referência 15.8.1 e evolução 15.9.1
+# Arquitetura — referência 15.8.1 e evolução 15.9.2
 
 ## Objetivo e escopo
 
 Transformar uma distribuição pronta em uma base editável e rastreável sem alterar o programa executado. O ZIP tinha 17 arquivos, incluindo um `content.js` de 2.107.006 bytes com 16.231 linhas. Esse script já continha 18 marcações de módulos, recuperadas nesta estrutura.
 
-A arquitetura em execução permanece a original: o manifesto carrega o armazenamento, SheetJS, JSZip e o content script; o service worker cuida das mensagens, imagens e mídia persistida. O conteúdo do Forms não ganhou servidor adicional. Na 15.9.1, lotes pedagógicos são persistidos pelo service worker em IndexedDB da própria extensão.
+A arquitetura em execução permanece a original: o manifesto carrega o armazenamento, SheetJS, JSZip e o content script; o service worker cuida das mensagens, imagens e mídia persistida. O conteúdo do Forms não ganhou servidor adicional. Na 15.9.2, lotes pedagógicos são persistidos pelo service worker em IndexedDB da própria extensão.
 
 ## Camadas de edição
 
@@ -34,7 +34,7 @@ O conjunto de permissões não foi ampliado para viabilizar a extração dos rec
 
 ## Dependências e contratos preservados
 
-Persistem `GSSF_STORAGE`, `GSSFResponseTools`, `GSSFSharedBridge` e as APIs públicas das ferramentas. A 15.9.1 adiciona `GSSF_PEDAGOGICAL_DATA`: Impressão e Diagnóstico deixam de manter seus lotes no origin do Forms e passam a usar stores no IndexedDB do service worker. Uma migração verificada importa os bancos legados antes de excluí-los. A identidade dos registros e dos alunos não é reescrita pela migração.
+Persistem `GSSF_STORAGE`, `GSSFResponseTools`, `GSSFSharedBridge` e as APIs públicas das ferramentas. A linha 15.9.x usa `GSSF_PEDAGOGICAL_DATA`: Impressão e Diagnóstico deixam de manter seus lotes no origin do Forms e passam a usar stores no IndexedDB do service worker. Uma migração verificada importa os bancos legados antes de excluí-los. A identidade dos registros e dos alunos não é reescrita pela migração.
 
 As áreas ainda compartilham funções no escopo principal. Esta entrega cria limites de arquivos; **não conclui a eliminação do acoplamento interno**. A próxima etapa técnica é extrair contratos por área, um de cada vez, sem perder o comportamento comprovado desta referência.
 
