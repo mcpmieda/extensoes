@@ -15,6 +15,13 @@ const GSSF_SPREADSHEET_LIMITS = Object.freeze({
   maxSheets: 128,
   maxRowsPerSheet: 100000,
   maxColumnsPerSheet: 1024,
+  maxCellsPerSheet: 2000000,
+  maxCellsPerWorkbook: 4000000,
+  maxMergeCells: 50000,
+  maxMergedCellsPerSheet: 100000,
+  maxMergedCellsPerWorkbook: 200000,
+  maxMergesPerSheet: 10000,
+  maxMergesPerWorkbook: 20000,
   maxQuestions: 500
 });
 
@@ -121,21 +128,56 @@ async function gssfReadSpreadsheetArrayBuffer(file, options = {}) {
   return buffer;
 }
 
+function gssfAssertWorksheetMerges(sheet, name, range) {
+  let mergedCells = 0;
+  if ((sheet?.['!merges']?.length || 0) > GSSF_SPREADSHEET_LIMITS.maxMergesPerSheet) throw new Error(`A aba “${name}” contém áreas mescladas demais.`);
+  for (const merge of sheet?.['!merges'] || []) {
+    const { s, e } = merge || {};
+    if (![s?.r, s?.c, e?.r, e?.c].every(value => Number.isSafeInteger(value) && value >= 0)
+      || e.r < s.r || e.c < s.c || !range
+      || s.r < range.s.r || s.c < range.s.c || e.r > range.e.r || e.c > range.e.c) {
+      throw new Error(`A aba “${name}” contém uma área mesclada inválida.`);
+    }
+    const cells = (e.r - s.r + 1) * (e.c - s.c + 1);
+    if (cells > GSSF_SPREADSHEET_LIMITS.maxMergeCells) throw new Error(`A aba “${name}” contém uma área mesclada grande demais.`);
+    mergedCells += cells;
+    if (mergedCells > GSSF_SPREADSHEET_LIMITS.maxMergedCellsPerSheet) throw new Error(`A aba “${name}” excede o limite de células mescladas.`);
+  }
+  return mergedCells;
+}
+
 function gssfAssertWorkbookShape(workbook, library = globalThis.XLSX) {
   const names = Array.isArray(workbook?.SheetNames) ? workbook.SheetNames : [];
   if (names.length > GSSF_SPREADSHEET_LIMITS.maxSheets) throw new Error(`A planilha contém abas demais (${names.length}).`);
   const decodeRange = library?.utils?.decode_range;
-  if (typeof decodeRange !== 'function') return workbook;
+  if (typeof decodeRange !== 'function') throw new Error('O leitor de planilhas não permite validar as dimensões das abas.');
+  let workbookCells = 0;
+  let workbookMergedCells = 0;
+  let workbookMerges = 0;
   for (const name of names) {
     const sheet = workbook?.Sheets?.[name];
+    workbookMerges += sheet?.['!merges']?.length || 0;
+    if (workbookMerges > GSSF_SPREADSHEET_LIMITS.maxMergesPerWorkbook) throw new Error('A planilha contém áreas mescladas demais.');
     const ref = sheet?.['!fullref'] || sheet?.['!ref'];
-    if (!ref) continue;
+    if (!ref) {
+      workbookMergedCells += gssfAssertWorksheetMerges(sheet, name, null);
+      continue;
+    }
     let range;
-    try { range = decodeRange(ref); } catch (_) { continue; }
+    try { range = decodeRange(ref); } catch (_) { throw new Error(`A aba “${name}” tem dimensões inválidas.`); }
+    if (![range?.s?.r, range?.s?.c, range?.e?.r, range?.e?.c].every(value => Number.isSafeInteger(value) && value >= 0)
+      || range.e.r < range.s.r || range.e.c < range.s.c) throw new Error(`A aba “${name}” tem dimensões inválidas.`);
     const rows = Math.max(0, Number(range?.e?.r) - Number(range?.s?.r) + 1);
     const columns = Math.max(0, Number(range?.e?.c) - Number(range?.s?.c) + 1);
+    if (!Number.isSafeInteger(rows) || !Number.isSafeInteger(columns) || rows < 1 || columns < 1) throw new Error(`A aba “${name}” tem dimensões inválidas.`);
     if (rows > GSSF_SPREADSHEET_LIMITS.maxRowsPerSheet) throw new Error(`A aba “${name}” excede ${GSSF_SPREADSHEET_LIMITS.maxRowsPerSheet} linhas.`);
     if (columns > GSSF_SPREADSHEET_LIMITS.maxColumnsPerSheet) throw new Error(`A aba “${name}” excede ${GSSF_SPREADSHEET_LIMITS.maxColumnsPerSheet} colunas.`);
+    const cells = rows * columns;
+    if (cells > GSSF_SPREADSHEET_LIMITS.maxCellsPerSheet) throw new Error(`A aba “${name}” excede o limite de células.`);
+    workbookCells += cells;
+    if (workbookCells > GSSF_SPREADSHEET_LIMITS.maxCellsPerWorkbook) throw new Error('A planilha excede o limite agregado de células.');
+    workbookMergedCells += gssfAssertWorksheetMerges(sheet, name, range);
+    if (workbookMergedCells > GSSF_SPREADSHEET_LIMITS.maxMergedCellsPerWorkbook) throw new Error('A planilha excede o limite agregado de células mescladas.');
   }
   return workbook;
 }

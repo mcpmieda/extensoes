@@ -261,3 +261,35 @@ async function testMixedClassFiles() {
 }
 
 await testMixedClassFiles();
+
+async function testSpreadsheetBudgets() {
+  const library = { utils: {
+    decode_range: (ref) => {
+      const [rows, columns] = ref.split(',').map(Number);
+      return { s: { r: 0, c: 0 }, e: { r: rows - 1, c: columns - 1 } };
+    },
+    sheet_to_json: () => { throw new Error('Materialização não deveria começar.'); }
+  } };
+  const context = vm.createContext({ XLSX: library });
+  vm.runInContext(await read('src/content/spreadsheet-adapter/index.js') +
+    await read('src/content/diagnostic/01-state/start-diagnostic-runtime/01-state-modules/07-report-update-draft-controls.js') + `
+    this.api = { shape: gssfAssertWorkbookShape, rows: reportWorksheetRows };
+  `, context);
+  const workbook = (...sheets) => ({
+    SheetNames: sheets.map((_, index) => `Sheet${index}`),
+    Sheets: Object.fromEntries(sheets.map((sheet, index) => [`Sheet${index}`, sheet]))
+  });
+  const sheet = (ref, merges = []) => ({ '!ref': ref, '!merges': merges });
+  const merge = (endRow, endColumn) => ({ s: { r: 0, c: 0 }, e: { r: endRow, c: endColumn } });
+  assert.throws(() => context.api.shape(workbook(sheet('100000,1024')), library), /limite de células/);
+  assert.throws(() => context.api.shape(workbook(sheet('2000,1000'), sheet('2000,1000'), sheet('1,1')), library), /limite agregado/);
+  assert.throws(() => context.api.shape(workbook(sheet('1000,100', [merge(999, 99)])), library), /área mesclada grande/);
+  assert.throws(() => context.api.shape(workbook(...Array.from({ length: 5 }, () => sheet('500,100', [merge(499, 99)]))), library), /limite agregado de células mescladas/);
+  assert.throws(() => context.api.shape(workbook(sheet('10,10', Array(10001).fill(merge(0, 0)))), library), /áreas mescladas demais/);
+  assert.throws(() => context.api.shape(workbook(sheet('10,10', [merge(100000, 1)])), library), /área mesclada inválida/);
+  assert.throws(() => context.api.rows(sheet('10,10', [merge(100000, 1)])), /área mesclada inválida/);
+  assert.equal(context.api.shape(workbook(sheet('1000,1000')), library).SheetNames.length, 1);
+  console.log('Issue #2 / 13: orçamentos de células e mesclagens validados antes da materialização.');
+}
+
+await testSpreadsheetBudgets();

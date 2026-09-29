@@ -22,7 +22,7 @@ Referências:
 
 ## Limites de planilha e ZIP
 
-Toda importação passa pelo adaptador compartilhado antes do parser. Os limites atuais são: 25 MiB por arquivo, 1024 entradas ZIP, 32 MiB por entrada descompactada, 128 MiB no total descompactado, 128 abas, 100.000 linhas por aba, 1024 colunas por aba e 500 questões. O preflight mede também a expansão real das entradas ZIP em stream antes do parser; o SheetJS recebe um teto de linhas durante a leitura e o `!fullref` é conferido quando disponível. O Organizador também aplica limites no parser XML próprio.
+Toda importação passa pelo adaptador compartilhado antes do parser. Os limites atuais são: 25 MiB por arquivo, 1024 entradas ZIP, 32 MiB por entrada descompactada, 128 MiB no total descompactado, 128 abas, 100.000 linhas por aba, 1024 colunas por aba, 2 milhões de posições por aba, 4 milhões por workbook e 500 questões. Áreas mescladas ficam limitadas a 50 mil posições cada, 100 mil por aba e 200 mil por workbook, com no máximo 10 mil áreas por aba e 20 mil por workbook. O preflight mede também a expansão real das entradas ZIP em stream antes do parser; o SheetJS recebe um teto de linhas durante a leitura e o `!fullref` é conferido quando disponível. O Organizador também aplica limites no parser XML próprio.
 
 Esses tetos reduzem risco de travamento e consumo excessivo; não transformam arquivos desconhecidos em conteúdo confiável. Erros de limite devem interromper a importação antes da alteração do formulário.
 
