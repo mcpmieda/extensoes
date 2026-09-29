@@ -72,10 +72,12 @@
     if(!Number.isInteger(mapping.rollCol)||!Number.isInteger(mapping.nameCol))throw new Error(`${file.name}: cabeçalho Roll No/Name não encontrado.`);
     const headerRow=Math.max(1,detected.headerRow||1),headers=(rows[headerRow-1]||[]).map(clean),qMap=new Map();
     headers.forEach((header,index)=>{
-      const match=String(header).match(/^Q\s*(\d+)\s+(Options|Key|Marks)$/i);
+      const match=String(header).match(/^Q\s*(\S+)\s+(Options|Key|Marks)$/i);
       if(!match)return;
       const question=Number(match[1]),kind=match[2].toLowerCase();
+      if(!/^\d+$/.test(match[1])||!Number.isSafeInteger(question)||question<1)throw new Error(`${file.name}: número de questão inválido no cabeçalho “${header}”.`);
       if(!qMap.has(question))qMap.set(question,{});
+      if(qMap.get(question)[kind]!=null)throw new Error(`${file.name}: cabeçalho repetido para Q${question} ${kind}.`);
       qMap.get(question)[kind]=index;
     });
     if(!qMap.size)throw new Error(`${file.name}: nenhuma coluna de questão foi reconhecida. Verifique se existem cabeçalhos como “Q1 Options” e “Q1 Key”.`);

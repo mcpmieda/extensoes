@@ -195,6 +195,7 @@ async function testStorageFlushFailure() {
 await testStorageFlushFailure();
 
 async function testMixedClassFiles() {
+  let created = 0;
   const rows = [
     ['Roll No', 'Name', 'Exam', 'Q1 Options', 'Q1 Key'],
     ['1', 'Aluno A', '6º ANO A', 'A', 'A'],
@@ -211,7 +212,8 @@ async function testMixedClassFiles() {
     normalizeOption: (value) => String(value ?? '').trim(),
     toNumeric: (value) => Number(value) || 0,
     toNum: (value) => Number(value) || 0,
-    lotUid: () => 'id', uid: () => 'id',
+    lotUid: () => { created += 1; return 'id'; },
+    uid: () => { created += 1; return 'id'; },
     natural: (a, b) => a.localeCompare(b),
     localDateInputValue: () => '2026-09-29',
     auditLotIdentities: () => ({ blockingRecords: 0 }),
@@ -239,6 +241,23 @@ async function testMixedClassFiles() {
   assert.equal((await printing.api.parse(file)).students.length, 2);
   assert.equal((await diagnostic.api.parse(file)).students.length, 2);
   console.log('Issue #2 / 11: arquivos mistos rejeitados nas duas importações; turma única aceita.');
+
+  const validHeaders = rows[0];
+  for (const invalidHeaders of [
+    ['Roll No', 'Name', 'Exam', 'Q0 Options', 'Q0 Key'],
+    ['Roll No', 'Name', 'Exam', 'Q-1 Options', 'Q1 Options', 'Q1 Key'],
+    ['Roll No', 'Name', 'Exam', 'Q1.5 Options', 'Q1 Options', 'Q1 Key'],
+    ['Roll No', 'Name', 'Exam', 'Q1 Options', 'Q1 Key', 'Q1 Options'],
+    ['Roll No', 'Name', 'Exam', 'Q1 Options', 'Q1 Key', 'Q01 Key']
+  ]) {
+    rows[0] = invalidHeaders;
+    const before = created;
+    await assert.rejects(printing.api.parse(file), /inválido|repetido/);
+    await assert.rejects(diagnostic.api.parse(file), /inválido|repetido/);
+    assert.equal(created, before, 'Cabeçalho inválido deve ser rejeitado antes de criar alunos.');
+  }
+  rows[0] = validHeaders;
+  console.log('Issue #2 / 12: números inválidos e cabeçalhos repetidos rejeitados antes dos alunos.');
 }
 
 await testMixedClassFiles();

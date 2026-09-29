@@ -10,7 +10,7 @@ async function parseEvalbeeFile(file){
   const headers=rows[hr].map(v=>String(v??'').trim()),idx={exam:findHeader(headers,state.columns.exam),roll:findHeader(headers,state.columns.roll),name:findHeader(headers,state.columns.name),marks:findHeader(headers,state.columns.marks),correct:findHeader(headers,state.columns.correct),incorrect:findHeader(headers,state.columns.incorrect),blank:findHeader(headers,state.columns.blank)};
   if(idx.roll<0||idx.name<0)throw new Error(`${file.name}: colunas obrigatórias não encontradas.`);
   const qMap=new Map();
-  headers.forEach((h,i)=>{const m=String(h).match(/^Q\s*(\d+)\s+(Options|Key|Marks)$/i);if(!m)return;const q=+m[1],kind=m[2].toLowerCase();if(!qMap.has(q))qMap.set(q,{});qMap.get(q)[kind]=i});
+  headers.forEach((h,i)=>{const m=String(h).match(/^Q\s*(\S+)\s+(Options|Key|Marks)$/i);if(!m)return;const q=Number(m[1]),kind=m[2].toLowerCase();if(!/^\d+$/.test(m[1])||!Number.isSafeInteger(q)||q<1)throw new Error(`${file.name}: número de questão inválido no cabeçalho “${h}”.`);if(!qMap.has(q))qMap.set(q,{});if(qMap.get(q)[kind]!=null)throw new Error(`${file.name}: cabeçalho repetido para Q${q} ${kind}.`);qMap.get(q)[kind]=i});
   if(!qMap.size)throw new Error(`${file.name}: nenhuma coluna de questão foi reconhecida. Verifique se existem cabeçalhos como “Q1 Options” e “Q1 Key”.`);
   const incomplete=[...qMap].filter(([,map])=>map.options==null||map.key==null).map(([q])=>q).sort((a,b)=>a-b);
   if(incomplete.length)throw new Error(`${file.name}: colunas incompletas nas questões ${incomplete.slice(0,12).map(q=>`Q${q}`).join(', ')}${incomplete.length>12?'…':''}. Cada questão precisa de Options e Key.`);
