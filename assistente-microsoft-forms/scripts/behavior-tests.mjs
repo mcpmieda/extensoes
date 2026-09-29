@@ -65,16 +65,16 @@ async function testAlternativeInsertionIntegrity() {
 async function testMathInsertionIntegrity() {
   const source = await read('src/content/math-audit/03-normalization.js');
   const context = {
-    cleanText: (value) => String(value ?? '').replace(/\\s+/g, ' ').trim(),
-    normalizeText: (value) => String(value ?? '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().trim(),
+    cleanText: (value) => String(value ?? '').replace(/\s+/g, ' ').trim(),
+    normalizeText: (value) => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(),
     letter: (index) => String.fromCharCode(65 + index),
     escapeRegExp: (value) => String(value || ''),
     textOf: (el) => String(el?.text || ''),
     document: { activeElement: null, querySelectorAll: () => [] }
   };
   vm.createContext(context);
-  vm.runInContext(source + '\\nthis.__math={cleanMathBodyForLetter,mathOptionAlreadyHasLetter};', context);
-  const { cleanMathBodyForLetter, mathOptionAlreadyHasLetter } = context.__math;
+  vm.runInContext(source + '\nthis.__math={asciiMathLetters,cleanMathBodyForLetter,mathOptionAlreadyHasLetter};', context);
+  const { asciiMathLetters, cleanMathBodyForLetter, mathOptionAlreadyHasLetter } = context.__math;
   const terminalCases = [[0, '25 A'], [0, '64A'], [1, 'x + B'], [2, 'x^2 + C'], [3, '20 D'], [4, 'x + E']];
   for (const [index, value] of terminalCases) assert(cleanMathBodyForLetter(value, index) === value, `Conteúdo terminal legítimo foi alterado em “${value}”.`);
   assert(cleanMathBodyForLetter('A 64', 0) === '64', 'Prefixo A no início deve ser isolado quando o chamador o trata como prefixo.');
@@ -84,6 +84,20 @@ async function testMathInsertionIntegrity() {
     [0,'A+25'],[0,'A−25'],[1,'B ± 2'],[3,'D÷4'],[4,'E = E'],
     [0,'A√25'],[1,'B∑x'],[2,'C%5'],[3,'D^2'],[4,'E·x'],[0,'A²'],[1,'B(x+1)']
   ]) assert(mathOptionAlreadyHasLetter(fake(value), null, index), `Caso matemático ambíguo deve ser preservado sem nova edição: “${value}”.`);
+
+  const mathematicalLetters = [
+    ['A', '𝐀𝐴𝑨𝘈𝙰𝓐'], ['B', '𝐁𝐵𝑩𝘉𝙱𝓑'], ['C', '𝐂𝐶𝑪𝘊𝙲𝓒'],
+    ['D', '𝐃𝐷𝑫𝘋𝙳𝓓'], ['E', '𝐄𝐸𝑬𝘌𝙴𝓔']
+  ];
+  for (const [index, [ascii, variants]] of mathematicalLetters.entries()) {
+    for (const variant of variants) {
+      assert(asciiMathLetters(variant) === ascii, `A conversão Unicode deve ler o caractere completo: ${variant}.`);
+      for (const suffix of ['+5', '-2', '√25', '²', '(x+1)']) {
+        assert(mathOptionAlreadyHasLetter(fake(variant + suffix), null, index), `Prefixo Unicode não pode gerar inserção duplicada: ${variant + suffix}.`);
+      }
+    }
+  }
+  assert(asciiMathLetters('𝑥 + 𝛼 + ação') === '𝑥 + 𝛼 + ação', 'Caracteres fora do mapa não podem ser reescritos.');
 
   const insertion = await read('src/content/math-audit/05-prefix-editing.js');
   const insertSource = insertion.slice(insertion.indexOf('async function insertMathOptionLetterOnly'));
@@ -264,6 +278,27 @@ async function testPedagogicalMigrationConflict() {
   assert(marker && marker.cleanupPending===false, 'Marcador deve concluir a limpeza pendente após o desbloqueio.');
 }
 
+async function assertDatabaseClearPropagatesFailure(source, name) {
+  const start = source.indexOf(`async function ${name}(`);
+  const end = source.indexOf('/* @include', start);
+  assert(start >= 0 && end > start, `Função de limpeza não localizada: ${name}.`);
+  const expectedError = new Error('Falha de armazenamento controlada.');
+  let clearCalls = 0;
+  const context = {
+    GSSF_PEDAGOGICAL_NAMESPACES: { printingLots: 'printingLots', diagnosticBatches: 'diagnosticBatches' },
+    PRINT_LOT_DB_NAME: 'legacy-print',
+    DIAGNOSTIC_DB_NAME: 'legacy-diagnostic',
+    gssfDeleteLegacyIndexedDb: async () => true,
+    gssfLegacyDatabaseExists: async () => false,
+    gssfPedagogicalDataClear: async () => { clearCalls += 1; throw expectedError; }
+  };
+  vm.createContext(context);
+  vm.runInContext(source.slice(start, end) + `\nthis.__clear=${name};`, context);
+  let actualError = null;
+  try { await context.__clear(); } catch (error) { actualError = error; }
+  assert(clearCalls === 1 && actualError === expectedError, `${name} deve propagar a falha real do banco.`);
+}
+
 async function testAuditHardeningRegressions() {
   const printingParser = await read('src/content/printing/01-state/start-printing-runtime/03-update-lot-form-state.js');
   const printingApi = await read('src/content/printing/01-state/start-printing-runtime/11-save-settings.js');
@@ -274,8 +309,8 @@ async function testAuditHardeningRegressions() {
 
   assert(/colunas incompletas nas questões/.test(printingParser) && /sequência de questões incompleta/.test(printingParser), 'Impressão deve rejeitar EvalBee com questões incompletas ou puladas.');
   assert(!/\blotDbPromise\b/.test(printingApi) && /lotDbMigrationPromise=null/.test(printingApi), 'Destroy da Impressão não pode referenciar o IndexedDB antigo.');
-  assert(!/gssfPedagogicalDataClear[^\n]*catch\s*\(_\)/.test(printingIndex), 'Limpeza da Impressão não pode engolir falha do banco novo.');
-  assert(!/gssfPedagogicalDataClear[^\n]*catch\s*\(_\)/.test(diagnosticIndex), 'Limpeza do Diagnóstico não pode engolir falha do banco novo.');
+  await assertDatabaseClearPropagatesFailure(printingIndex, 'deletePrintLotDatabase');
+  await assertDatabaseClearPropagatesFailure(diagnosticIndex, 'deleteDiagnosticDatabase');
   assert(/cloneLotManualMatches/.test(printingMatches), 'Impressão deve reverter vínculo manual que falhou ao persistir.');
   assert(/cloneDiagnosticManualMatches/.test(diagnosticMatches), 'Diagnóstico deve reverter vínculo manual que falhou ao persistir.');
   assert(!/lotDbDelete\(conflict\.id\)/.test(printingParser), 'Substituição de lote não pode apagar o mesmo ID recém-gravado.');

@@ -8,7 +8,7 @@
       '𝐃': 'D', '𝐷': 'D', '𝑫': 'D', '𝘋': 'D', '𝙳': 'D', '𝓓': 'D',
       '𝐄': 'E', '𝐸': 'E', '𝑬': 'E', '𝘌': 'E', '𝙴': 'E', '𝓔': 'E'
     };
-    return String(value || '').replace(/[𝐀𝐴𝑨𝘈𝙰𝓐𝐁𝐵𝑩𝘉𝙱𝓑𝐂𝐶𝑪𝘊𝙲𝓒𝐃𝐷𝑫𝘋𝙳𝓓𝐄𝐸𝑬𝘌𝙴𝓔]/g, (ch) => map[ch] || ch);
+    return String(value || '').replace(/[𝐀𝐴𝑨𝘈𝙰𝓐𝐁𝐵𝑩𝘉𝙱𝓑𝐂𝐶𝑪𝘊𝙲𝓒𝐃𝐷𝑫𝘋𝙳𝓓𝐄𝐸𝑬𝘌𝙴𝓔]/gu, (ch) => map[ch] || ch);
   }
 
   function normalizedMathOptionText(el) {
