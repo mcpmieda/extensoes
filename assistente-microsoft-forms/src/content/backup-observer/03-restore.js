@@ -66,7 +66,8 @@
             merged = mergeStoredValues(merged, entry.value, storedValueTime(merged, 0), entry.time);
           });
           if (merged && merged !== before) {
-            GSSF_STORAGE.setItem(key, merged);
+            if (key === GSSF_STORAGE.canonicalKey(formsBankKey())) saveFormsBank(JSON.parse(merged), 'backup importado');
+            else GSSF_STORAGE.setItem(key, merged);
             applied += entries.length;
           }
         } catch (error) {

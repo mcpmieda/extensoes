@@ -82,6 +82,27 @@
       return value === undefined ? null : value;
     }
 
+    function setCachedItem(key, value, confirmedWrite = false) {
+      const nextKey = canonicalKey(key);
+      if (!isManagedKey(nextKey)) throw new Error(`Chave fora do namespace GSSF: ${key}`);
+      if (value == null) cache.delete(nextKey);
+      else cache.set(nextKey, String(value));
+      if (confirmedWrite) {
+        if (value == null) confirmed.delete(nextKey);
+        else confirmed.set(nextKey, String(value));
+      }
+    }
+
+    function restoreConfirmedItem(key) {
+      const nextKey = canonicalKey(key);
+      if (confirmed.has(nextKey)) cache.set(nextKey, confirmed.get(nextKey));
+      else cache.delete(nextKey);
+    }
+
+    function trackWrite(operation) {
+      return enqueue(operation);
+    }
+
     function setItem(key, value) {
       if (suspended) return;
       const nextKey = canonicalKey(key);
@@ -159,6 +180,9 @@
       isManagedKey,
       init,
       getItem,
+      setCachedItem,
+      restoreConfirmedItem,
+      trackWrite,
       setItem,
       removeItem,
       key,

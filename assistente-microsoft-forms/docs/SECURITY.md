@@ -32,6 +32,8 @@ Lotes da Impressão e do Diagnóstico são persistidos em IndexedDB no **service
 
 Não versionar dados importados, notas, backups, cookies, arquivos de autenticação ou capturas com dados pessoais.
 
+O banco de gabaritos é atualizado por alterações de formulário e de campo de questão enviadas ao service worker. Ele lê o valor mais recente e serializa as gravações de todas as abas; eventos de `chrome.storage.onChanged` atualizam os caches das abas abertas. O `flush` inclui essas gravações e informa falhas pendentes.
+
 ## Integridade das alternativas
 
 A ação **Inserir letras** é não destrutiva: ela não remove separadores nem operadores existentes. A ação **Remover letras** remove apenas a letra esperada, preservando pontuação e operadores.

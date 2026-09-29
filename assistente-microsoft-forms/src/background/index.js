@@ -4,3 +4,4 @@
 /* @include ./03-pedagogical-media.js */
 
 /* @include ./04-pedagogical-data.js */
+/* @include ./05-forms-bank.js */

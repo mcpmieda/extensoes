@@ -315,3 +315,99 @@ async function testSpreadsheetBudgets() {
 }
 
 await testSpreadsheetBudgets();
+
+async function testFormsBankAcrossTabs() {
+  const listeners = [];
+  const storage = new Map();
+  let messageListener;
+  const serviceChrome = {
+    runtime: { onMessage: { addListener(listener) { messageListener = listener; } } },
+    storage: { local: {
+      get: async (key) => ({ [key]: storage.get(key) }),
+      set: async (entries) => {
+        for (const [key, value] of Object.entries(entries)) {
+          const oldValue = storage.get(key);
+          storage.set(key, value);
+          listeners.forEach(listener => listener({ [key]: { oldValue, newValue: value } }, 'local'));
+        }
+      }
+    } }
+  };
+  const worker = vm.createContext({ chrome: serviceChrome, gssfAllowedSender: () => true });
+  vm.runInContext(await read('src/background/05-forms-bank.js'), worker);
+
+  const tab = async () => {
+    const cache = new Map();
+    const confirmed = new Map();
+    let queue = Promise.resolve();
+    const adapter = {
+      canonicalKey: key => String(key).replace(/^gssf_/, 'gssf:'),
+      getItem: key => cache.get(adapter.canonicalKey(key)) ?? null,
+      setCachedItem: (key, value, isConfirmed = false) => {
+        const canonical = adapter.canonicalKey(key);
+        if (value == null) cache.delete(canonical); else cache.set(canonical, value);
+        if (isConfirmed) {
+          if (value == null) confirmed.delete(canonical); else confirmed.set(canonical, value);
+        }
+      },
+      restoreConfirmedItem: key => {
+        const canonical = adapter.canonicalKey(key);
+        if (confirmed.has(canonical)) cache.set(canonical, confirmed.get(canonical));
+        else cache.delete(canonical);
+      },
+      trackWrite: operation => { queue = queue.then(operation); return queue; },
+      flush: () => queue
+    };
+    const chrome = {
+      runtime: { sendMessage: (message, callback) => messageListener(message, {}, callback), lastError: null },
+      storage: { onChanged: { addListener: listener => listeners.push(listener) } }
+    };
+    const context = vm.createContext({ chrome, GSSF_STORAGE: adapter,
+      window: { dispatchEvent() {} }, CustomEvent: class { constructor() {} },
+      reportNonFatalError: (_scope, error) => { throw error; } });
+    vm.runInContext(await read('src/content/audit-bank/04-forms-bank.js') + `
+      this.api = { read: readFormsBank, save: saveFormsBank };
+    `, context);
+    return { api: context.api, adapter };
+  };
+  const first = await tab();
+  const second = await tab();
+  const a = first.api.read();
+  a.forms.A = { title: 'A', questions: { 1: { originalAnswer: 'A' }, 2: {} } };
+  const b = second.api.read();
+  b.forms.B = { title: 'B', questions: { 1: { originalAnswer: 'B' } } };
+  first.api.save(a);
+  second.api.save(b);
+  await Promise.all([first.adapter.flush(), second.adapter.flush()]);
+  const key = 'gssf:forms_bank_v1';
+  let saved = JSON.parse(storage.get(key));
+  assert.deepEqual(Object.keys(saved.forms).sort(), ['A', 'B']);
+  assert.deepEqual(Object.keys(first.api.read().forms).sort(), ['A', 'B']);
+  assert.deepEqual(Object.keys(second.api.read().forms).sort(), ['A', 'B']);
+
+  const left = first.api.read();
+  const right = second.api.read();
+  left.forms.A.questions[1].manualAnswer = 'C';
+  right.forms.A.questions[2].importedAnswer = 'D';
+  first.api.save(left);
+  second.api.save(right);
+  await Promise.all([first.adapter.flush(), second.adapter.flush()]);
+  saved = JSON.parse(storage.get(key));
+  assert.equal(saved.forms.A.questions[1].manualAnswer, 'C');
+  assert.equal(saved.forms.A.questions[2].importedAnswer, 'D');
+  assert.equal(saved.forms.A.answerCount, 2);
+  const sameQuestionLeft = first.api.read();
+  const sameQuestionRight = second.api.read();
+  sameQuestionLeft.forms.A.questions[1].manualAnswer = 'E';
+  sameQuestionRight.forms.A.questions[1].importedAnswer = 'B';
+  first.api.save(sameQuestionLeft);
+  second.api.save(sameQuestionRight);
+  await Promise.all([first.adapter.flush(), second.adapter.flush()]);
+  saved = JSON.parse(storage.get(key));
+  assert.equal(saved.forms.A.questions[1].manualAnswer, 'E');
+  assert.equal(saved.forms.A.questions[1].importedAnswer, 'B');
+  assert.equal(saved.forms.A.questions[1].effectiveAnswer, 'E');
+  console.log('Issue #2 / 07: gravações de duas abas mescladas pelo service worker e caches sincronizados.');
+}
+
+await testFormsBankAcrossTabs();
