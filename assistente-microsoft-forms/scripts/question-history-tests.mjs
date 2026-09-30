@@ -7,14 +7,17 @@ const contentSource = await fs.readFile(new URL('../src/content/question-history
 const contentContext = vm.createContext({});
 vm.runInContext(contentSource + '\nthis.looksTransient = questionHistoryLooksTransient;', contentContext);
 const looksTransient = contentContext.looksTransient;
-assert.equal(looksTransient({ options: [] }, true), true);
-assert.equal(looksTransient({ options: [{ correct: true }, { correct: true }, { correct: true }] }, true), true);
-assert.equal(looksTransient({ options: [{ correct: false }, { correct: true }, { correct: false }] }, true), false);
-assert.equal(looksTransient({ options: [] }, false), false);
+assert.equal(looksTransient({ options: [] }, true, false), true);
+assert.equal(looksTransient({ options: [{ correct: true }, { correct: true }, { correct: true }] }, true, false), true);
+assert.equal(looksTransient({ options: [{ correct: false }, { correct: true }, { correct: false }] }, true, false), false);
+assert.equal(looksTransient({ options: [] }, false, false), false);
+assert.equal(looksTransient({ options: [] }, false, true), true);
+assert.equal(looksTransient({ options: [{ correct: true }, { correct: true }, { correct: true }] }, false, true), true);
 vm.runInContext(`
   const blocksForHistoryTest = [1, 2, 3].map((n) => ({ n, querySelector: () => null }));
   const capturedForHistoryTest = [];
   pageMode = () => 'edição';
+  isActuallyEditingQuestion = () => false;
   collectQuestionBlocks = () => blocksForHistoryTest;
   refreshQuestionHistoryButtons = () => {};
   questionNumberFromBlock = (block) => block.n;

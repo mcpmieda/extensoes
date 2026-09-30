@@ -87,9 +87,9 @@
     positionQuestionHistoryButtons();
   }
 
-  function questionHistoryLooksTransient(content, singleChoice) {
-    return (singleChoice && !content.options.length)
-      || (singleChoice && content.options.length >= 3 && content.options.every((option) => option.correct));
+  function questionHistoryLooksTransient(content, singleChoice, editing) {
+    return ((singleChoice || editing) && !content.options.length)
+      || ((singleChoice || editing) && content.options.length >= 3 && content.options.every((option) => option.correct));
   }
 
   async function captureQuestionHistory() {
@@ -105,6 +105,7 @@
       if (!blocks.length) return;
       const fullScan = !GSSF_HISTORY_STATE.initialCaptured || GSSF_HISTORY_STATE.fullScan || (GSSF_HISTORY_STATE.structural && blocks.length !== GSSF_HISTORY_STATE.questionCount);
       const dirtyNumbers = new Set(GSSF_HISTORY_STATE.dirtyNumbers);
+      const editing = isActuallyEditingQuestion();
       GSSF_HISTORY_STATE.fullScan = false;
       GSSF_HISTORY_STATE.structural = false;
       GSSF_HISTORY_STATE.dirtyNumbers.clear();
@@ -116,7 +117,8 @@
         if (!fullScan && !dirtyNumbers.has(number)) continue;
         const content = questionHistorySnapshot(block, number);
         if (content) {
-          if (questionHistoryLooksTransient(content, Boolean(block.querySelector('[role="radiogroup"]')))) continue;
+          const blockEditing = editing || Boolean(block.querySelector('[contenteditable="true"], [role="textbox"]'));
+          if (questionHistoryLooksTransient(content, Boolean(block.querySelector('[role="radiogroup"]')), blockEditing)) continue;
           try { await questionHistoryRequest('capture', questionHistoryIdentity(block, number), { content }); }
           catch (error) { reportNonFatalError('historico:capturar-questao', error, { number }); }
         }
