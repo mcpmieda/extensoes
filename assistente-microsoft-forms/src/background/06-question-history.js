@@ -33,6 +33,22 @@ async function gssfMigrateHistoryMetadata(db) {
 }
 let gssfHistoryMigratedDatabase = null;
 
+function gssfValidateHistoryBackup(rows) {
+  if (!Array.isArray(rows) || rows.length > 10000 || JSON.stringify(rows).length > 32_000_000) throw new Error('Histórico de backup inválido ou maior que 32 MB.');
+  for (const row of rows) {
+    if (!row || typeof row !== 'object') throw new Error('Versão inválida no backup.');
+    gssfHistoryIdentity(row);
+    const c = row.content;
+    if (!Number.isFinite(Date.parse(row.capturedAt)) || !c || typeof c !== 'object' || JSON.stringify(c).length > 1_000_000
+      || (c.options !== undefined && (!Array.isArray(c.options) || c.options.some((v) => !v || typeof v.text !== 'string')))
+      || (c.images !== undefined && (!Array.isArray(c.images) || c.images.some((v) => !v || typeof v.src !== 'string')))
+      || (c.math !== undefined && (!Array.isArray(c.math) || c.math.some((v) => typeof v !== 'string')))) throw new Error('Conteúdo inválido no histórico do backup.');
+    if (row.media && (typeof row.media !== 'object' || Array.isArray(row.media)
+      || Object.values(row.media).some((v) => typeof v !== 'string' || !/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(v)))) throw new Error('Imagem inválida no histórico do backup.');
+  }
+  return true;
+}
+
 function gssfOpenHistoryDatabase() {
   if (gssfHistoryDatabasePromise) return gssfHistoryDatabasePromise;
   gssfHistoryDatabasePromise = new Promise((resolve, reject) => {
@@ -108,6 +124,67 @@ async function gssfQuestionHistory(message) {
       const request = questions.getAll();
       request.onsuccess = () => (request.result || []).forEach((row) => questions.put(gssfHistoryTombstone(row)));
       done({ deleted: true });
+    });
+  }
+  if (action === 'exportPage') {
+    return gssfHistoryTransaction(db, 'readonly', (questions, versions, done) => {
+      const range = message.after ? IDBKeyRange.lowerBound(message.after, true) : null;
+      const request = versions.openCursor(range);
+      request.onsuccess = () => {
+        const row = request.result?.value;
+        if (!row) { done(null); return; }
+        const meta = questions.get(row.id);
+        meta.onsuccess = () => done({ after: [row.id, row.sequence], row: { form: meta.result.form, question: meta.result.question, capturedAt: row.capturedAt, content: row.content, media: row.media } });
+      };
+    });
+  }
+  if (action === 'validateImport' || action === 'import') {
+    gssfValidateHistoryBackup(message.rows);
+    if (action === 'validateImport') return { valid: true };
+    const prepared = [];
+    for (const row of message.rows) prepared.push({ ...row, id: gssfHistoryIdentity(row), fingerprint: await gssfHistoryHash(JSON.stringify(row.content)) });
+    const existing = await gssfHistoryTransaction(db, 'readonly', (questions, versions, done) => {
+      const request = questions.getAll(); request.onsuccess = () => done(request.result || []);
+    });
+    const metas = new Map(existing.map((row) => [row.id, row]));
+    const additions = [];
+    for (const id of new Set(prepared.map((row) => row.id))) {
+      const saved = await gssfHistoryTransaction(db, 'readonly', (questions, versions, done) => {
+        const request = versions.getAll(IDBKeyRange.bound([id, 0], [id, Number.MAX_SAFE_INTEGER]));
+        request.onsuccess = () => done(request.result || []);
+      });
+      const seen = new Set();
+      for (const row of saved) seen.add(`${row.capturedAt}:${await gssfHistoryHash(JSON.stringify(row.content))}`);
+      const meta = metas.get(id) || { id, count: 0, nextSequence: 1 };
+      for (const row of prepared.filter((item) => item.id === id).sort((a, b) => Date.parse(a.capturedAt) - Date.parse(b.capturedAt))) {
+        const key = `${row.capturedAt}:${row.fingerprint}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        if (meta.count >= 100) throw new Error('Importação excederia 100 versões de uma questão. Nenhuma versão foi importada.');
+        additions.push({ id, sequence: meta.nextSequence++, capturedAt: row.capturedAt, content: row.content, media: row.media || {} });
+        meta.count++;
+        Object.assign(meta, { form: row.form, question: row.question, number: row.content.number });
+        // Uma mesclagem não altera a assinatura da captura local atual.
+        if (!metas.has(id)) { meta.fingerprint = row.fingerprint; meta.lastPrompt = String(row.content.prompt || '').slice(0, 160); }
+      }
+      metas.set(id, meta);
+    }
+    return gssfHistoryTransaction(db, 'readwrite', (questions, versions, done) => {
+      additions.forEach((row) => versions.put(row));
+      metas.forEach((row) => questions.put(row));
+      done({ imported: additions.length });
+    });
+  }
+  if (action === 'listPage') {
+    return gssfHistoryTransaction(db, 'readonly', (questions, versions, done) => {
+      const before = Number.isSafeInteger(message.before) && message.before > 0 ? message.before - 1 : Number.MAX_SAFE_INTEGER;
+      const rows = [];
+      const request = versions.openCursor(IDBKeyRange.bound([id, 0], [id, before]), 'prev');
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (cursor && rows.length < 5) { rows.push(cursor.value); cursor.continue(); }
+        else done({ versions: rows, more: Boolean(cursor), before: rows.at(-1)?.sequence });
+      };
     });
   }
   if (action === 'listForm') {

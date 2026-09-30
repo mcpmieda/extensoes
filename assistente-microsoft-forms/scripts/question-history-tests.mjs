@@ -88,6 +88,22 @@ const database = {
       put: (value) => request(() => { records.set(value.id, copy(value)); return value.id; })
     };
     const history = {
+      openCursor: (range, direction) => {
+        let rows = [...versions.values()].sort((a, b) => a.id.localeCompare(b.id) || a.sequence - b.sequence);
+        if (Array.isArray(range)) rows = rows.filter((row) => row.id === range[0][0] && row.sequence <= range[1][1]);
+        else if (range?.after) rows = rows.filter((row) => row.id > range.after[0] || row.id === range.after[0] && row.sequence > range.after[1]);
+        if (direction === 'prev') rows.reverse();
+        const result = {};
+        let index = 0;
+        const advance = () => {
+          pending++;
+          queueMicrotask(() => {
+            result.result = rows[index] ? { value: copy(rows[index]), continue() { index++; advance(); } } : null;
+            result.onsuccess?.(); pending--; finish();
+          });
+        };
+        advance(); return result;
+      },
       clear: () => request(() => versions.clear()),
       get: (key) => request(() => copy(versions.get(keyOf(key)))),
       getAll: (range) => request(() => copy([...versions.values()].filter((item) => item.id === range[0][0]).sort((a, b) => a.sequence - b.sequence))),
@@ -113,7 +129,7 @@ const database = {
 const context = vm.createContext({
   crypto: webcrypto, TextEncoder,
   chrome: { runtime: { onMessage: { addListener() {} } } },
-  IDBKeyRange: { bound: (a, b) => [a, b] },
+  IDBKeyRange: { bound: (a, b) => [a, b], lowerBound: (after) => ({ after }) },
   database
 });
 vm.runInContext(source + `
@@ -146,4 +162,25 @@ await Promise.all([
 assert.equal(versions.size, 0);
 assert.equal(records.get(api.identity(base)).lastPrompt, undefined);
 assert.equal((await api.run({ ...base, action: 'capture', content: { prompt: 'C', options: [] } })).saved, false);
+for (let n = 0; n < 7; n++) await api.run({ ...base, action: 'capture', content: { prompt: `Versão ${n}`, options: [] } });
+const firstPage = await api.run({ ...base, action: 'listPage' });
+assert.equal(firstPage.versions.length, 5);
+assert.equal(firstPage.more, true);
+const secondPage = await api.run({ ...base, action: 'listPage', before: firstPage.before });
+assert.equal(secondPage.versions.length, 2);
+assert.equal(secondPage.more, false);
+const exported = [];
+let after = null;
+for (;;) {
+  const page = await api.run({ ...base, action: 'exportPage', after });
+  if (!page) break;
+  exported.push(page.row); after = page.after;
+}
+assert.equal(exported.length, 7);
+assert.equal((await api.run({ ...base, action: 'import', rows: exported })).imported, 0);
+await api.run({ ...base, action: 'clearAll' });
+assert.equal((await api.run({ ...base, action: 'import', rows: exported })).imported, 7);
+assert.equal((await api.run({ ...base, action: 'import', rows: exported })).imported, 0);
+await assert.rejects(api.run({ ...base, action: 'import', rows: [{ ...exported[0], media: { x: 'data:text/html;base64,AAAA' } }] }), /Imagem inválida/);
+assert.equal((await api.run({ ...base, action: 'list' })).length, 7);
 console.log('Histórico de questões: identidade, limite, deduplicação e exclusões aprovados.');

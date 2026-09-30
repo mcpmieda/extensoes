@@ -186,6 +186,19 @@
     GSSF_HISTORY_STATE.panel?.remove(); GSSF_HISTORY_STATE.panel = null;
   }
 
+  async function exportQuestionHistory() {
+    const rows = [];
+    let after = null;
+    let size = 0;
+    for (;;) {
+      const page = await questionHistoryRequest('exportPage', 'all', { after });
+      if (!page) return rows;
+      size += JSON.stringify(page.row).length;
+      if (size > 32_000_000) throw new Error('Histórico maior que 32 MB. O backup não foi gerado; nenhum dado foi apagado.');
+      rows.push(page.row); after = page.after;
+    }
+  }
+
   async function openQuestionHistory(block, number, savedQuestion = '') {
     closeQuestionHistory();
     const question = savedQuestion || questionHistoryIdentity(block, number);
@@ -201,14 +214,24 @@
     const summary = document.createElement('p'); summary.className = 'gssf-history-summary'; summary.textContent = 'Carregando versões locais…';
     const list = document.createElement('div'); list.className = 'gssf-history-list';
     const clear = document.createElement('button'); clear.type = 'button'; clear.className = 'gssf-history-clear'; clear.textContent = 'Apagar todo o histórico desta questão';
-    dialog.append(heading, summary, list, clear); overlay.appendChild(dialog); document.body.appendChild(overlay);
+    const navigation = document.createElement('div');
+    const previous = document.createElement('button'); previous.textContent = 'Mais recentes'; previous.type = 'button';
+    const next = document.createElement('button'); next.textContent = 'Mais antigas'; next.type = 'button';
+    navigation.append(previous, next);
+    let before = null;
+    let nextBefore = null;
+    const pages = [];
+    dialog.append(heading, summary, list, navigation, clear); overlay.appendChild(dialog); document.body.appendChild(overlay);
     overlay.addEventListener('click', (event) => { if (event.target === overlay) closeQuestionHistory(); });
     GSSF_HISTORY_STATE.panel = overlay;
     const render = async () => {
       try {
-        const versions = await questionHistoryRequest('list', question);
+        const page = await questionHistoryRequest('listPage', question, { before });
+        const versions = page.versions;
+        nextBefore = page.before;
+        previous.disabled = !pages.length; next.disabled = !page.more;
         if (GSSF_HISTORY_STATE.panel !== overlay) return;
-        summary.textContent = versions.length ? `${versions.length} versão(ões) salvas neste navegador` : 'Nenhuma versão salva para esta questão.';
+        summary.textContent = versions.length ? `Página ${pages.length + 1} · até 5 versões por página · salvas neste navegador` : 'Nenhuma versão salva nesta página.';
         clear.hidden = versions.length === 0;
         list.replaceChildren();
         versions.forEach((version) => {
@@ -245,9 +268,11 @@
         });
       } catch (error) { summary.textContent = error.message; }
     };
+    previous.addEventListener('click', async () => { if (!pages.length) return; before = pages.pop(); await render(); });
+    next.addEventListener('click', async () => { if (next.disabled) return; pages.push(before); before = nextBefore; await render(); });
     clear.addEventListener('click', async () => {
       if (!confirm(`Apagar todas as versões da questão ${number}?`)) return;
-      try { await questionHistoryRequest('clear', question); await render(); }
+      try { await questionHistoryRequest('clear', question); before = null; pages.length = 0; await render(); }
       catch (error) { summary.textContent = error.message; }
     });
     await render(); close.focus();

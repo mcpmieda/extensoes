@@ -85,10 +85,11 @@
     }
     const bank = readFormsBank();
     const pedagogicalMedia = await collectPedagogicalMediaForBackup();
+    const questionHistory = await exportQuestionHistory();
     return {
       app: APP.name,
       version: APP.version,
-      backupFormat: 'gssf-backup-v4',
+      backupFormat: 'gssf-backup-v5',
       storageNamespace: GSSF_STORAGE.NAMESPACE,
       exportedAt: new Date().toISOString(),
       exportedAtText: new Date().toLocaleString('pt-BR'),
@@ -101,6 +102,7 @@
       },
       backupScope: {
         managedStorage: true,
+        questionHistory: true,
         answerCardMedia: true,
         answerCardWorkbook: false,
         printingSourceFiles: false,
@@ -120,6 +122,7 @@
         organizador: 'preferências, cabeçalho personalizado e edições salvas por planilha; sem o arquivo XLSX original'
       },
       pedagogicalMedia,
+      questionHistory,
       storage: values
     };
   }

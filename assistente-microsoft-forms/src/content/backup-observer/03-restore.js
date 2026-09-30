@@ -1,6 +1,7 @@
 
 
   async function readBackupFile(file) {
+    if (file.size > 64_000_000) throw new Error('Backup maior que 64 MB.');
     const text = await file.text();
     const payload = JSON.parse(text);
     const fileTime = parseDateMs(payload?.exportedAt) || (file.lastModified || Date.now());
@@ -25,7 +26,9 @@
       if (!/^data:image\/(?:png|jpeg|webp);base64,/i.test(String(value || ''))) return;
       media[key] = { value: String(value), time: fileTime, file: file.name };
     });
-    return { entries, media };
+    const questionHistory = payload.questionHistory || [];
+    if (payload.questionHistory !== undefined) await questionHistoryRequest('validateImport', 'all', { rows: questionHistory });
+    return { entries, media, questionHistory };
   }
 
   async function importAllSavedData(event) {
@@ -34,22 +37,25 @@
     if (!files.length) return;
     try {
       const allEntries = [];
+      const questionHistory = [];
       const mediaByKey = new Map();
       for (const file of files) {
         const parsed = await readBackupFile(file);
         allEntries.push(...parsed.entries);
+        questionHistory.push(...parsed.questionHistory);
         Object.entries(parsed.media).forEach(([key, entry]) => {
           const current = mediaByKey.get(key);
           if (!current || entry.time >= current.time) mediaByKey.set(key, entry);
         });
       }
-      if (!allEntries.length && !mediaByKey.size) throw new Error('Nenhuma configuração do assistente foi encontrada nos arquivos.');
+      if (!allEntries.length && !mediaByKey.size && !questionHistory.length) throw new Error('Nenhuma configuração do assistente foi encontrada nos arquivos.');
+      if (questionHistory.length) await questionHistoryRequest('validateImport', 'all', { rows: questionHistory });
       const grouped = new Map();
       allEntries.forEach((entry) => {
         if (!grouped.has(entry.key)) grouped.set(entry.key, []);
         grouped.get(entry.key).push(entry);
       });
-      const mediaText = mediaByKey.size ? ` e ${pluralPt(mediaByKey.size, 'imagem personalizada', 'imagens personalizadas')}` : '';
+      const mediaText = (mediaByKey.size ? ` e ${pluralPt(mediaByKey.size, 'imagem personalizada', 'imagens personalizadas')}` : '') + (questionHistory.length ? ` e ${questionHistory.length} versões do histórico de questões` : '');
       const ok = await askConfirm({
         title: 'Importar backup?',
         message: `Vou importar ${pluralPt(allEntries.length, 'registro', 'registros')}${mediaText} de ${pluralPt(files.length, 'arquivo', 'arquivos')}. Dados atuais e backups serão mesclados; respostas manuais/importadas mais recentes serão preservadas. Planilhas originais do Cartão-resposta e do Organizador, arquivos Excel da Impressão e relatórios do EvalBee não fazem parte do backup.`,
@@ -57,6 +63,7 @@
         cancelText: 'Cancelar'
       });
       if (!ok) return;
+      if (questionHistory.length) await questionHistoryRequest('import', 'all', { rows: questionHistory });
       let applied = 0;
       grouped.forEach((entries, key) => {
         try {
