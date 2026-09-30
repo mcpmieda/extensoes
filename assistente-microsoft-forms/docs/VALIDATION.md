@@ -1,3 +1,13 @@
+# Teste real da revisão local 15212d4
+
+30/09/2026, após recarga confirmada pelo proprietário. Primeira captura manual na instalação reinstalada: 46 versões, nenhuma falha. Segunda captura sem edição: 0 novas, 46 inalteradas. Recarregamento completo do Forms, seguido de nova captura: novamente 0 novas, 46 inalteradas e nenhuma falha. Histórico da Q19 mostrou uma única versão e fonte MathML sem o wrapper visual, preservando alternativas e C como correta. Índice da instalação atual contém 46 questões; isso não comprova restauração dos registros da instalação anterior.
+
+O horário da análise permaneceu estável durante as consultas/gravações sem alterações: 10:16:51 antes da recarga; 10:18:21 após a recarga, até o final das consultas. Console capturado sem avisos/erros. Não foi feito ensaio isolado de mudança de foco do sistema operacional.
+
+Análises completas ainda custaram 4108 ms (maior etapa 625 ms) e 3979 ms (maior etapa 547 ms). Deduplicação após recarga aprovada neste cenário; fluidez da análise completa continua pendente. Nenhuma nova alteração de runtime nem publicação remota nesta rodada.
+
+---
+
 # Revisão local após reinstalação — 15.9.8
 
 Correções locais posteriores à publicação c27d0ba: histórico usa fonte MathML/LaTeX em vez do wrapper visual MathJax, ordenando atributos do MathML e preservando valores, sinais e conteúdo. Versões já salvas não são reescritas nem apagadas. A primeira gravação manual após a mudança pode criar uma versão de transição nas questões matemáticas, pois a representação antiga incluía HTML visual; comparações posteriores usam a nova representação. Não há captura automática.
