@@ -1,6 +1,37 @@
 // Histórico privado de questões, isolado no origin da extensão.
 const GSSF_HISTORY_DB = 'gssf-question-history-v1';
 let gssfHistoryDatabasePromise = null;
+let gssfHistoryQueue = Promise.resolve();
+
+async function gssfHistoryHash(text) {
+  const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return 'sha256:' + Array.from(new Uint8Array(bytes), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function gssfHistoryTombstone(meta) {
+  return { id: meta.id, form: meta.form, question: meta.question, nextSequence: meta.nextSequence, fingerprint: meta.fingerprint, count: 0 };
+}
+
+function gssfQueuedQuestionHistory(message) {
+  const task = gssfHistoryQueue.then(() => gssfQuestionHistory(message));
+  gssfHistoryQueue = task.catch(() => {});
+  return task;
+}
+
+async function gssfMigrateHistoryMetadata(db) {
+  const rows = await gssfHistoryTransaction(db, 'readonly', (questions, versions, done) => {
+    const request = questions.getAll(); request.onsuccess = () => done(request.result || []);
+  });
+  const changes = [];
+  for (const row of rows) {
+    if (!String(row.fingerprint || '').startsWith('sha256:')) {
+      row.fingerprint = await gssfHistoryHash(row.fingerprint || '');
+      changes.push(row.count ? row : gssfHistoryTombstone(row));
+    } else if (!row.count && row.lastPrompt !== undefined) changes.push(gssfHistoryTombstone(row));
+  }
+  if (changes.length) await gssfHistoryTransaction(db, 'readwrite', (questions) => changes.forEach((row) => questions.put(row)));
+}
+let gssfHistoryMigratedDatabase = null;
 
 function gssfOpenHistoryDatabase() {
   if (gssfHistoryDatabasePromise) return gssfHistoryDatabasePromise;
@@ -67,10 +98,22 @@ async function gssfQuestionHistory(message) {
   const id = gssfHistoryIdentity(message);
   const action = String(message.action || '');
   const db = await gssfOpenHistoryDatabase();
+  if (gssfHistoryMigratedDatabase !== db) {
+    await gssfMigrateHistoryMetadata(db);
+    gssfHistoryMigratedDatabase = db;
+  }
+  if (action === 'clearAll') {
+    return gssfHistoryTransaction(db, 'readwrite', (questions, versions, done) => {
+      versions.clear();
+      const request = questions.getAll();
+      request.onsuccess = () => (request.result || []).forEach((row) => questions.put(gssfHistoryTombstone(row)));
+      done({ deleted: true });
+    });
+  }
   if (action === 'listForm') {
     return gssfHistoryTransaction(db, 'readonly', (questions, versions, done) => {
       const request = questions.getAll();
-      request.onsuccess = () => done((request.result || []).filter((item) => item.form === message.form && item.count > 0).map(({ question, count, lastPrompt }) => ({ question, count, lastPrompt })));
+      request.onsuccess = () => done((request.result || []).filter((item) => item.form === message.form && item.count > 0).map(({ question, count, lastPrompt, number }) => ({ question, count, lastPrompt, number })));
     });
   }
   if (action === 'list') {
@@ -83,22 +126,24 @@ async function gssfQuestionHistory(message) {
     const content = message.content;
     const serialized = JSON.stringify(content);
     if (!content || typeof content !== 'object' || !serialized || serialized.length > 1_000_000) throw new Error('Conteúdo da questão inválido ou muito grande.');
+    const fingerprint = await gssfHistoryHash(serialized);
     const previous = await gssfHistoryTransaction(db, 'readonly', (questions, versions, done) => {
       const request = questions.get(id);
       request.onsuccess = () => done(request.result || null);
     });
-    if (previous?.fingerprint === serialized) return { saved: false };
+    if (previous?.fingerprint === fingerprint) return { saved: false };
+    if (previous?.count >= 100) throw new Error('Limite de 100 versões atingido. Exporte um backup e apague versões para continuar salvando.');
     const media = content.images?.length ? await gssfHistoryMedia(content) : {};
-    // O texto serializado é o fingerprint: evita colisões e preserva diferenças em fórmulas e mídias.
+    // A assinatura não conserva o conteúdo de uma versão que o usuário apagou.
     return gssfHistoryTransaction(db, 'readwrite', (questions, versions, done) => {
       const request = questions.get(id);
       request.onsuccess = () => {
         const previous = request.result || { id, nextSequence: 1, fingerprint: '', count: 0 };
-        if (previous.fingerprint === serialized) { done({ saved: false }); return; }
+        if (previous.fingerprint === fingerprint) { done({ saved: false }); return; }
         const sequence = previous.nextSequence;
         const capturedAt = new Date().toISOString();
         versions.put({ id, sequence, capturedAt, content, media });
-        questions.put({ id, form: message.form, question: message.question, nextSequence: sequence + 1, fingerprint: serialized, count: previous.count + 1, lastPrompt: String(content.prompt || content.text || '').slice(0, 160) });
+        questions.put({ id, form: message.form, question: message.question, number: content.number, nextSequence: sequence + 1, fingerprint, count: previous.count + 1, lastPrompt: String(content.prompt || content.text || '').slice(0, 160) });
         done({ saved: true, sequence });
       };
     });
@@ -113,7 +158,13 @@ async function gssfQuestionHistory(message) {
           if (!found.result) return;
           versions.delete([id, sequence]);
           const meta = questions.get(id);
-          meta.onsuccess = () => { if (meta.result) questions.put({ ...meta.result, count: Math.max(0, meta.result.count - 1) }); };
+          meta.onsuccess = () => {
+            if (!meta.result) return;
+            // O resumo pode pertencer à versão apagada; não conservar seu enunciado.
+            const { lastPrompt, ...safe } = meta.result;
+            const count = Math.max(0, safe.count - 1);
+            questions.put(count ? { ...safe, count } : gssfHistoryTombstone(safe));
+          };
         };
       } else {
         const request = versions.openKeyCursor(IDBKeyRange.bound([id, 0], [id, Number.MAX_SAFE_INTEGER]));
@@ -122,7 +173,7 @@ async function gssfQuestionHistory(message) {
           if (cursor) { versions.delete(cursor.primaryKey); cursor.continue(); }
         };
         const meta = questions.get(id);
-        meta.onsuccess = () => { if (meta.result) questions.put({ ...meta.result, count: 0 }); };
+        meta.onsuccess = () => { if (meta.result) questions.put(gssfHistoryTombstone(meta.result)); };
       }
       // Manter o fingerprint evita recriar imediatamente uma versão apagada.
       done({ deleted: true });
@@ -136,7 +187,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   (async () => {
     try {
       if (!gssfAllowedSender(sender)) throw new Error('Origem da solicitação não permitida.');
-      sendResponse({ ok: true, result: await gssfQuestionHistory(message) });
+      sendResponse({ ok: true, result: await gssfQueuedQuestionHistory(message) });
     } catch (error) { sendResponse({ ok: false, error: String(error?.message || error) }); }
   })();
   return true;

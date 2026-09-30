@@ -2,13 +2,14 @@
   const GSSF_HISTORY_STATE = { active: false, busy: false, queued: false, initialCaptured: false, fullScan: false, structural: false, questionCount: 0, dirtyNumbers: new Set(), targetNumbers: new WeakMap(), buttons: new Map(), globalButton: null, panel: null, refresh: null, scroll: null, resize: null, positionFrame: null };
 
   function questionHistoryIdentity(block, number) {
-    for (let node = block, depth = 0; node && depth < 4; node = node.parentElement, depth += 1) {
-      for (const name of ['data-question-id', 'data-item-id', 'data-id', 'id']) {
-        const value = node.getAttribute?.(name);
-        if (value && value.length <= 200 && !/^(questionWrapper|questionDesignerCard|question-list)$/i.test(value)) return `${name}:${value}`;
-      }
+    const stable = block?.matches?.('[id^="QuestionId_"]') ? block : block?.querySelector?.('[id^="QuestionId_"]');
+    if (stable?.id) return `id:${stable.id}`;
+    for (const name of ['data-question-id', 'data-item-id']) {
+      const value = block?.getAttribute?.(name) || block?.querySelector?.(`[${name}]`)?.getAttribute(name);
+      if (value && value.length <= 200) return `${name}:${value}`;
     }
-    return `number:${number}`;
+    // Uma posição não identifica uma questão após inserção, exclusão ou reordenação.
+    return null;
   }
 
   function questionHistorySnapshot(block, number) {
@@ -77,7 +78,9 @@
         document.body.appendChild(button);
         GSSF_HISTORY_STATE.buttons.set(button, block);
       }
-      if (button.dataset.gssfQuestionNumber !== String(number)) {
+      const identity = questionHistoryIdentity(block, number);
+      if (button.dataset.gssfQuestionNumber !== String(number) || button.dataset.gssfIdentity !== identity) {
+        button.dataset.gssfIdentity = identity || '';
         button.dataset.gssfQuestionNumber = String(number);
         button.textContent = '◷'; button.title = `Histórico da questão ${number}`;
         button.setAttribute('aria-label', `Abrir histórico da questão ${number}`);
@@ -112,7 +115,7 @@
       const listedBlocks = getQuestionBlocksFromList();
       const blocks = listedBlocks.length > sequentialBlocks.length ? listedBlocks : sequentialBlocks;
       if (!blocks.length) return;
-      const incomplete = GSSF_HISTORY_STATE.initialCaptured && blocks.length < GSSF_HISTORY_STATE.questionCount;
+      const incomplete = GSSF_HISTORY_STATE.initialCaptured && blocks.length < GSSF_HISTORY_STATE.questionCount && isActuallyEditingQuestion();
       const fullScan = !GSSF_HISTORY_STATE.initialCaptured || GSSF_HISTORY_STATE.fullScan || incomplete || (GSSF_HISTORY_STATE.structural && blocks.length !== GSSF_HISTORY_STATE.questionCount);
       const dirtyNumbers = new Set(GSSF_HISTORY_STATE.dirtyNumbers);
       const editing = isActuallyEditingQuestion();
@@ -132,8 +135,17 @@
             GSSF_HISTORY_STATE.dirtyNumbers.add(number);
             continue;
           }
-          try { await questionHistoryRequest('capture', questionHistoryIdentity(block, number), { content }); }
-          catch (error) { reportNonFatalError('historico:capturar-questao', error, { number }); }
+          const identity = questionHistoryIdentity(block, number);
+          if (!identity) continue;
+          try { await questionHistoryRequest('capture', identity, { content }); }
+          catch (error) {
+            GSSF_HISTORY_STATE.dirtyNumbers.add(number);
+            if (GSSF_HISTORY_STATE.globalButton) {
+              GSSF_HISTORY_STATE.globalButton.textContent = 'Histórico: falha ao salvar';
+              GSSF_HISTORY_STATE.globalButton.title = error.message;
+            }
+            reportNonFatalError('historico:capturar-questao', error, { number });
+          }
         }
       }
       if (GSSF_HISTORY_STATE.active && fullScan && !incomplete) {
@@ -177,12 +189,13 @@
   async function openQuestionHistory(block, number, savedQuestion = '') {
     closeQuestionHistory();
     const question = savedQuestion || questionHistoryIdentity(block, number);
+    if (!question) { toast('O Forms ainda não expôs a identidade desta questão. Tente após sair da edição.'); return; }
     const overlay = document.createElement('div'); overlay.className = 'gssf-history-overlay';
     const dialog = document.createElement('section'); dialog.className = 'gssf-history-dialog';
     dialog.setAttribute('role', 'dialog'); dialog.setAttribute('aria-modal', 'true');
     dialog.setAttribute('aria-label', `Histórico da questão ${number}`);
     const heading = document.createElement('header');
-    const title = document.createElement('h2'); title.textContent = `Histórico · questão ${number}`;
+    const title = document.createElement('h2'); title.textContent = question.startsWith('number:') ? `Histórico antigo · posição ${number}` : `Histórico · questão ${number}`;
     const close = document.createElement('button'); close.type = 'button'; close.textContent = 'Fechar'; close.addEventListener('click', closeQuestionHistory);
     heading.append(title, close);
     const summary = document.createElement('p'); summary.className = 'gssf-history-summary'; summary.textContent = 'Carregando versões locais…';
@@ -262,8 +275,8 @@
       questions.sort((a, b) => naturalOrder.compare(a.lastPrompt || a.question, b.lastPrompt || b.question));
       questions.forEach((item) => {
         const button = document.createElement('button'); button.type = 'button'; button.className = 'gssf-history-form-item';
-        button.textContent = `${item.lastPrompt || item.question} · ${item.count} versão(ões)`;
-        button.addEventListener('click', () => openQuestionHistory(null, item.question.replace(/^number:/, ''), item.question));
+        button.textContent = `${item.question.startsWith('number:') ? 'Histórico antigo por posição · ' : ''}${item.lastPrompt || item.question} · ${item.count} versão(ões)`;
+        button.addEventListener('click', () => openQuestionHistory(null, item.number || item.question.replace(/^number:/, ''), item.question));
         list.appendChild(button);
       });
     } catch (error) { summary.textContent = error.message; }

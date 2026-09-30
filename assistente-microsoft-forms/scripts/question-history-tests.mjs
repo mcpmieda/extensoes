@@ -1,12 +1,16 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import vm from 'node:vm';
+import { webcrypto } from 'node:crypto';
 
 const source = await fs.readFile(new URL('../src/background/06-question-history.js', import.meta.url), 'utf8');
 const contentSource = await fs.readFile(new URL('../src/content/question-history/index.js', import.meta.url), 'utf8');
 const contentContext = vm.createContext({});
 vm.runInContext(contentSource + '\nthis.looksTransient = questionHistoryLooksTransient;', contentContext);
 const looksTransient = contentContext.looksTransient;
+assert.equal(vm.runInContext(`questionHistoryIdentity({ querySelector: () => ({ id: 'QuestionId_stable' }) }, 46)`, contentContext), 'id:QuestionId_stable');
+assert.equal(vm.runInContext(`questionHistoryIdentity({ querySelector: () => ({ id: 'QuestionId_stable' }) }, 45)`, contentContext), 'id:QuestionId_stable');
+assert.equal(vm.runInContext(`questionHistoryIdentity({ querySelector: () => null }, 1)`, contentContext), null);
 assert.equal(looksTransient({ options: [] }, true, false), true);
 assert.equal(looksTransient({ options: [{ correct: true }, { correct: true }, { correct: true }] }, true, false), true);
 assert.equal(looksTransient({ options: [{ correct: false }, { correct: true }, { correct: false }] }, true, false), false);
@@ -45,6 +49,13 @@ vm.runInContext(`blocksForHistoryTest.splice(1, 1); collectQuestionBlocks = () =
 await contentContext.historyCaptureTest.capture();
 assert.deepEqual([...contentContext.historyCaptureTest.captured], ['1', '2', '3', '2', '3', '1', '3']);
 assert.equal(contentContext.historyCaptureTest.state.questionCount, 3);
+vm.runInContext(`isActuallyEditingQuestion = () => false; GSSF_HISTORY_STATE.structural = true;`, contentContext);
+await contentContext.historyCaptureTest.capture();
+assert.equal(contentContext.historyCaptureTest.state.questionCount, 2);
+contentContext.historyCaptureTest.captured.length = 0;
+contentContext.historyCaptureTest.state.dirtyNumbers.add(1);
+await contentContext.historyCaptureTest.capture();
+assert.deepEqual([...contentContext.historyCaptureTest.captured], ['1']);
 assert.equal(vm.runInContext(`questionHistoryEditedNumber({ n: 57, querySelector: () => ({ getAttribute: () => 'Título da pergunta 46 Insira o título da pergunta aqui' }) })`, contentContext), 46);
 const records = new Map();
 const versions = new Map();
@@ -77,6 +88,7 @@ const database = {
       put: (value) => request(() => { records.set(value.id, copy(value)); return value.id; })
     };
     const history = {
+      clear: () => request(() => versions.clear()),
       get: (key) => request(() => copy(versions.get(keyOf(key)))),
       getAll: (range) => request(() => copy([...versions.values()].filter((item) => item.id === range[0][0]).sort((a, b) => a.sequence - b.sequence))),
       put: (value) => request(() => { versions.set(keyOf([value.id, value.sequence]), copy(value)); return value.sequence; }),
@@ -99,13 +111,14 @@ const database = {
   }
 };
 const context = vm.createContext({
+  crypto: webcrypto, TextEncoder,
   chrome: { runtime: { onMessage: { addListener() {} } } },
   IDBKeyRange: { bound: (a, b) => [a, b] },
   database
 });
 vm.runInContext(source + `
   gssfOpenHistoryDatabase = async () => database;
-  this.historyApi = { run: gssfQuestionHistory, identity: gssfHistoryIdentity };
+  this.historyApi = { run: gssfQueuedQuestionHistory, identity: gssfHistoryIdentity };
 `, context);
 const api = context.historyApi;
 const base = { form: 'forms.office.com/Pages/DesignPageV2.aspx?form=abc', question: 'number:1' };
@@ -123,5 +136,14 @@ assert.equal((await api.run({ ...base, action: 'listForm' }))[0]?.count, 1);
 await api.run({ ...base, action: 'clear' });
 assert.equal((await api.run({ ...base, action: 'list' })).length, 0);
 assert.equal((await api.run({ ...base, action: 'listForm' })).length, 0);
+assert.equal(records.get(api.identity(base)).lastPrompt, undefined);
+assert.match(records.get(api.identity(base)).fingerprint, /^sha256:[a-f0-9]{64}$/);
 assert.equal((await api.run({ ...base, action: 'capture', content: { prompt: 'B', options: [] } })).saved, false);
+await Promise.all([
+  api.run({ ...base, action: 'capture', content: { prompt: 'C', options: [] } }),
+  api.run({ ...base, action: 'clearAll' })
+]);
+assert.equal(versions.size, 0);
+assert.equal(records.get(api.identity(base)).lastPrompt, undefined);
+assert.equal((await api.run({ ...base, action: 'capture', content: { prompt: 'C', options: [] } })).saved, false);
 console.log('Histórico de questões: identidade, limite, deduplicação e exclusões aprovados.');

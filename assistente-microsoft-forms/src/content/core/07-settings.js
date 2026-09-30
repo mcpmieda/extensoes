@@ -157,12 +157,16 @@
   }
 
   async function cleanAllAppSavedData() {
+    const historyWasActive = GSSF_HISTORY_STATE.active;
+    GSSF_HISTORY_STATE.active = false;
+    clearTimeout(GSSF_HISTORY_STATE.refresh);
     try {
       clearTimeout(APP.autoTimer);
       clearTimeout(APP.mutationTimer);
       APP.autoTimer = null;
       APP.mutationTimer = null;
       GSSF_STORAGE.suspendWrites();
+      await questionHistoryRequest('clearAll', 'all');
       await globalThis.GSSFAnswerCard?.clearStoredData?.({ resetRuntime: true });
       await globalThis.GSSFPrinting?.clearStoredData?.({ resetRuntime: true });
       await globalThis.GSSFDiagnostic?.clearStoredData?.({ resetRuntime: true });
@@ -182,13 +186,14 @@
       toast('Não foi possível limpar todos os dados.');
     } finally {
       GSSF_STORAGE.resumeWrites();
+      GSSF_HISTORY_STATE.active = historyWasActive;
     }
   }
 
   async function runClearSavedData() {
     const ok = await askConfirm({
       title: 'Limpar todo o app?',
-      message: 'Isso apaga todos os dados salvos pelo assistente: backups, gabaritos, registros, configurações, alunos, imagens do Cartão-resposta, lotes da Impressão, avaliações do Diagnóstico e dados salvos do Organizador. Para confirmar, digite limpar.',
+      message: 'Isso apaga todos os dados salvos pelo assistente: histórico de questões e suas imagens, backups, gabaritos, registros, configurações, alunos, imagens do Cartão-resposta, lotes da Impressão, avaliações do Diagnóstico e dados salvos do Organizador. Para confirmar, digite limpar.',
       confirmText: 'Limpar tudo',
       cancelText: 'Cancelar',
       danger: true,
