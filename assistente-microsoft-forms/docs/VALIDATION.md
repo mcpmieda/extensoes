@@ -1,3 +1,23 @@
+# Medição no Edge — 15.9.6 e ajuste 15.9.7
+
+30/09/2026. Versão 15.9.6 confirmada no painel: 46 questões, 184 alternativas, 29 imagens e 11 seções. Histórico da primeira questão abriu por ID permanente, com imagem local carregada (800 px); índice geral mostrou 46 registros atuais e 46 legados separados. Console capturado sem avisos/erros. Isso não equivale à validação de todos os fluxos de escrita/exclusão ou sincronização.
+
+Processo renderer 19916, três janelas consecutivas de aproximadamente 10 s por condição, sem interações planejadas dentro de cada janela:
+
+| Condição | Segundos de CPU nas três janelas |
+|---|---|
+| Painel aberto | 1,516 / 1,984 / 1,656 |
+| Painel oculto | 0,500 / 0,516 / 0,781 |
+| Painel reaberto | 2,391 / 1,719 / 2,250 |
+
+Média aberto/reaberto: 1,919 s de CPU por 10 s; oculto: 0,599 s. São medições do processo previamente identificado, não atribuição exclusiva à extensão, nem INP ou percentual global de CPU. A comparação não desativa integralmente a extensão. Carga do Forms, coleta de lixo e outras atividades não foram isoladas.
+
+O log da própria extensão registrou análises de 3523, 3600 e 2848 ms. Um clique de atualização excedeu o prazo da automação, embora a análise tenha concluído. Portanto a 15.9.6 ainda não foi aprovada como livre de travamentos.
+
+A 15.9.7 passa a cooperar com o event loop entre questões e remove animações contínuas das pendências. Testes verificam equivalência do executor, cancelamento por mutação/edição e fechamento do gerador. A nova versão precisa de recarga e medição no Edge antes de concluir melhora de responsividade. Nenhum push nesta sessão.
+
+---
+
 # Registro de validação — 15.9.6
 
 Data: 30 de setembro de 2026.

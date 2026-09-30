@@ -1,4 +1,6 @@
-# Arquitetura — referência 15.8.1 e evolução 15.9.6
+# Arquitetura — referência 15.8.1 e evolução 15.9.7
+
+Na 15.9.7, `auditPageSteps` é um gerador compartilhado: `auditPage` o consome sincronamente para preservar os contratos existentes; o painel usa `auditPageCooperatively`, cedendo uma macrotarefa entre questões. Revisão de conteúdo, prazo de edição, documento ativo, visibilidade e ciclo de vida invalidam a leitura em andamento. O log informa tempo total e maior etapa de leitura; a etapa de apresentação do painel ainda não está incluída nessa maior etapa. Não há promessa de limite rígido de duração por questão.
 
 ## Histórico e desempenho na 15.9.6
 
@@ -14,7 +16,7 @@ Transformar uma distribuição pronta em uma base editável e rastreável sem al
 
 A arquitetura em execução permanece a original: o manifesto carrega o armazenamento, SheetJS, JSZip e o content script; o service worker cuida das mensagens, imagens e mídia persistida. O conteúdo do Forms não ganhou servidor adicional. Na 15.9.2, lotes pedagógicos são persistidos pelo service worker em IndexedDB da própria extensão.
 
-O histórico de questões adiciona o protocolo `GSSF_QUESTION_HISTORY` ao service worker, restrito aos remetentes já autorizados do Forms. O banco `gssf-question-history-v1` armazena metadados e versões separadamente, em transações atômicas. A identidade usa identificadores de questão expostos pelo Forms quando disponíveis e recorre ao número da questão quando não há identificador estável; nesse caso, renumerações podem associar uma versão à posição anterior. O painel oferece uma lista geral para consultar versões de questões removidas.
+O histórico de questões adiciona o protocolo `GSSF_QUESTION_HISTORY` ao service worker, restrito aos remetentes já autorizados do Forms. O banco `gssf-question-history-v1` armazena metadados e versões separadamente, em transações atômicas. Novas capturas exigem identidade estável exposta pelo Forms; os registros legados por número ficam separados. O painel oferece uma lista geral para consultar versões de questões removidas.
 
 ## Camadas de edição
 
