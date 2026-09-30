@@ -1,6 +1,6 @@
 # Segurança e publicação pública
 
-## Estado da 15.9.3
+## Estado da 15.9.4
 
 A 15.9.0 corrigiu os principais achados da auditoria registrada na issue #1. A 15.9.1 reforçou a integridade das alternativas matemáticas. A 15.9.2 corrige lacunas remanescentes em alternativas textuais, concorrência, migração, limpeza e validação de EvalBee, sem ampliar permissões nem adicionar telemetria, servidores ou código remoto. O pacote continua executando dependências vendorizadas localmente.
 

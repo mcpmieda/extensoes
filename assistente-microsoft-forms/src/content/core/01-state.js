@@ -2,7 +2,7 @@
 // Fonte modular: core.
   const GSSF_STORAGE = globalThis.GSSF_STORAGE;
 
-  const GSSF_VERSION = '15.9.3';
+  const GSSF_VERSION = '15.9.4';
 
   const GSSF_BUILD = `v${GSSF_VERSION}-question-history-2026-09-29`;
 
