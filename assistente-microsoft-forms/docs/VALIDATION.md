@@ -1,3 +1,29 @@
+# Auditoria de confiabilidade da importação entre Forms
+
+30/09/2026, código local 575edae, runtime 5eef3bb. Verificação solicitada pelo proprietário; nenhuma correção de runtime nesta rodada. Reprodução local em `reports/import-reliability-audit.mjs` (ignorado pelo Git), executando os fontes completos de banco, relatório de respostas, seções, modelo e importador em Node/vm. UI, transporte e armazenamento são controlados nesse ensaio; os casos abaixo não são todos testes nativos.
+
+## Teste autenticado nos dois Forms fornecidos
+
+A origem foi lida pela extensão e apareceu automaticamente no destino. Origem: 44 questões, 36 respostas disponíveis; destino descartável: 46 questões, inicialmente sem ajustes internos. Importação individual da Q4, cujo conteúdo era diferente e cuja letra na origem era D contra C no destino: um clique aplicou D no gabarito interno, sem confirmação. A interface indicava texto diferente antes e mostrou divergência depois. Após recarregar o destino, D permanecia importada. A importação não altera a marcação correta nativa do Microsoft Forms: a rota escreve no banco interno da extensão.
+
+Restauração: usada a limpeza seletiva de importadas, contendo somente Q4. Após nova recarga, o painel voltou a 0 ajustes internos, nenhuma marcação no histórico e distribuição original A=6/B=14/C=21/D=5. Nenhuma questão ou alternativa foi editada nos dois Forms; nenhum aluno ou resultado foi usado. Console capturado sem erros/avisos. A origem permanece disponível no banco local.
+
+## Achados reproduzidos
+
+1. **Alta — associação por posição.** `importSelectedAnswersFromSource` associa número da origem ao mesmo número no destino. No ensaio com duas questões trocadas, importou A/B nas posições antigas, mesmo classificando os textos como diferentes. `analyzeSourceSectionsForImport` aceitou a seção como `ready` porque nome, faixa e contagem eram iguais; não valida identidade do conteúdo.
+2. **Alta — ordem das alternativas ignorada.** Alternativas Saturno/Marte foram permutadas; o comparador manteve `similar` e importou A, embora Saturno estivesse em B no destino. As alternativas são concatenadas e comparadas por conjuntos de palavras, sem mapear a resposta pelo conteúdo. Controle positivo com questões/alternativas idênticas importou A corretamente.
+3. **Alta — divergência não exige confirmação nos botões usuais.** Os handlers individual e de selecionadas passam `skipConfirm:true` sem `alertOnReplace`. Reprodução autenticada da Q4 confirmou aplicação imediata. Há rótulo de revisão, mas ele não bloqueia a operação.
+4. **Alta — letra inexistente no destino.** No ensaio individual, origem com resposta D e destino com apenas duas alternativas aceitou D e contou uma importação concluída. A validação da quantidade de alternativas existe no fluxo de seções, não na rotina comum de aplicação.
+5. **Alta — sucesso antes da persistência.** Transporte simulado falhou nas duas gravações agendadas; o importador já havia retornado 1 e mostrado “Importação concluída”. O banco restaura o cache confirmado ao falhar, mas o importador não aguarda a fila/flush antes de anunciar sucesso. O teste real de gravação bem-sucedida persistiu após recarga; não foi induzida falha no armazenamento real.
+6. **Média — questão sem resposta pula comparação.** Um destino com enunciado e opções totalmente diferentes, mas sem resposta marcada, recebeu `match=blank` e aceitou a letra da origem. A ausência de gabarito é confundida com modelo de questão vazio para fins de comparação.
+7. **Média — ajuste manual prevalece sobre importação anunciada.** No ensaio, destino com manual B recebeu imported A e sucesso de aplicação, mas a resposta efetiva permaneceu B. Preservar a manual pode ser intencional; o retorno de sucesso e a comunicação não distinguem resposta guardada de resposta efetivamente usada.
+
+Controle de importação parcial: questão sem destino foi descartada, e a existente foi importada; o toast genérico não detalha o descarte. A origem real sem seções teve importação por seção indisponível, mas a mensagem a atribuiu a uma versão antiga, apesar da leitura atual. Isso é uma mensagem inadequada, não prova de falha na captura de seções.
+
+**Conclusão:** a transferência e a persistência funcionaram no caso real, mas a associação correta não está garantida. Não aprovada para importar em lote sem conferência, sobretudo após reordenação de questões/alternativas ou diferenças de conteúdo. Prioridades: correspondência verificável, validação da letra e quantidade de alternativas, tratamento explícito de conflitos/manuais e confirmação da gravação antes do sucesso. Não houve publicação no GitHub nem alteração da pasta instalada/ZIP nesta auditoria.
+
+---
+
 # Teste real de 5eef3bb — redução confirmada no tempo da análise
 
 30/09/2026, após recarga da extensão confirmada pelo proprietário e recarga do Forms. Duas análises manuais estabilizadas: **676 ms** e **587 ms**. Maior etapa de leitura: **84 ms** e **80 ms**, ambas na descoberta de questões. Apresentação do painel: **102 ms** e **70 ms**. Finalização: **33 ms** e **27 ms**. Referência anterior às duas otimizações: 3979–4108 ms; revisão intermediária: 2303 ms. Os tempos são instrumentação da extensão nesta sessão, sem controle de carga da máquina ou medição de INP. A carga automática não gerou novo log de duração porque ficou abaixo do limiar de registro; o log antigo persistido não foi usado como medida nova.
