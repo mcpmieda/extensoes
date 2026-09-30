@@ -1,6 +1,6 @@
 # Assistente do Microsoft Forms
 
-Versão de desenvolvimento **15.9.7**, derivada da referência histórica `V15.8.1(2).zip`.
+Versão de desenvolvimento **15.9.8**, derivada da referência histórica `V15.8.1(2).zip`.
 
 A 15.9.7 divide a leitura do painel em etapas com oportunidade de entrada e pintura entre questões. Leituras interrompidas por edição, mutação ou troca de formulário são descartadas. Indicadores de pendência deixaram de animar continuamente. As ações que exigem auditoria síncrona mantêm o contrato anterior; a rotina de edição matemática não foi alterada.
 
@@ -51,7 +51,7 @@ As versões e imagens agora participam do backup consolidado. Exportar em um nav
 
 A consulta carrega até cinco versões por página, com orçamento de 28 milhões de caracteres por resposta (uma versão individual pode ocupar a página). Cada questão admite até 100 versões: ao atingir esse limite, a captura mostra uma falha e aguarda o usuário exportar/apagar versões. Não há descarte automático. A limpeza de todo o app também apaga o histórico. Após exclusões, só permanece uma assinatura SHA-256 sem o texto para evitar recriação imediata da versão apagada.
 
-Na edição de um questionário, o assistente salva uma primeira versão das questões carregadas e registra novas versões após mudanças de conteúdo. O botão discreto à esquerda de cada questão abre suas versões; **Histórico de questões**, no canto inferior esquerdo, também permite consultar questões que já foram removidas do Forms. Cada versão pode ser apagada separadamente, ou todas as versões de uma questão podem ser excluídas. A exclusão não recria imediatamente o conteúdo apagado; uma nova edição volta a gerar uma versão.
+Na 15.9.8, o histórico é exclusivamente manual. Em **Salvamento de dados**, clique em **Gravar histórico agora** para registrar as questões carregadas. **Consultar histórico** abre as versões anteriores, inclusive de questões removidas. Não existem selos sobre as questões, captura ao abrir/editar ou listeners de rolagem do histórico. Novas edições só entram no histórico após outro clique; versões idênticas não são duplicadas. Os registros antigos, backup e exclusão continuam disponíveis. Se houver edição durante a gravação, as questões restantes são informadas como não gravadas; não há tentativa automática posterior.
 
 O histórico usa IndexedDB no armazenamento privado da instalação da extensão e permanece após fechar o navegador ou desligar o computador. Ele não é sincronizado entre Chrome e Edge, entre perfis ou entre instalações com identidades diferentes. Apagar dados da extensão no navegador também apaga o histórico. A extensão tenta guardar uma cópia local das imagens permitidas, até 5 MB por imagem e 20 MB por versão; quando não consegue, preserva o endereço e o texto alternativo. Fórmulas são preservadas como representação textual/MathML quando presentes na página. Questões que o Forms não carregou no DOM ainda não podem ser capturadas até aparecerem na edição.
 

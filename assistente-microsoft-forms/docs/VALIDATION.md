@@ -1,3 +1,11 @@
+# Histórico manual — 15.9.8
+
+Removidos selos por questão, botão flutuante e captura automática do histórico. Gravação e consulta disponíveis no painel em Salvamento de dados. Testes cobrem ativação sem captura, captura manual, bloqueio durante análise, falhas reportadas e interrupção após alteração do formulário. Regressões verificam ausência de timers/listeners de rolagem e de chamadas de captura no observador e na análise. Banco e versões existentes preservados. A rotina matemática não foi alterada.
+
+Verificação técnica e comportamental executada antes de empacotar. Validação da nova interface no Edge depende de recarregar a extensão e a página; não concluir eliminação de todos os travamentos a partir desta alteração.
+
+---
+
 # Validação ao vivo — 15.9.7
 
 30/09/2026, sessão posterior à recarga. Versão confirmada no painel. Log da extensão: 1410 ms / maior etapa 327 ms; 2780 ms / 432 ms; 3858 ms / 571 ms. Tempo total não é tempo contínuo de bloqueio; maior etapa cobre a leitura, não todas as tarefas do Forms ou a apresentação do painel. Ainda existem etapas suficientemente longas para engasgos perceptíveis.
