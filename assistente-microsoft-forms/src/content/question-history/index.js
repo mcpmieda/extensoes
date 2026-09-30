@@ -110,11 +110,8 @@
     try {
       const blocks = collectQuestionBlocks();
       if (!blocks.length) return;
-      if (GSSF_HISTORY_STATE.initialCaptured && blocks.length < GSSF_HISTORY_STATE.questionCount && isActuallyEditingQuestion()) {
-        GSSF_HISTORY_STATE.fullScan = true;
-        return;
-      }
-      const fullScan = !GSSF_HISTORY_STATE.initialCaptured || GSSF_HISTORY_STATE.fullScan || (GSSF_HISTORY_STATE.structural && blocks.length !== GSSF_HISTORY_STATE.questionCount);
+      const incomplete = GSSF_HISTORY_STATE.initialCaptured && blocks.length < GSSF_HISTORY_STATE.questionCount;
+      const fullScan = !GSSF_HISTORY_STATE.initialCaptured || GSSF_HISTORY_STATE.fullScan || incomplete || (GSSF_HISTORY_STATE.structural && blocks.length !== GSSF_HISTORY_STATE.questionCount);
       const dirtyNumbers = new Set(GSSF_HISTORY_STATE.dirtyNumbers);
       const editing = isActuallyEditingQuestion();
       GSSF_HISTORY_STATE.fullScan = false;
@@ -137,7 +134,7 @@
           catch (error) { reportNonFatalError('historico:capturar-questao', error, { number }); }
         }
       }
-      if (GSSF_HISTORY_STATE.active && fullScan) {
+      if (GSSF_HISTORY_STATE.active && fullScan && !incomplete) {
         GSSF_HISTORY_STATE.initialCaptured = true;
         GSSF_HISTORY_STATE.questionCount = blocks.length;
       }
