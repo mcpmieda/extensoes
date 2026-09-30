@@ -1,6 +1,6 @@
 {
   "name": "assistente-microsoft-forms",
-  "version": "15.9.4",
+  "version": "15.9.5",
   "private": true,
   "description": "Fontes modulares do Assistente do Microsoft Forms.",
   "engines": {

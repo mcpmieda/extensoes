@@ -1,8 +1,8 @@
 # Assistente do Microsoft Forms
 
-Versão de desenvolvimento **15.9.4**, derivada da referência histórica `V15.8.1(2).zip`.
+Versão de desenvolvimento **15.9.5**, derivada da referência histórica `V15.8.1(2).zip`.
 
-A 15.9.0 deixou de ser uma migração byte a byte e corrigiu os principais riscos da auditoria. A 15.9.1 reforçou a ação de inserir letras em alternativas matemáticas. A 15.9.2 amplia essa proteção para alternativas textuais, endurece migração/concorrência dos lotes, valida melhor arquivos EvalBee e torna operações de limpeza verificáveis. A 15.9.3 acrescenta o histórico local de questões. A **15.9.4** atualiza o número de versão para publicação, sem mudança funcional. A referência original 15.8.1 continua preservada em `config/baseline-v15.8.1.json`.
+A 15.9.0 deixou de ser uma migração byte a byte e corrigiu os principais riscos da auditoria. A 15.9.1 reforçou a ação de inserir letras em alternativas matemáticas. A 15.9.2 amplia essa proteção para alternativas textuais, endurece migração/concorrência dos lotes, valida melhor arquivos EvalBee e torna operações de limpeza verificáveis. A 15.9.3 acrescenta o histórico local de questões. A 15.9.4 atualiza o número de versão para publicação. A **15.9.5** reduz as leituras repetidas do histórico e evita versões criadas por estados transitórios do editor. A referência original 15.8.1 continua preservada em `config/baseline-v15.8.1.json`.
 
 > **Segurança:** SheetJS CE foi atualizado para 0.20.3 e planilhas passam por limites compartilhados de tamanho, estrutura ZIP e dimensões antes do processamento. Consulte [Segurança](docs/SECURITY.md).
 

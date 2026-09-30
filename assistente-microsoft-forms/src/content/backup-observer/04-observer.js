@@ -17,6 +17,21 @@
       || document.documentElement;
   }
 
+  function questionMutationContext(mutation) {
+    const selector = '[data-automation-id="questionWrapper"], [data-automation-id="questionDesignerCard"]';
+    const changed = [...(mutation.addedNodes || []), ...(mutation.removedNodes || [])]
+      .filter((node) => node.nodeType === 1);
+    if (mutation.type === 'childList' && changed.some((node) => node.matches?.(selector) || node.querySelector?.(selector))) {
+      const added = [...(mutation.addedNodes || [])].find((node) => node.nodeType === 1 && (node.matches?.(selector) || node.querySelector?.(selector)));
+      return { structural: true, target: added?.matches?.(selector) ? added : added?.querySelector?.(selector) || null };
+    }
+    const target = mutation.target.nodeType === 1 ? mutation.target : mutation.target.parentElement;
+    const question = target?.closest?.(selector);
+    if (question) return { structural: false, target: question };
+    const section = target?.closest?.('[data-automation-id*="section" i]');
+    return section ? { structural: false, target: null } : null;
+  }
+
   function queueMutationAnalysis() {
     clearTimeout(APP.mutationTimer);
     if (APP.mutationIdleCallback && typeof cancelIdleCallback === 'function') cancelIdleCallback(APP.mutationIdleCallback);
@@ -35,7 +50,17 @@
       APP.autoObserver?.disconnect?.();
       APP.autoObserver = new MutationObserver((mutations) => {
         if (APP.lifecycle.destroyed || APP.busy || document.hidden || APP.omrModeState?.active) return;
-        if (!mutations.some((mutation) => !mutationTouchesOnlyIgnoredNodes(mutation))) return;
+        const changes = mutations.filter((mutation) => !mutationTouchesOnlyIgnoredNodes(mutation));
+        if (!changes.length) return;
+        const relevant = changes.map(questionMutationContext).filter(Boolean);
+        const queued = new Set();
+        for (const item of relevant) {
+          if (!item.target && !item.structural) continue;
+          const key = item.target || 'structural';
+          if (queued.has(key)) continue;
+          queued.add(key);
+          queueQuestionHistoryCapture(item.target, item.structural);
+        }
         const now = Date.now();
         if (now - APP.lastMutationAt < GSSF_TIMING.mutationGuardMs) return;
         APP.lastMutationAt = now;
@@ -59,6 +84,7 @@
       if (!editable && !isQuestionActivityTarget(target, false)) return;
       const now = Date.now();
       markQuestionEditing();
+      if (event.type === 'input') queueQuestionHistoryCapture(target);
       if (now - APP.lastMarkEditingAt > 1400) {
         APP.lastMarkEditingAt = now;
         scheduleAutoAnalysis(2600);
