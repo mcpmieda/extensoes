@@ -1,3 +1,13 @@
+# Teste real de 5eef3bb — redução confirmada no tempo da análise
+
+30/09/2026, após recarga da extensão confirmada pelo proprietário e recarga do Forms. Duas análises manuais estabilizadas: **676 ms** e **587 ms**. Maior etapa de leitura: **84 ms** e **80 ms**, ambas na descoberta de questões. Apresentação do painel: **102 ms** e **70 ms**. Finalização: **33 ms** e **27 ms**. Referência anterior às duas otimizações: 3979–4108 ms; revisão intermediária: 2303 ms. Os tempos são instrumentação da extensão nesta sessão, sem controle de carga da máquina ou medição de INP. A carga automática não gerou novo log de duração porque ficou abaixo do limiar de registro; o log antigo persistido não foi usado como medida nova.
+
+Verificação no DOM: 46 grupos e 184 alternativas, iguais ao painel. Painel mantém 29 imagens e 11 seções, os seis alertas conhecidos (Q22/Q21 e Q42–46/Q41) e exatamente as mesmas 46 letras de gabarito conferidas antes. Navegação pelo mapa para Q46 concluiu e o marcador ativo passou a 46, sem timeout nesta tentativa. Não houve edição de conteúdo.
+
+Histórico manual após recarga: **0 novas versões, 46 sem alterações, 0 não gravadas, 0 falhas**. Horário da análise permaneceu em 10:57:53 durante a gravação. Console capturado sem avisos/erros. Evidência de melhora substancial nesta sessão, sem aprovação geral de todas as funções: persistem etapas acima de 50 ms e não foi medido o atraso real de digitação/rolagem. Nenhuma nova alteração de runtime, necessidade de recarga ou publicação remota nesta rodada.
+
+---
+
 # Teste real de 8abd03d e redução da varredura de modo
 
 30/09/2026. Após recarga da extensão confirmada pelo proprietário e recarga do Forms: análise inicial 2247 ms, maior etapa 450 ms (finalização), apresentação 1207 ms. Análise manual estabilizada: 2303 ms, maior etapa 522 ms (finalização), apresentação 1103 ms. Na manual: descoberta 120 ms, seções 7 ms, localização de alternativas 13 ms, leitura das alternativas 172 ms, enunciados/modelos vazios 90 ms e repetições 67 ms. A análise anterior custava 3979–4108 ms; houve redução nesta sessão, sem ensaio controlado de CPU nem medida de INP. Etapas longas persistem, portanto fluidez não aprovada.
