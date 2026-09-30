@@ -1,4 +1,18 @@
-# Correção local da importação — validação autenticada pendente
+# Validação autenticada da importação corrigida — 30/09/2026
+
+Runtime local `5a61452`, extensão 15.9.8 recarregada pelo proprietário e ambos os Forms recarregados. No par original (origem 44 questões/36 respostas; destino 46 questões), as 36 respostas ficaram bloqueadas por conteúdo incompatível ou ambiguidade. Botão individual da Q4 e botão de importar selecionadas desabilitados. O caso anterior de Q4=D sobrescrever indevidamente Q4=C não está mais permitido.
+
+Controle positivo pela interface nativa no destino descartável: criada Q47 temporária com o enunciado completo da Q4 de origem, alternativas trocadas entre A e D e sem resposta correta nativa. O painel identificou **origem Q4 → destino Q47, D → A**. Cancelar a confirmação manteve 46 marcadas/1 em branco/0 ajustes; confirmar resultou em 47 marcadas/0 em branco/1 ajuste e mensagem de uma resposta gravada e conferida. Após recarregar, Q47=A permaneceu importada com origem Q4. A marcação nativa do Forms continuou ausente, como esperado para o gabarito interno do app.
+
+Um primeiro controle com texto sobre a Copa foi corretamente bloqueado porque a origem continha uma imagem que não foi copiada. Isso não foi tratado como defeito da implementação após inspeção do DOM. O controle positivo acima usa uma questão sem imagem. Foram removidos, pela interface, a importação de Q47 e a própria questão temporária. Após nova recarga: 46 questões, 184 alternativas, 29 imagens, 11 seções, 46 marcadas, zero ajustes e distribuição original A=6/B=14/C=21/D=5. Origem não editada.
+
+Análises manuais estabilizadas com a nova evidência completa: **647 ms e 706 ms**. Maior etapa: descoberta de questões, **92 ms e 82 ms**; painel: **77 ms e 81 ms**. Console capturado sem avisos/erros na leitura final. Houve falhas intermitentes de prazo na automação do navegador, resolvidas após conferir o estado e usar edição pelo teclado; esses prazos não medem travamento do Forms. Não foi medido INP nem latência contínua de digitação. Ainda existem etapas acima de 50 ms.
+
+Validado ao vivo: bloqueio de conteúdo incompatível/imagem ausente, remapeamento simultâneo de número e letra, confirmação, cancelamento, persistência após recarga e limpeza seletiva. Importação por seção, concorrência e falhas de armazenamento continuam cobertas por inspeção/testes locais, sem novos ensaios autenticados nesta rodada. Não houve alteração adicional de runtime, pasta instalada ou ZIP, nem publicação no GitHub.
+
+---
+
+# Correção local da importação — implementação
 
 Associação por evidência completa do enunciado e das alternativas, preservando sinais, representações MathML, imagens e sobrescritos/subscritos na comparação. Prévia truncada e semelhança por palavras não autorizam importação. Uma origem deve corresponder a um único enunciado no destino; cada alternativa deve ter correspondência única. Questões e alternativas reordenadas são remapeadas quando essa prova existe. Diferenças, duplicatas, letras inválidas, quantidade divergente e leitura antiga sem evidência completa são bloqueadas. As leituras antigas continuam armazenadas; é necessário reabrir origem e destino para renovar a evidência. A comparação conservadora pode bloquear representações visualmente equivalentes.
 
