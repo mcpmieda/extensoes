@@ -1,16 +1,16 @@
 
 
   function currentVisibleQuestionNumber() {
-    const blocks = collectQuestionBlocks();
+    // A coleta é atualizada pela análise; a rolagem só consulta geometria.
+    const blocks = APP.scrollQuestionBlocks || [];
     if (!blocks.length) return 0;
     const viewTop = 0;
     const viewBottom = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
     const targetY = Math.round(viewBottom * 0.42);
     let best = null;
     let bestScore = Infinity;
-    for (const block of blocks) {
-      if (!visible(block)) continue;
-      const n = questionNumberFromBlock(block);
+    for (const { block, number: n } of blocks) {
+      if (!block.isConnected) continue;
       if (!n) continue;
       const r = block.getBoundingClientRect();
       if (r.bottom < viewTop + 40 || r.top > viewBottom - 40) continue;
@@ -88,6 +88,7 @@
   }
 
   function scheduleActiveLetterMapUpdate() {
+    if (document.hidden || APP.busy || document.getElementById('gssf-root')?.classList.contains('hidden')) return;
     if (APP.letterMapScrollTimer) return;
     APP.letterMapScrollTimer = requestAnimationFrame(() => {
       APP.letterMapScrollTimer = null;

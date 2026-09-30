@@ -106,16 +106,20 @@
     if (!blocks.length) blocks = uniqueElements(blocksByQuestionWrappers());
     if (!blocks.length) blocks = uniqueElements(blocksByRadioGroups());
     if (!blocks.length) blocks = uniqueElements(blocksByNumbers());
-    if (!blocks.length) return [];
+    if (!blocks.length) { APP.scrollQuestionBlocks = []; return []; }
 
-    const numbers = blocks.map(questionNumberFromBlock).filter((n) => n > 0);
-    if (!numbers.length) return blocks.sort(byTop);
+    const byNumber = new Map();
+    blocks.forEach((block) => { const n = questionNumberFromBlock(block); if (n > 0 && !byNumber.has(n)) byNumber.set(n, block); });
+    const numbers = [...byNumber.keys()];
+    if (!numbers.length) { APP.scrollQuestionBlocks = []; return blocks.sort(byTop); }
 
     const sequence = [];
     const max = Math.max(...numbers);
     for (let i = 1; i <= max; i += 1) {
-      const block = blocks.find((candidate) => questionNumberFromBlock(candidate) === i);
+      const block = byNumber.get(i);
       if (block) sequence.push(block); else break;
     }
-    return (sequence.length ? sequence : blocks).sort(byTop);
+    const result = (sequence.length ? sequence : blocks).sort(byTop);
+    APP.scrollQuestionBlocks = result.map((block) => ({ block, number: questionNumberFromBlock(block) }));
+    return result;
   }

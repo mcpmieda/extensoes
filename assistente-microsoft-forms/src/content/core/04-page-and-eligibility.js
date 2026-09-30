@@ -1,6 +1,6 @@
 
 
-  const APP_IGNORED_SELECTOR = '#gssf-root,#gssf-fab,#gssf-toast,#gssf-modal,#gssf-confirm-modal,#gssf-work-overlay,#gssf-question-focus-marker,#dfp-root,#dfp-fab,#dfp-panel,#dfp-toast,[id^="dfp-"]';
+  const APP_IGNORED_SELECTOR = '#gssf-root,#gssf-fab,#gssf-toast,#gssf-modal,#gssf-confirm-modal,#gssf-work-overlay,#gssf-question-focus-marker,.gssf-history-overlay,.gssf-history-button,.gssf-history-all-button,#dfp-root,#dfp-fab,#dfp-panel,#dfp-toast,[id^="dfp-"]';
 
   function isIgnoredAppNode(node) {
     if (!node || node.nodeType !== 1) return false;

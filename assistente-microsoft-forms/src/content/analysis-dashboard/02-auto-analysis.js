@@ -2,13 +2,12 @@
 
   function currentQuestionDomSignature() {
     try {
-      const blocks = collectQuestionBlocks();
-      const numbers = blocks.map(questionNumberFromBlock).filter((n) => n > 0);
+      const identities = Array.from(document.querySelectorAll('[id^="QuestionId_"]'), (node) => node.id).join(',');
       const wrappers = document.querySelectorAll('[data-automation-id="questionWrapper"], [data-automation-id="questionDesignerCard"]').length;
       const radioGroups = document.querySelectorAll('[role="radiogroup"]').length;
       const optionContainers = document.querySelectorAll('[data-automation-id="questionChoiceOptionContainer"]').length;
-      const sections = getSectionBlocks().length;
-      return [numbers.join(','), numbers.length, wrappers, radioGroups, optionContainers, sections].join('|');
+      const sections = document.querySelectorAll('[data-automation-id*="section" i]').length;
+      return [identities, wrappers, radioGroups, optionContainers, sections].join('|');
     } catch (_) {
       return '';
     }
@@ -42,6 +41,7 @@
 
   async function runAutoAnalysis(showToast) {
     if (APP.busy || APP.analysisRunning || document.hidden || APP.omrModeState?.active) return;
+    if (!showToast && document.getElementById('gssf-root')?.classList.contains('hidden')) return;
     if (!showToast && isActuallyEditingQuestion()) {
       scheduleAutoAnalysis(GSSF_TIMING.editingAnalysisMs);
       return;
@@ -119,7 +119,7 @@
     APP.analysisRunning = false;
     APP.lastAnalysisAt = Date.now();
     const elapsed = APP.lastAnalysisAt - analysisStarted;
-    if (elapsed > 1400) log(`Análise automática otimizada. Tempo: ${elapsed} ms.`, false);
+    if (elapsed > 1400) log(`Análise demorou ${elapsed} ms.`, false);
   }
 
   function scheduleAutoAnalysis(delay = GSSF_TIMING.autoAnalysisMs) {

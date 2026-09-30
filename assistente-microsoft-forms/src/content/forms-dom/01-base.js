@@ -146,7 +146,9 @@
       const block = el.closest?.('[data-automation-id="questionWrapper"]') || findLooseSectionBlock(el) || el;
       if (isLikelySectionBlock(block) && !block.closest('#gssf-root')) set.add(block);
     });
-    const labelCandidates = all('*').filter((el) => looksLikeSectionText(textOf(el)) || looksLikeSectionText(el.getAttribute?.('aria-label')));
+    // O Forms identifica os títulos: não medir milhares de nós da página inteira.
+    const labelCandidates = Array.from(document.querySelectorAll('[data-automation-id*="section" i], [aria-label^="Seção" i], [aria-label^="Section" i], [role="heading"]'))
+      .filter((el) => !isIgnoredAppNode(el) && (looksLikeSectionText(textOf(el)) || looksLikeSectionText(el.getAttribute?.('aria-label')) || /sectiontitle/i.test(el.getAttribute?.('data-automation-id') || '')));
     for (const label of labelCandidates) {
       const block = closestQuestionListChild(label) || findLooseSectionBlock(label);
       if (block && isLikelySectionBlock(block) && !block.closest('#gssf-root')) set.add(block);
@@ -157,7 +159,8 @@
       const tx = normalizeText(textOf(child));
       const hasOptions = hasOptionSignals(child);
       const hint = nodeHint(child);
-      const headText = normalizeText(Array.from(child.querySelectorAll('*')).filter(visible).slice(0, 8).map(textOf).join(' '));
+      if (hasOptions) continue;
+      const headText = normalizeText(Array.from(child.querySelectorAll('*')).slice(0, 8).filter(visible).map(textOf).join(' '));
       if (!hasOptions && (/\bsecao\b/.test(headText) || /\bsection\b/.test(hint) || /^secao\b/.test(tx))) set.add(child);
     }
     // O Forms expõe o mesmo cabeçalho de seção em mais de um nó acessível

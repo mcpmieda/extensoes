@@ -1,6 +1,8 @@
 
 
   function mutationTouchesOnlyIgnoredNodes(mutation) {
+    const target = mutation.target?.nodeType === 1 ? mutation.target : mutation.target?.parentElement;
+    if (target && isIgnoredAppNode(target)) return true;
     const changed = [...(mutation.addedNodes || []), ...(mutation.removedNodes || [])].filter(Boolean);
     const nodes = mutation.type === 'childList' && changed.length ? changed : [mutation.target];
     return nodes.length > 0 && nodes.every((node) => {
@@ -53,6 +55,8 @@
         const changes = mutations.filter((mutation) => !mutationTouchesOnlyIgnoredNodes(mutation));
         if (!changes.length) return;
         const relevant = changes.map(questionMutationContext).filter(Boolean);
+        if (!relevant.length) return;
+        APP.sectionBlocksCache = null;
         const queued = new Set();
         for (const item of relevant) {
           if (!item.target && !item.structural) continue;
@@ -90,9 +94,10 @@
         scheduleAutoAnalysis(2600);
       }
     };
-    const scheduleMapAfterInteraction = () => {
-      queueQuestionHistoryCapture();
-      lifecycleTimeout(scheduleMapRefreshIfDomChanged, GSSF_TIMING.interactionMapRefreshMs);
+    const scheduleMapAfterInteraction = (event) => {
+      if (event?.target && isIgnoredAppNode(event.target)) return;
+      clearTimeout(APP.interactionMapTimer);
+      APP.interactionMapTimer = lifecycleTimeout(scheduleMapRefreshIfDomChanged, GSSF_TIMING.interactionMapRefreshMs);
     };
     const scheduleFocusAnalysis = () => scheduleAutoAnalysis(800);
     const scheduleVisibilityAnalysis = () => { if (!document.hidden) scheduleAutoAnalysis(800); };
