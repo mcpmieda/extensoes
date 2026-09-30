@@ -226,6 +226,7 @@
     APP.lastPrecheck = null;
     APP.lastAnalysisKey = '';
     APP.sectionBlocksCache = { value: null, at: 0 };
+    APP.scrollQuestionBlocks = [];
     if (hadUi && reason) console.info(`[GSSF] Assistente desativado: ${reason}`);
   }
 

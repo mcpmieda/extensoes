@@ -155,6 +155,8 @@ async function testPortableBackupKeys() {
       entries: () => stored, flush: async () => {}
     },
     APP: { name: 'test', version: '15.9.2' },
+    exportQuestionHistory: async () => [{ form: 'test', question: 'id:QuestionId_test', content: { prompt: 'Teste' } }],
+    questionHistoryRequest: async () => ({ valid: true }),
     location: { href: 'https://forms.office.com/test' },
     document: { title: 'Test' },
     getFormTitle: () => 'Test', formsBankKey: () => 'gssf:forms_bank',
@@ -167,6 +169,10 @@ async function testPortableBackupKeys() {
     this.api = { collect: collectAllSavedData, read: readBackupFile };
   `, context);
   const backup = await context.api.collect();
+  assert.equal(backup.questionHistory[0].question, 'id:QuestionId_test');
+  assert.equal(backup.backupScope.questionHistory, true);
+  const newRestored = await context.api.read({ name: 'new.json', text: async () => JSON.stringify(backup) });
+  assert.equal(newRestored.questionHistory.length, 1);
   assert.equal(backup.backupScope.excludedMigrationMarkers, true);
   assert.equal(Object.keys(backup.storage).some((key) => key.includes('migrat')), false);
   assert.equal(backup.storage['gssf:custom_setting'], 'keep');

@@ -183,4 +183,36 @@ assert.equal((await api.run({ ...base, action: 'import', rows: exported })).impo
 assert.equal((await api.run({ ...base, action: 'import', rows: exported })).imported, 0);
 await assert.rejects(api.run({ ...base, action: 'import', rows: [{ ...exported[0], media: { x: 'data:text/html;base64,AAAA' } }] }), /Imagem inválida/);
 assert.equal((await api.run({ ...base, action: 'list' })).length, 7);
+const legacyId = api.identity({ ...base, question: 'number:old' });
+records.set(legacyId, { id: legacyId, form: base.form, question: 'number:old', count: 0, nextSequence: 2, fingerprint: '{"prompt":"CONTEUDO APAGADO"}', lastPrompt: 'CONTEUDO APAGADO' });
+vm.runInContext('gssfHistoryMigratedDatabase = null;', context);
+await api.run({ ...base, action: 'listForm' });
+assert.equal(JSON.stringify(records.get(legacyId)).includes('CONTEUDO APAGADO'), false);
+const capped = { ...base, question: 'id:QuestionId_limit' };
+for (let n = 0; n < 100; n++) await api.run({ ...capped, action: 'capture', content: { prompt: `Q${n}`, options: [] } });
+await assert.rejects(api.run({ ...capped, action: 'capture', content: { prompt: 'Q100', options: [] } }), /100 versões/);
+assert.equal((await api.run({ ...capped, action: 'list' })).length, 100);
+
+// A checagem periódica e a rolagem não podem voltar a coletar toda a página.
+const perf = vm.createContext({
+  APP: {},
+  document: { querySelectorAll: () => [], documentElement: { clientHeight: 800 } },
+  window: { innerHeight: 800 },
+  collectQuestionBlocks: () => { throw new Error('Varredura completa no caminho frequente'); }
+});
+vm.runInContext(await fs.readFile(new URL('../src/content/analysis-dashboard/02-auto-analysis.js', import.meta.url), 'utf8') +
+  await fs.readFile(new URL('../src/content/audit-bank/03-map-interaction.js', import.meta.url), 'utf8') +
+  '\nthis.checkSignature = currentQuestionDomSignature; this.visibleNumber = currentVisibleQuestionNumber;', perf);
+assert.notEqual(perf.checkSignature(), '');
+perf.APP.scrollQuestionBlocks = [{ number: 46, block: { isConnected: true, getBoundingClientRect: () => ({ top: 100, bottom: 500, height: 400 }) } }];
+assert.equal(perf.visibleNumber(), 46);
+const discovery = vm.createContext({ APP: {}, uniqueElements: (rows) => rows, byTop: () => 0 });
+vm.runInContext(await fs.readFile(new URL('../src/content/forms-dom/02-question-discovery.js', import.meta.url), 'utf8') + `
+  let reads = 0;
+  getQuestionBlocksFromList = () => Array.from({length: 500}, (_, i) => ({ n: i + 1 }));
+  questionNumberFromBlock = (block) => { reads++; return block.n; };
+  this.collect = collectQuestionBlocks; this.reads = () => reads;
+`, discovery);
+assert.equal(discovery.collect().length, 500);
+assert.ok(discovery.reads() <= 1000, 'A coleta deve ler números em quantidade linear, não quadrática.');
 console.log('Histórico de questões: identidade, limite, deduplicação e exclusões aprovados.');

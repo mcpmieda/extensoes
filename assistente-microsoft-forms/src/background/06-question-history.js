@@ -179,10 +179,12 @@ async function gssfQuestionHistory(message) {
     return gssfHistoryTransaction(db, 'readonly', (questions, versions, done) => {
       const before = Number.isSafeInteger(message.before) && message.before > 0 ? message.before - 1 : Number.MAX_SAFE_INTEGER;
       const rows = [];
+      let bytes = 0;
       const request = versions.openCursor(IDBKeyRange.bound([id, 0], [id, before]), 'prev');
       request.onsuccess = () => {
         const cursor = request.result;
-        if (cursor && rows.length < 5) { rows.push(cursor.value); cursor.continue(); }
+        const size = cursor ? JSON.stringify(cursor.value).length : 0;
+        if (cursor && rows.length < 5 && (!rows.length || bytes + size <= 28_000_000)) { rows.push(cursor.value); bytes += size; cursor.continue(); }
         else done({ versions: rows, more: Boolean(cursor), before: rows.at(-1)?.sequence });
       };
     });

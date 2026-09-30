@@ -114,7 +114,13 @@
       const sequentialBlocks = collectQuestionBlocks();
       const listedBlocks = getQuestionBlocksFromList();
       const blocks = listedBlocks.length > sequentialBlocks.length ? listedBlocks : sequentialBlocks;
-      if (!blocks.length) return;
+      if (!blocks.length) {
+        if (!isActuallyEditingQuestion()) {
+          GSSF_HISTORY_STATE.questionCount = 0;
+          refreshQuestionHistoryButtons([]);
+        }
+        return;
+      }
       const incomplete = GSSF_HISTORY_STATE.initialCaptured && blocks.length < GSSF_HISTORY_STATE.questionCount && isActuallyEditingQuestion();
       const fullScan = !GSSF_HISTORY_STATE.initialCaptured || GSSF_HISTORY_STATE.fullScan || incomplete || (GSSF_HISTORY_STATE.structural && blocks.length !== GSSF_HISTORY_STATE.questionCount);
       const dirtyNumbers = new Set(GSSF_HISTORY_STATE.dirtyNumbers);
