@@ -154,10 +154,13 @@
         <section class="gssf-card gssf-data-card">
           <h3>Salvamento de dados</h3>
           <div class="gssf-actions two">
+            <button id="gssf-save-history" class="gssf-btn ok" type="button">Gravar histórico agora</button>
+            <button id="gssf-view-history" class="gssf-btn" type="button">Consultar histórico</button>
             <button id="gssf-export-data" class="gssf-btn ok" type="button">Baixar backup</button>
             <button id="gssf-import-data" class="gssf-btn ok" type="button">Importar backup</button>
           </div>
           <input id="gssf-import-file" type="file" accept="application/json,.json" multiple hidden>
+          <p id="gssf-history-status" role="status">Histórico manual: clique em gravar para salvar as questões carregadas. Alterações não são gravadas automaticamente.</p>
         </section>
 
         <section class="gssf-card">
@@ -212,6 +215,8 @@
     document.getElementById('gssf-expected-questions')?.addEventListener('blur', saveExpectedQuestionSetting);
     document.getElementById('gssf-map-by-sections')?.addEventListener('change', saveMapSectionSetting);
     document.getElementById('gssf-export-data')?.addEventListener('click', exportAllSavedData);
+    document.getElementById('gssf-save-history')?.addEventListener('click', captureQuestionHistory);
+    document.getElementById('gssf-view-history')?.addEventListener('click', openFormQuestionHistory);
     document.getElementById('gssf-import-data')?.addEventListener('click', () => document.getElementById('gssf-import-file')?.click());
     document.getElementById('gssf-import-file')?.addEventListener('change', importAllSavedData);
     document.getElementById('gssf-diag')?.addEventListener('click', downloadDiagnostic);

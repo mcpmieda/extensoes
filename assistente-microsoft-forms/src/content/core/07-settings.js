@@ -159,7 +159,6 @@
   async function cleanAllAppSavedData() {
     const historyWasActive = GSSF_HISTORY_STATE.active;
     GSSF_HISTORY_STATE.active = false;
-    clearTimeout(GSSF_HISTORY_STATE.refresh);
     try {
       clearTimeout(APP.autoTimer);
       clearTimeout(APP.mutationTimer);

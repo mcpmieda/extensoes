@@ -1,5 +1,5 @@
   // O histórico guarda conteúdo autoral, não controles ou respostas de alunos.
-  const GSSF_HISTORY_STATE = { active: false, busy: false, queued: false, initialCaptured: false, fullScan: false, structural: false, questionCount: 0, dirtyNumbers: new Set(), targetNumbers: new WeakMap(), buttons: new Map(), globalButton: null, panel: null, refresh: null, scroll: null, resize: null, positionFrame: null };
+  const GSSF_HISTORY_STATE = { active: false, busy: false, panel: null };
 
   function questionHistoryIdentity(block, number) {
     const stable = block?.matches?.('[id^="QuestionId_"]') ? block : block?.querySelector?.('[id^="QuestionId_"]');
@@ -44,52 +44,6 @@
     });
   }
 
-  function positionQuestionHistoryButtons() {
-    for (const [button, block] of GSSF_HISTORY_STATE.buttons) {
-      if (!block.isConnected) { button.remove(); GSSF_HISTORY_STATE.buttons.delete(button); continue; }
-      const rect = block.getBoundingClientRect();
-      const shown = rect.width > 0 && rect.bottom > 0 && rect.top < innerHeight && rect.left >= 0;
-      button.hidden = !shown;
-      if (shown) { button.style.top = `${Math.max(8, rect.top + 12)}px`; button.style.left = `${Math.max(2, rect.left - 34)}px`; }
-    }
-  }
-
-  function scheduleQuestionHistoryButtonPosition() {
-    if (GSSF_HISTORY_STATE.positionFrame != null) return;
-    GSSF_HISTORY_STATE.positionFrame = requestAnimationFrame(() => {
-      GSSF_HISTORY_STATE.positionFrame = null;
-      if (GSSF_HISTORY_STATE.active) positionQuestionHistoryButtons();
-    });
-  }
-
-  function refreshQuestionHistoryButtons(blocks = collectQuestionBlocks()) {
-    if (!GSSF_HISTORY_STATE.active) return;
-    const seen = new Set(blocks);
-    const existing = new Map(Array.from(GSSF_HISTORY_STATE.buttons, ([button, block]) => [block, button]));
-    for (const [button, block] of GSSF_HISTORY_STATE.buttons) {
-      if (!seen.has(block)) { button.remove(); GSSF_HISTORY_STATE.buttons.delete(button); }
-    }
-    blocks.forEach((block, index) => {
-      const number = questionNumberFromBlock(block) || index + 1;
-      let button = existing.get(block);
-      if (!button) {
-        button = document.createElement('button');
-        button.type = 'button'; button.className = 'gssf-history-button';
-        document.body.appendChild(button);
-        GSSF_HISTORY_STATE.buttons.set(button, block);
-      }
-      const identity = questionHistoryIdentity(block, number);
-      if (button.dataset.gssfQuestionNumber !== String(number) || button.dataset.gssfIdentity !== identity) {
-        button.dataset.gssfIdentity = identity || '';
-        button.dataset.gssfQuestionNumber = String(number);
-        button.textContent = '◷'; button.title = `Histórico da questão ${number}`;
-        button.setAttribute('aria-label', `Abrir histórico da questão ${number}`);
-        button.onclick = (event) => { event.preventDefault(); event.stopPropagation(); openQuestionHistory(block, number); };
-      }
-    });
-    positionQuestionHistoryButtons();
-  }
-
   function questionHistoryLooksTransient(content, singleChoice, editing) {
     return ((singleChoice || editing) && !content.options.length)
       || ((singleChoice || editing) && content.options.length >= 3 && content.options.every((option) => option.correct));
@@ -103,89 +57,53 @@
   }
 
   async function captureQuestionHistory() {
-    if (!GSSF_HISTORY_STATE.active || GSSF_HISTORY_STATE.busy || pageMode() === 'visualização') return;
-    if (Date.now() < APP.editingUntil) {
-      clearTimeout(GSSF_HISTORY_STATE.refresh);
-      GSSF_HISTORY_STATE.refresh = setTimeout(captureQuestionHistory, Math.max(500, APP.editingUntil - Date.now() + 300));
-      return;
+    if (!GSSF_HISTORY_STATE.active || GSSF_HISTORY_STATE.busy) return;
+    if (pageMode() === 'visualização' || APP.busy || APP.analysisRunning) {
+      toast('Aguarde o término da operação e use a tela de edição para gravar.'); return;
     }
+    const button = document.getElementById('gssf-save-history');
+    const status = document.getElementById('gssf-history-status');
+    const form = currentFormsDocumentKey();
+    const revision = APP.questionContentRevision || 0;
+    const counts = { saved: 0, unchanged: 0, skipped: 0, failed: 0 };
     GSSF_HISTORY_STATE.busy = true;
+    if (button) { button.disabled = true; button.textContent = 'Gravando histórico…'; }
+    if (status) status.textContent = 'Gravando as questões carregadas. Aguarde sem editar o formulário.';
     try {
-      const sequentialBlocks = collectQuestionBlocks();
-      const listedBlocks = getQuestionBlocksFromList();
-      const blocks = listedBlocks.length > sequentialBlocks.length ? listedBlocks : sequentialBlocks;
-      if (!blocks.length) {
-        if (!isActuallyEditingQuestion()) {
-          GSSF_HISTORY_STATE.questionCount = 0;
-          refreshQuestionHistoryButtons([]);
+      const sequential = collectQuestionBlocks();
+      const listed = getQuestionBlocksFromList();
+      const blocks = listed.length > sequential.length ? listed : sequential;
+      if (!blocks.length) throw new Error('Nenhuma questão carregada para gravar.');
+      for (let index = 0; index < blocks.length; index++) {
+        if (!GSSF_HISTORY_STATE.active || currentFormsDocumentKey() !== form || (APP.questionContentRevision || 0) !== revision) {
+          counts.skipped += blocks.length - index; break;
         }
-        return;
-      }
-      const incomplete = GSSF_HISTORY_STATE.initialCaptured && blocks.length < GSSF_HISTORY_STATE.questionCount && isActuallyEditingQuestion();
-      const fullScan = !GSSF_HISTORY_STATE.initialCaptured || GSSF_HISTORY_STATE.fullScan || incomplete || (GSSF_HISTORY_STATE.structural && blocks.length !== GSSF_HISTORY_STATE.questionCount);
-      const dirtyNumbers = new Set(GSSF_HISTORY_STATE.dirtyNumbers);
-      const editing = isActuallyEditingQuestion();
-      GSSF_HISTORY_STATE.fullScan = false;
-      GSSF_HISTORY_STATE.structural = false;
-      GSSF_HISTORY_STATE.dirtyNumbers.clear();
-      refreshQuestionHistoryButtons(blocks);
-      for (let index = 0; index < blocks.length; index += 1) {
-        if (!GSSF_HISTORY_STATE.active) break;
         const block = blocks[index];
-        const number = questionNumberFromBlock(block) || index + 1;
-        if (!fullScan && !dirtyNumbers.has(number)) continue;
+        const number = questionHistoryEditedNumber(block) || index + 1;
+        const identity = questionHistoryIdentity(block, number);
         const content = questionHistorySnapshot(block, number);
-        if (content) {
-          const blockEditing = editing || Boolean(block.querySelector('[contenteditable="true"], [role="textbox"]'));
-          if (questionHistoryLooksTransient(content, Boolean(block.querySelector('[role="radiogroup"]')), blockEditing)) {
-            GSSF_HISTORY_STATE.dirtyNumbers.add(number);
-            continue;
-          }
-          const identity = questionHistoryIdentity(block, number);
-          if (!identity) continue;
-          try { await questionHistoryRequest('capture', identity, { content }); }
-          catch (error) {
-            GSSF_HISTORY_STATE.dirtyNumbers.add(number);
-            if (GSSF_HISTORY_STATE.globalButton) {
-              GSSF_HISTORY_STATE.globalButton.textContent = 'Histórico: falha ao salvar';
-              GSSF_HISTORY_STATE.globalButton.title = error.message;
-            }
-            reportNonFatalError('historico:capturar-questao', error, { number });
-          }
+        if (!identity || !content || questionHistoryLooksTransient(content, Boolean(block.querySelector('[role="radiogroup"]')), Boolean(block.querySelector('[contenteditable="true"], [role="textbox"]')))) {
+          counts.skipped++; continue;
+        }
+        try {
+          const result = await questionHistoryRequest('capture', identity, { content, form });
+          if (result.saved) counts.saved++; else counts.unchanged++;
+        } catch (error) {
+          counts.failed++;
+          reportNonFatalError('historico:captura-manual', error, { number });
         }
       }
-      if (GSSF_HISTORY_STATE.active && fullScan && !incomplete) {
-        GSSF_HISTORY_STATE.initialCaptured = true;
-        GSSF_HISTORY_STATE.questionCount = blocks.length;
-      }
-    } catch (error) { reportNonFatalError('historico:capturar', error); }
-    finally {
+      const message = `${counts.saved} novas versões; ${counts.unchanged} sem alterações; ${counts.skipped} não gravadas; ${counts.failed} falhas.`;
+      if (status) status.textContent = message + (counts.skipped || counts.failed ? ' Confira o formulário e clique em gravar novamente quando estiver pronto.' : ' Gravação concluída.');
+      toast(message);
+      return counts;
+    } catch (error) {
+      if (status) status.textContent = `Não foi possível gravar: ${error.message}`;
+      toast(`Histórico: ${error.message}`);
+    } finally {
       GSSF_HISTORY_STATE.busy = false;
-      if (GSSF_HISTORY_STATE.queued) { GSSF_HISTORY_STATE.queued = false; queueQuestionHistoryCapture(); }
+      if (button) { button.disabled = false; button.textContent = 'Gravar histórico agora'; }
     }
-  }
-
-  function queueQuestionHistoryCapture(target = null, structural = false) {
-    if (!GSSF_HISTORY_STATE.active) return;
-    if (structural) { GSSF_HISTORY_STATE.structural = true; GSSF_HISTORY_STATE.targetNumbers = new WeakMap(); }
-    if (target) {
-      const element = target.nodeType === 1 ? target : target.parentElement;
-      let number = element && GSSF_HISTORY_STATE.targetNumbers.get(element);
-      if (!number) {
-        const wrapper = element?.closest?.('[data-automation-id="questionWrapper"], [data-automation-id="questionDesignerCard"]');
-        const block = wrapper || (element && collectQuestionBlocks().find((candidate) => candidate.contains(element)));
-        number = questionHistoryEditedNumber(block);
-        if (GSSF_HISTORY_STATE.initialCaptured && number > GSSF_HISTORY_STATE.questionCount) number = 0;
-        if (number > 0) GSSF_HISTORY_STATE.targetNumbers.set(element, number);
-      }
-      if (number > 0) GSSF_HISTORY_STATE.dirtyNumbers.add(number);
-      else GSSF_HISTORY_STATE.fullScan = true;
-    }
-    if (GSSF_HISTORY_STATE.initialCaptured && !GSSF_HISTORY_STATE.fullScan && !GSSF_HISTORY_STATE.structural && !GSSF_HISTORY_STATE.dirtyNumbers.size) return;
-    if (GSSF_HISTORY_STATE.busy) { GSSF_HISTORY_STATE.queued = true; return; }
-    clearTimeout(GSSF_HISTORY_STATE.refresh);
-    const delay = GSSF_HISTORY_STATE.initialCaptured ? Math.max(1800, APP.editingUntil - Date.now() + 300) : 750;
-    GSSF_HISTORY_STATE.refresh = setTimeout(captureQuestionHistory, delay);
   }
 
   function closeQuestionHistory() {
@@ -316,29 +234,9 @@
 
   function startQuestionHistory() {
     GSSF_HISTORY_STATE.active = true;
-    GSSF_HISTORY_STATE.initialCaptured = false;
-    GSSF_HISTORY_STATE.fullScan = true;
-    GSSF_HISTORY_STATE.structural = false;
-    GSSF_HISTORY_STATE.questionCount = 0;
-    GSSF_HISTORY_STATE.dirtyNumbers.clear();
-    GSSF_HISTORY_STATE.targetNumbers = new WeakMap();
-    const globalButton = document.createElement('button'); globalButton.type = 'button';
-    globalButton.className = 'gssf-history-all-button'; globalButton.textContent = 'Histórico de questões';
-    globalButton.addEventListener('click', openFormQuestionHistory);
-    document.body.appendChild(globalButton); GSSF_HISTORY_STATE.globalButton = globalButton;
-    GSSF_HISTORY_STATE.scroll = scheduleQuestionHistoryButtonPosition;
-    GSSF_HISTORY_STATE.resize = scheduleQuestionHistoryButtonPosition;
-    document.addEventListener('scroll', GSSF_HISTORY_STATE.scroll, true);
-    window.addEventListener('resize', GSSF_HISTORY_STATE.resize);
   }
 
   function stopQuestionHistory() {
-    GSSF_HISTORY_STATE.active = false; GSSF_HISTORY_STATE.queued = false;
-    clearTimeout(GSSF_HISTORY_STATE.refresh);
-    if (GSSF_HISTORY_STATE.positionFrame != null) cancelAnimationFrame(GSSF_HISTORY_STATE.positionFrame);
-    GSSF_HISTORY_STATE.positionFrame = null;
-    document.removeEventListener('scroll', GSSF_HISTORY_STATE.scroll, true);
-    window.removeEventListener('resize', GSSF_HISTORY_STATE.resize);
-    for (const button of GSSF_HISTORY_STATE.buttons.keys()) button.remove();
-    GSSF_HISTORY_STATE.buttons.clear(); GSSF_HISTORY_STATE.globalButton?.remove(); GSSF_HISTORY_STATE.globalButton = null; closeQuestionHistory();
+    GSSF_HISTORY_STATE.active = false;
+    closeQuestionHistory();
   }

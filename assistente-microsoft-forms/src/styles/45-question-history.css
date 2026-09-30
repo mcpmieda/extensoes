@@ -1,8 +1,3 @@
-.gssf-history-button{position:fixed;z-index:2147483000;width:28px;height:28px;border:1px solid #64748b;border-radius:50%;background:#fff;color:#334155;opacity:.2;cursor:pointer;font:20px/22px Arial,sans-serif;box-shadow:0 1px 5px #0002}
-.gssf-history-button:hover,.gssf-history-button:focus-visible{opacity:1;outline:2px solid #2563eb;outline-offset:2px}
-.gssf-history-button[hidden]{display:none}
-.gssf-history-all-button{position:fixed;z-index:2147483000;left:12px;bottom:12px;border:1px solid #94a3b8;border-radius:999px;background:#fff;color:#334155;padding:7px 12px;opacity:.35;cursor:pointer;font:12px Arial,sans-serif}
-.gssf-history-all-button:hover,.gssf-history-all-button:focus-visible{opacity:1}
 .gssf-history-overlay{position:fixed;inset:0;z-index:2147483600;background:#0f172a99;display:flex;align-items:center;justify-content:center;padding:20px;font:14px/1.5 Arial,sans-serif;color:#172033}
 .gssf-history-dialog{box-sizing:border-box;width:min(720px,100%);max-height:min(85vh,900px);overflow:auto;background:#fff;border-radius:16px;padding:22px;box-shadow:0 18px 55px #0005}
 .gssf-history-dialog header,.gssf-history-version-bar{display:flex;align-items:center;justify-content:space-between;gap:12px}

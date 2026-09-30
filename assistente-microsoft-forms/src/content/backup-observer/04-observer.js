@@ -58,14 +58,6 @@
         if (!relevant.length) return;
         APP.questionContentRevision = (APP.questionContentRevision || 0) + 1;
         APP.sectionBlocksCache = null;
-        const queued = new Set();
-        for (const item of relevant) {
-          if (!item.target && !item.structural) continue;
-          const key = item.target || 'structural';
-          if (queued.has(key)) continue;
-          queued.add(key);
-          queueQuestionHistoryCapture(item.target, item.structural);
-        }
         const now = Date.now();
         if (now - APP.lastMutationAt < GSSF_TIMING.mutationGuardMs) return;
         APP.lastMutationAt = now;
@@ -89,7 +81,6 @@
       if (!editable && !isQuestionActivityTarget(target, false)) return;
       const now = Date.now();
       markQuestionEditing();
-      if (event.type === 'input') queueQuestionHistoryCapture(target);
       if (now - APP.lastMarkEditingAt > 1400) {
         APP.lastMarkEditingAt = now;
         scheduleAutoAnalysis(2600);
