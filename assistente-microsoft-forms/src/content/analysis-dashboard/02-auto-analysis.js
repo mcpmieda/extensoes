@@ -63,7 +63,12 @@
       return;
     }
     try {
-      const audit = auditPage();
+      const audit = await auditPageCooperatively();
+      if (!audit) {
+        APP.analysisRunning = false;
+        scheduleAutoAnalysis(GSSF_TIMING.editingAnalysisMs);
+        return;
+      }
       const hasContent = Boolean(audit.questions.length || audit.radioGroups);
       if (hasContent) APP.emptyAutoRetries = 0;
       if (auditLooksTransient(audit)) {
@@ -119,7 +124,7 @@
     APP.analysisRunning = false;
     APP.lastAnalysisAt = Date.now();
     const elapsed = APP.lastAnalysisAt - analysisStarted;
-    if (elapsed > 1400) log(`Análise demorou ${elapsed} ms.`, false);
+    if (elapsed > 1400) log(`Análise: ${elapsed} ms no total; maior etapa de leitura: ${APP.lastAnalysisLongestSliceMs || 0} ms.`, false);
   }
 
   function scheduleAutoAnalysis(delay = GSSF_TIMING.autoAnalysisMs) {

@@ -215,4 +215,25 @@ vm.runInContext(await fs.readFile(new URL('../src/content/forms-dom/02-question-
 `, discovery);
 assert.equal(discovery.collect().length, 500);
 assert.ok(discovery.reads() <= 1000, 'A coleta deve ler números em quantidade linear, não quadrática.');
+
+// A análise cooperativa deve permitir entrada entre etapas e descartar leitura obsoleta.
+const auditContext = vm.createContext({ APP: { editingUntil: 0, quizDocumentKey: 'form', lifecycle: {} }, document: { hidden: false }, performance, setTimeout });
+vm.runInContext(await fs.readFile(new URL('../src/content/audit-bank/01-base.js', import.meta.url), 'utf8') + `
+  let processed = 0;
+  let closed = 0;
+  auditPageSteps = function* () { try { for (let i=0; i<4; i++) { processed++; yield; } return { questions: [1,2,3,4] }; } finally { closed++; } };
+  this.cooperate = auditPageCooperatively; this.synchronous = auditPage;
+  this.metrics = () => ({processed, closed});
+`, auditContext);
+const synchronousAudit = auditContext.synchronous();
+assert.deepEqual(await auditContext.cooperate(), synchronousAudit);
+const beforeCancel = auditContext.metrics().processed;
+const cancelledAudit = auditContext.cooperate();
+auditContext.APP.questionContentRevision = 1;
+assert.equal(await cancelledAudit, null);
+assert.equal(auditContext.metrics().processed, beforeCancel + 1, 'Mutação entre etapas deve impedir que a próxima questão seja lida.');
+assert.equal(auditContext.metrics().closed, 3, 'Cancelar deve fechar o gerador e liberar referências.');
+const editingAudit = auditContext.cooperate();
+auditContext.APP.editingUntil = Date.now() + 3000;
+assert.equal(await editingAudit, null);
 console.log('Histórico de questões: identidade, limite, deduplicação e exclusões aprovados.');

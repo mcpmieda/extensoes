@@ -526,8 +526,7 @@ html.gssf-docked-page [data-automation-id="questionWrapper"], html.gssf-docked-p
   border-radius: 50%;
   background: linear-gradient(135deg,#22d3ee,#14b8a6);
   box-shadow: 0 0 0 3px rgba(6,182,212,.10),0 0 12px rgba(20,184,166,.34);
-  animation: gssfPendingSignalFloat 2.2s ease-in-out infinite;
-  will-change: transform;
+  animation: none;
 }
 #gssf-root .gssf-pending-signal::before,
 #gssf-root .gssf-pending-signal::after {
@@ -541,8 +540,7 @@ html.gssf-docked-page [data-automation-id="questionWrapper"], html.gssf-docked-p
   border-radius: 50%;
   transform: translate(-50%,-50%) scale(.9);
   opacity: 0;
-  animation: gssfPendingSignalWave 2.2s ease-out infinite;
-  will-change: transform,opacity;
+  animation: none;
 }
 #gssf-root .gssf-pending-signal::after { animation-delay: 1.1s; }
 @keyframes gssfPendingSignalWave {
@@ -783,4 +781,3 @@ html.gssf-docked-page [data-automation-id="questionWrapper"], html.gssf-docked-p
   #gssf-root .gssf-pending-signal::after { animation: none; }
   #gssf-root .gssf-pending-question-card { transition: none; }
 }
-

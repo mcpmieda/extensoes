@@ -56,6 +56,7 @@
         if (!changes.length) return;
         const relevant = changes.map(questionMutationContext).filter(Boolean);
         if (!relevant.length) return;
+        APP.questionContentRevision = (APP.questionContentRevision || 0) + 1;
         APP.sectionBlocksCache = null;
         const queued = new Set();
         for (const item of relevant) {

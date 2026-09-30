@@ -107,6 +107,35 @@
   }
 
   function auditPage() {
+    const steps = auditPageSteps();
+    let step;
+    do { step = steps.next(); } while (!step.done);
+    return step.value;
+  }
+
+  async function auditPageCooperatively() {
+    const revision = APP.questionContentRevision || 0;
+    const editingUntil = APP.editingUntil;
+    const documentKey = APP.quizDocumentKey;
+    const steps = auditPageSteps();
+    let longestSlice = 0;
+    const stale = () => APP.busy || document.hidden || APP.lifecycle?.destroyed
+      || APP.quizDocumentKey !== documentKey || (APP.questionContentRevision || 0) !== revision
+      || APP.editingUntil !== editingUntil;
+    try {
+      for (;;) {
+        if (stale()) return null;
+        const start = performance.now();
+        const step = steps.next();
+        longestSlice = Math.max(longestSlice, performance.now() - start);
+        if (step.done) { APP.lastAnalysisLongestSliceMs = Math.round(longestSlice); return step.value; }
+        // Macrotarefa: permite ao Forms tratar entrada, rolagem e pintura entre questões.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    } finally { steps.return(); }
+  }
+
+  function* auditPageSteps() {
     const problems = [];
     const answerKey = [];
     const questions = [];
@@ -119,12 +148,13 @@
     const groupsToUse = [];
     const sectionBlocks = getSectionBlocks();
     const sectionContext = buildSectionContext(sectionBlocks);
+    yield;
 
     if (!blocks.length && !fallbackGroups.length) problems.push('Nenhum grupo de alternativas foi encontrado. A página pode estar na edição sem visualização carregada, ou o Forms mudou a estrutura.');
 
-    blocks.forEach((block, idx) => {
+    for (const [idx, block] of blocks.entries()) {
       const group = block.querySelector('[role="radiogroup"]') || fallbackGroups[idx] || block;
-      if (!group || !visible(group)) return;
+      if (!group || !visible(group)) continue;
       groupsToUse.push(group);
       const options = findOptionContainers(group);
       const correct = [];
@@ -142,7 +172,8 @@
       const emptyModel = isEmptyModel(block);
       const section = sectionForBlock(block, sectionContext);
       questions.push({ order: idx + 1, number, prompt, totalOptions: options.length, correct, optionTexts, rawOptionTexts, letterMarkers, emptyModel, sectionTitle: section?.title || '', sectionIndex: Number.isInteger(section?.index) ? section.index : -1 });
-    });
+      yield;
+    }
 
     questions.sort((a, b) => a.number - b.number);
     if (!questions.length) problems.push('Nenhuma questão encontrada para o relatório.');
@@ -150,7 +181,7 @@
       problems.push(`Quantidade de questões diferente: encontrado ${questions.length}; configurado ${expectedQuestionCount}`);
     }
 
-    questions.forEach((q, i) => {
+    for (const [i, q] of questions.entries()) {
       if (!q.prompt) problems.push(`Q${q.number}: Sem enunciado`);
       if (q.emptyModel) problems.push(`Q${q.number}: Questão em branco`);
       if (q.totalOptions && !standardOptionCounts.includes(q.totalOptions)) {
@@ -178,7 +209,8 @@
         });
         if (repeated !== -1) problems.push(`Q${q.number}: Enunciado repetido com Q${questions[repeated].number}`);
       }
-    });
+      yield;
+    }
 
     for (let i = 0; i < questions.length; i += 1) if (questions[i].number !== i + 1) problems.push(`Numeração fora da ordem: esperado ${i + 1}, encontrado ${questions[i].number}`);
 
