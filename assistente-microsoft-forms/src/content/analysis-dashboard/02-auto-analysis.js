@@ -53,6 +53,7 @@
     }
     APP.analysisRunning = true;
     const analysisStarted = Date.now();
+    let presentationMs = 0;
     if (!isRealFormsDocument()) {
       const data = collectPrecheck();
       updateDashboard(data);
@@ -96,6 +97,7 @@
       }
       APP.lastAudit = audit;
       APP.questionAuditDirty = false;
+      const presentationStarted = performance.now();
       APP.lastQuestionDomSignature = currentQuestionDomSignature();
       resetLetterCapitalizeForNewForm(audit);
       const data = dataFromAudit(audit);
@@ -103,6 +105,7 @@
       updateActionAvailability(data);
       updateInlineReport(audit);
       refreshOpenOmrBoard(audit);
+      presentationMs = Math.round(performance.now() - presentationStarted);
       if (!hasContent && APP.emptyAutoRetries < 18) {
         APP.emptyAutoRetries += 1;
         setInlineLoading('Carregando formulário...');
@@ -125,7 +128,10 @@
     APP.analysisRunning = false;
     APP.lastAnalysisAt = Date.now();
     const elapsed = APP.lastAnalysisAt - analysisStarted;
-    if (elapsed > 1400) log(`Análise: ${elapsed} ms no total; maior etapa de leitura: ${APP.lastAnalysisLongestSliceMs || 0} ms.`, false);
+    if (showToast || elapsed > 1400) {
+      const stages = Object.entries(APP.lastAnalysisStages || {}).map(([name, ms]) => `${name}: ${Math.round(ms)} ms`).join('; ');
+      log(`Análise: ${elapsed} ms no total; maior etapa de leitura: ${APP.lastAnalysisLongestSliceMs || 0} ms (${APP.lastAnalysisLongestStage || 'leitura'}); painel: ${presentationMs} ms. ${stages}`, false);
+    }
   }
 
   function scheduleAutoAnalysis(delay = GSSF_TIMING.autoAnalysisMs) {

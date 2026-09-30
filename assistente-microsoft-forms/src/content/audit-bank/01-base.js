@@ -78,18 +78,27 @@
   function editDistanceLimited(a, b, limit = 8) {
     if (a === b) return 0;
     if (Math.abs(a.length - b.length) > limit) return limit + 1;
-    let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+    // Uma distância <= limit nunca sai desta faixa diagonal. Reutilizar
+    // duas linhas evita percorrer/alocar a matriz inteira para textos longos.
+    const outside = limit + 1;
+    let prev = new Array(b.length + 1).fill(outside);
+    let cur = new Array(b.length + 1).fill(outside);
+    for (let j = 0; j <= Math.min(b.length, limit); j += 1) prev[j] = j;
     for (let i = 1; i <= a.length; i += 1) {
-      const cur = [i];
+      cur[0] = i <= limit ? i : outside;
+      const start = Math.max(1, i - limit);
+      const end = Math.min(b.length, i + limit);
+      if (start > 1) cur[start - 1] = outside;
       let rowMin = cur[0];
-      for (let j = 1; j <= b.length; j += 1) {
+      for (let j = start; j <= end; j += 1) {
         const cost = a[i - 1] === b[j - 1] ? 0 : 1;
         const value = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
         cur[j] = value;
         if (value < rowMin) rowMin = value;
       }
       if (rowMin > limit) return limit + 1;
-      prev = cur;
+      if (end < b.length) cur[end + 1] = outside;
+      [prev, cur] = [cur, prev];
     }
     return prev[b.length];
   }
@@ -97,6 +106,10 @@
   function veryStrictSimilar(a, b, threshold = 0.992) {
     const left = comparableText(a);
     const right = comparableText(b);
+    return comparableTextsVeryStrictSimilar(left, right, threshold);
+  }
+
+  function comparableTextsVeryStrictSimilar(left, right, threshold = 0.992) {
     if (!left || !right) return false;
     if (left === right) return true;
     const maxLen = Math.max(left.length, right.length);
@@ -119,6 +132,10 @@
     const documentKey = APP.quizDocumentKey;
     const steps = auditPageSteps();
     let longestSlice = 0;
+    let longestStage = '';
+    const stages = {};
+    let batchStarted = performance.now();
+    let firstStep = true;
     const stale = () => APP.busy || document.hidden || APP.lifecycle?.destroyed
       || APP.quizDocumentKey !== documentKey || (APP.questionContentRevision || 0) !== revision
       || APP.editingUntil !== editingUntil;
@@ -127,10 +144,23 @@
         if (stale()) return null;
         const start = performance.now();
         const step = steps.next();
-        longestSlice = Math.max(longestSlice, performance.now() - start);
-        if (step.done) { APP.lastAnalysisLongestSliceMs = Math.round(longestSlice); return step.value; }
-        // Macrotarefa: permite ao Forms tratar entrada, rolagem e pintura entre questões.
-        await new Promise((resolve) => setTimeout(resolve, 0));
+        const elapsed = performance.now() - start;
+        const stage = typeof step.value === 'string' ? step.value : (step.done ? 'finalização' : 'leitura');
+        stages[stage] = (stages[stage] || 0) + elapsed;
+        if (elapsed > longestSlice) { longestSlice = elapsed; longestStage = stage; }
+        if (step.done) {
+          APP.lastAnalysisLongestSliceMs = Math.round(longestSlice);
+          APP.lastAnalysisLongestStage = longestStage;
+          APP.lastAnalysisStages = stages;
+          return step.value;
+        }
+        // Ceder entre alternativas caras; agrupar etapas baratas evita centenas
+        // de timers, sem manter trabalho contínuo por uma questão inteira.
+        if (firstStep || performance.now() - batchStarted >= 8) {
+          firstStep = false;
+          await new Promise((resolve) => setTimeout(resolve, 0));
+          batchStarted = performance.now();
+        }
       }
     } finally { steps.return(); }
   }
@@ -143,12 +173,13 @@
     const standardOptions = standardOptionCounts[0] || 4;
     const expectedQuestionCount = readExpectedQuestionCount();
     const initialBlocks = collectQuestionBlocks();
+    yield 'descoberta de questões';
     const fallbackGroups = Array.from(document.querySelectorAll('[role="radiogroup"]')).filter(visible);
     const blocks = initialBlocks.length ? initialBlocks : uniqueElements(fallbackGroups.map(findQuestionBlockFromRadioGroup));
     const groupsToUse = [];
     const sectionBlocks = getSectionBlocks();
     const sectionContext = buildSectionContext(sectionBlocks);
-    yield;
+    yield 'seções';
 
     if (!blocks.length && !fallbackGroups.length) problems.push('Nenhum grupo de alternativas foi encontrado. A página pode estar na edição sem visualização carregada, ou o Forms mudou a estrutura.');
 
@@ -158,21 +189,27 @@
       groupsToUse.push(group);
       const options = findOptionContainers(group);
       const correct = [];
-      options.forEach((container, i) => { if (isCorrectOption(container)) correct.push(i); });
+      const rawOptionTexts = [];
+      const mathLetterMarkers = [];
+      yield 'localização de alternativas';
+      for (const [i, container] of options.entries()) {
+        if (isCorrectOption(container)) correct.push(i);
+        rawOptionTexts.push(optionTextForAudit(container));
+        mathLetterMarkers.push(optionMathLetterMarkerForAudit(container, i));
+        yield 'leitura de alternativa';
+      }
       const number = extractQuestionNumber(block) || (idx + 1);
       const prompt = extractQuestionPrompt(block, group);
-      const rawOptionTexts = options.map(optionTextForAudit);
       const markerInfo = detectManualOptionMarkers(rawOptionTexts);
       const optionTexts = rawOptionTexts.map((text, optionIndex) => stripOptionMarkerForAudit(text, optionIndex, markerInfo));
-      const mathLetterMarkers = options.map((container, optionIndex) => optionMathLetterMarkerForAudit(container, optionIndex));
       const looseLetterMarkers = rawOptionTexts.map((text, optionIndex) => mathLetterMarkers[optionIndex] || optionStartsWithExpectedLetterForMap(text, optionIndex));
       const strictLetterMarkers = rawOptionTexts.map((text, optionIndex) => mathLetterMarkers[optionIndex] || optionStrictLetterMarkerForMap(text, optionIndex));
       const looseLetterCount = looseLetterMarkers.filter(Boolean).length;
       const letterMarkers = markerInfo?.looseSequential || looseLetterCount >= Math.max(3, Math.ceil(rawOptionTexts.length * 0.75)) ? looseLetterMarkers : strictLetterMarkers;
-      const emptyModel = isEmptyModel(block);
+      const emptyModel = isEmptyModel(block, rawOptionTexts);
       const section = sectionForBlock(block, sectionContext);
       questions.push({ order: idx + 1, number, prompt, totalOptions: options.length, correct, optionTexts, rawOptionTexts, letterMarkers, emptyModel, sectionTitle: section?.title || '', sectionIndex: Number.isInteger(section?.index) ? section.index : -1 });
-      yield;
+      yield 'enunciado e modelo vazio';
     }
 
     questions.sort((a, b) => a.number - b.number);
@@ -181,6 +218,7 @@
       problems.push(`Quantidade de questões diferente: encontrado ${questions.length}; configurado ${expectedQuestionCount}`);
     }
 
+    const comparablePrompts = questions.map((q) => comparableText(q.prompt));
     for (const [i, q] of questions.entries()) {
       if (!q.prompt) problems.push(`Q${q.number}: Sem enunciado`);
       if (q.emptyModel) problems.push(`Q${q.number}: Questão em branco`);
@@ -200,16 +238,16 @@
         else seenOptions.push({ text: current, raw: text, index: optIndex });
       });
       if (q.prompt) {
-        const np = comparableText(q.prompt);
+        const np = comparablePrompts[i];
         const repeated = questions.findIndex((other, j) => {
           if (j >= i) return false;
-          const op = comparableText(other.prompt);
+          const op = comparablePrompts[j];
           if (!np || !op || np.length < 18 || op.length < 18) return false;
-          return np === op || veryStrictSimilar(other.prompt, q.prompt, 0.992);
+          return np === op || comparableTextsVeryStrictSimilar(op, np, 0.992);
         });
         if (repeated !== -1) problems.push(`Q${q.number}: Enunciado repetido com Q${questions[repeated].number}`);
       }
-      yield;
+      yield 'validação de repetições';
     }
 
     for (let i = 0; i < questions.length; i += 1) if (questions[i].number !== i + 1) problems.push(`Numeração fora da ordem: esperado ${i + 1}, encontrado ${questions[i].number}`);

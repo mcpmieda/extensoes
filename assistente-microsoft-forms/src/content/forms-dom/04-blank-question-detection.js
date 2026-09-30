@@ -176,11 +176,10 @@
     return true;
   }
 
-  function isEmptyModel(block) {
+  function isEmptyModel(block, knownOptionTexts = null) {
     if (!block) return false;
     const group = block.querySelector?.('[role="radiogroup"]') || block;
-    const options = findOptionContainers(group);
-    const optionTexts = options.map(optionTextForAudit);
+    const optionTexts = knownOptionTexts || findOptionContainers(group).map(optionTextForAudit);
     if (optionTexts.length >= 2 && optionTexts.every((text, index) => isSequentialPlaceholderOptionText(text, index)) && isBlankQuestionPromptText(authoredQuestionPromptTextForBlankCheck(block, group))) return true;
     const t = normalizeText(textOf(block));
     return t.includes('pergunta') && t.includes('opcao 1') && t.includes('opcao 2') && t.includes('opcao 3') && t.includes('opcao 4');

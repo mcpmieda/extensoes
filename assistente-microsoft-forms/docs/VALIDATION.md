@@ -1,3 +1,15 @@
+# Otimização local da auditoria — aguardando teste no Forms
+
+30/09/2026. A comparação limitada de textos calcula apenas a faixa diagonal compatível com o limite, reutiliza duas linhas e mantém as decisões dos limiares 0,992/0,997. Enunciados são normalizados uma vez por auditoria. A detecção de modelo vazio reutiliza os textos de alternativas já lidos na mesma passagem; chamadas independentes conservam a leitura normal.
+
+A leitura cooperativa possui pontos de interrupção entre alternativas e agrupa etapas baratas até 8 ms antes de ceder uma macrotarefa. Isso não garante limite de 8 ms: uma etapa individual pode ultrapassá-lo. Descoberta, seções, alternativas, enunciados e repetições têm duração discriminada no log, que agora também mede a apresentação do painel. A rotina especializada de edição matemática não foi alterada.
+
+`npm test` aprovado: 356 verificações técnicas, 823 comportamentais, suítes da issue #2/histórico e 80.645 comparações do algoritmo limitado contra uma matriz completa independente, incluindo distância zero, inclusões, exclusões e substituições. Limiares reais e reutilização das alternativas também passaram. `npm run package` aprovado, 17 arquivos.
+
+Ensaio isolado em Node/vm: 100 comparações de textos sintéticos de 500 caracteres, distância 1 e limite 4, passaram de 16226 ms para 214 ms, mantendo a soma das distâncias em 100. Esses tempos incluem o custo de execução em vm e não estimam o ganho do navegador. A referência real anterior permanece 3979–4108 ms por análise. O teste no Forms da nova revisão depende de recarga da extensão; não há aprovação de fluidez nem publicação remota nesta etapa. Mesma versão 15.9.8 e pasta de instalação para a revisão local.
+
+---
+
 # Teste real da revisão local 15212d4
 
 30/09/2026, após recarga confirmada pelo proprietário. Primeira captura manual na instalação reinstalada: 46 versões, nenhuma falha. Segunda captura sem edição: 0 novas, 46 inalteradas. Recarregamento completo do Forms, seguido de nova captura: novamente 0 novas, 46 inalteradas e nenhuma falha. Histórico da Q19 mostrou uma única versão e fonte MathML sem o wrapper visual, preservando alternativas e C como correta. Índice da instalação atual contém 46 questões; isso não comprova restauração dos registros da instalação anterior.
