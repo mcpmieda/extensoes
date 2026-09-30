@@ -19,6 +19,7 @@ vm.runInContext(`
   pageMode = () => 'edição';
   isActuallyEditingQuestion = () => false;
   collectQuestionBlocks = () => blocksForHistoryTest;
+  getQuestionBlocksFromList = () => blocksForHistoryTest;
   refreshQuestionHistoryButtons = () => {};
   questionNumberFromBlock = (block) => block.n;
   questionHistorySnapshot = (block) => ({ number: block.n, options: [{ correct: false }] });
@@ -40,7 +41,7 @@ vm.runInContext(`queueQuestionHistoryCapture({ nodeType: 1, n: 3, closest: () =>
 assert.deepEqual([...contentContext.historyCaptureTest.state.dirtyNumbers], [3]);
 await contentContext.historyCaptureTest.capture();
 assert.deepEqual([...contentContext.historyCaptureTest.captured], ['1', '2', '3', '2', '3']);
-vm.runInContext(`blocksForHistoryTest.splice(1, 1); isActuallyEditingQuestion = () => true;`, contentContext);
+vm.runInContext(`blocksForHistoryTest.splice(1, 1); collectQuestionBlocks = () => blocksForHistoryTest.slice(0, 1); isActuallyEditingQuestion = () => true;`, contentContext);
 await contentContext.historyCaptureTest.capture();
 assert.deepEqual([...contentContext.historyCaptureTest.captured], ['1', '2', '3', '2', '3', '1', '3']);
 assert.equal(contentContext.historyCaptureTest.state.questionCount, 3);

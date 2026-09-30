@@ -108,7 +108,9 @@
     }
     GSSF_HISTORY_STATE.busy = true;
     try {
-      const blocks = collectQuestionBlocks();
+      const sequentialBlocks = collectQuestionBlocks();
+      const listedBlocks = getQuestionBlocksFromList();
+      const blocks = listedBlocks.length > sequentialBlocks.length ? listedBlocks : sequentialBlocks;
       if (!blocks.length) return;
       const incomplete = GSSF_HISTORY_STATE.initialCaptured && blocks.length < GSSF_HISTORY_STATE.questionCount;
       const fullScan = !GSSF_HISTORY_STATE.initialCaptured || GSSF_HISTORY_STATE.fullScan || incomplete || (GSSF_HISTORY_STATE.structural && blocks.length !== GSSF_HISTORY_STATE.questionCount);
