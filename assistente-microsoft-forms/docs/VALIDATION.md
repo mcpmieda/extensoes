@@ -1,3 +1,17 @@
+# Teste final solicitado — 15.9.8
+
+30/09/2026, formulário descartável autorizado. Contagem independente no DOM do Forms: 46 radiogroups, 184 radios, 29 imagens nos wrappers das questões, 11 cabeçalhos de seção. Todos coincidem com o painel. As 46 letras do gabarito coincidem com os ícones de resposta correta do Forms (conferência da configuração, não validação pedagógica das respostas). Comparação dos enunciados completos confirma os seis alertas: Q22/Q21 e Q42–46/Q41.
+
+Fluidez não aprovada: logs de leitura de 3309, 4138, 3149 e 3808 ms, com maior etapa respectivamente 527, 625, 440 e 532 ms. Uma tentativa de navegar pelo mapa para Q46 expirou e a questão ativa continuou em Q1. Nova tentativa funcionou. Tempos das chamadas de automação não são INP; não houve atribuição exclusiva desses atrasos à extensão.
+
+Consulta ao histórico apresentou `Extension context invalidated`; recarregar apenas a página restabeleceu o acesso aos 92 registros (atuais + legados). Causa da invalidação não determinada. Console capturado após recarga sem avisos/erros. Selos ausentes.
+
+Gravação manual: 1 versão nova, 45 sem alterações, 0 não gravadas, 0 falhas. A nova versão era Q19. Comparação das versões 1 e 2 mostrou alternativas iguais e diferença na ordem dos atributos `style` e `data-mathml` do span MathJax; os detalhes tinham 22026 caracteres em ambas. Nenhuma edição autoral foi feita nesta rodada. Achado: serialização de apresentação pode gerar versão sem mudança autoral. Deduplicação semântica ainda não aprovada. Nenhuma versão foi apagada para esconder o resultado.
+
+Resultado: números e gabarito corretos neste formulário; desempenho e deduplicação do histórico ainda têm pendências. Não concluir estabilidade geral nem publicar como totalmente validado. Nenhuma alteração de runtime nesta rodada de teste.
+
+---
+
 # Histórico manual — 15.9.8
 
 Removidos selos por questão, botão flutuante e captura automática do histórico. Gravação e consulta disponíveis no painel em Salvamento de dados. Testes cobrem ativação sem captura, captura manual, bloqueio durante análise, falhas reportadas e interrupção após alteração do formulário. Regressões verificam ausência de timers/listeners de rolagem e de chamadas de captura no observador e na análise. Banco e versões existentes preservados. A rotina matemática não foi alterada.
