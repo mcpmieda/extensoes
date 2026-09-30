@@ -12,6 +12,30 @@
     return null;
   }
 
+  function questionHistoryCanonicalMath(node) {
+    // Ordenar atributos do MathML, sem serializar o wrapper visual do MathJax.
+    const escape = (value) => String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const serialize = (element) => {
+      if (element.nodeType === 3) return escape(element.nodeValue || '');
+      if (element.nodeType !== 1) return '';
+      const attrs = Array.from(element.attributes || []).sort((a, b) => a.name.localeCompare(b.name))
+        .map((attr) => ` ${attr.name}="${escape(attr.value)}"`).join('');
+      return `<${element.nodeName}${attrs}>${Array.from(element.childNodes || []).map(serialize).join('')}</${element.nodeName}>`;
+    };
+    const source = node.getAttribute?.('data-mathml');
+    if (source) {
+      const parsed = new DOMParser().parseFromString(source, 'application/xml');
+      if (!parsed.querySelector('parsererror') && parsed.documentElement?.localName === 'math') return serialize(parsed.documentElement);
+      // Preservar fonte desconhecida inteira; não tentar consertar a fórmula.
+      return source;
+    }
+    for (const name of ['data-latex', 'data-math']) {
+      const value = node.getAttribute?.(name);
+      if (value) return `${name}:${value}`;
+    }
+    return serialize(node);
+  }
+
   function questionHistorySnapshot(block, number) {
     const group = block.querySelector('[role="radiogroup"]') || block;
     const containers = findOptionContainers(group);
@@ -28,7 +52,9 @@
       text: cleanText((clone.textContent || '').replace(/Insira o título da pergunta aqui/gi, '')).slice(0, 200000),
       options,
       images: Array.from(block.querySelectorAll('img')).filter(meaningfulImage).map((img) => ({ src: imageSourceForCopy(img), alt: img.alt || '' })),
-      math: Array.from(block.querySelectorAll('math,[data-mathml],[data-latex],[data-math]')).map((node) => node.outerHTML.slice(0, 20000)).slice(0, 40)
+      math: Array.from(block.querySelectorAll('math,[data-mathml],[data-latex],[data-math]'))
+        .filter((node) => !node.parentElement?.closest?.('math,[data-mathml],[data-latex],[data-math]'))
+        .map(questionHistoryCanonicalMath)
     };
     if (!content.prompt && !content.text && !content.options.length && !content.images.length) return null;
     return content;

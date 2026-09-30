@@ -8,6 +8,17 @@ const contentSource = await fs.readFile(new URL('../src/content/question-history
 const contentContext = vm.createContext({});
 vm.runInContext(contentSource + '\nthis.looksTransient = questionHistoryLooksTransient;', contentContext);
 const looksTransient = contentContext.looksTransient;
+const mathNode = (attributes, text) => ({ nodeType: 1, nodeName: 'math', attributes: Object.entries(attributes).map(([name, value]) => ({name, value})), childNodes: [{nodeType: 3, nodeValue: text}], getAttribute: () => null });
+vm.runInContext('this.canonicalMath = questionHistoryCanonicalMath;', contentContext);
+assert.equal(contentContext.canonicalMath(mathNode({display:'block', mathvariant:'bold'}, 'x < -2')),
+  contentContext.canonicalMath(mathNode({mathvariant:'bold', display:'block'}, 'x < -2')));
+assert.notEqual(contentContext.canonicalMath(mathNode({}, 'x < -2')), contentContext.canonicalMath(mathNode({}, 'x > -2')));
+assert.notEqual(contentContext.canonicalMath(mathNode({mathvariant:'bold'}, 'x')), contentContext.canonicalMath(mathNode({mathvariant:'normal'}, 'x')));
+const mathSource = '<math><mi>x</mi></math>';
+contentContext.DOMParser = class { parseFromString(source) { assert.equal(source, mathSource); return {querySelector:()=>null, documentElement:{...mathNode({},'x'), localName:'math'}}; } };
+const visualWrapper = (html) => ({ outerHTML: html, getAttribute: (name) => name === 'data-mathml' ? mathSource : null });
+assert.equal(contentContext.canonicalMath(visualWrapper('<span style="a" id="old">')),
+  contentContext.canonicalMath(visualWrapper('<span id="new" style="b">')));
 assert.equal(vm.runInContext(`questionHistoryIdentity({ querySelector: () => ({ id: 'QuestionId_stable' }) }, 46)`, contentContext), 'id:QuestionId_stable');
 assert.equal(vm.runInContext(`questionHistoryIdentity({ querySelector: () => ({ id: 'QuestionId_stable' }) }, 45)`, contentContext), 'id:QuestionId_stable');
 assert.equal(vm.runInContext(`questionHistoryIdentity({ querySelector: () => null }, 1)`, contentContext), null);
@@ -51,6 +62,29 @@ assert.equal(interruptedCapture.saved, 1);
 assert.equal(interruptedCapture.skipped, 2);
 assert.equal(contentSource.includes('setTimeout('), false, 'Histórico não deve agendar gravação.');
 assert.equal(contentSource.includes("addEventListener('scroll'"), false);
+let focusAnalyses = 0;
+let focusSignatures = 0;
+let observedMutation;
+const focusContext = vm.createContext({
+  APP: { lifecycle: {}, lastAudit: {} }, document: { hidden: false, querySelector: () => null, body: {} }, window: {},
+  GSSF_TIMING: {}, clearInterval() {}, setInterval() {}, addLifecycleEventListener() {},
+  MutationObserver: class { constructor(callback) { observedMutation = callback; } observe() {} },
+  isIgnoredAppNode: () => false,
+  scheduleAutoAnalysis: () => focusAnalyses++, scheduleMapRefreshIfDomChanged: () => focusSignatures++,
+  scheduleActiveLetterMapUpdate() {}
+});
+vm.runInContext(await fs.readFile(new URL('../src/content/backup-observer/04-observer.js', import.meta.url), 'utf8') +
+  '\nthis.focus = refreshAnalysisAfterFocus; this.start = startAutoObserver;', focusContext);
+focusContext.focus();
+assert.equal(focusAnalyses, 0);
+assert.equal(focusSignatures, 1);
+focusContext.start();
+focusContext.document.hidden = true;
+observedMutation([{ type: 'characterData', target: { nodeType: 1, closest: () => ({}) } }]);
+assert.equal(focusContext.APP.questionAuditDirty, true, 'Mudança na aba oculta não pode deixar relatório obsoleto.');
+focusContext.document.hidden = false;
+focusContext.focus();
+assert.equal(focusAnalyses, 1);
 for (const file of ['src/content/backup-observer/04-observer.js', 'src/content/analysis-dashboard/02-auto-analysis.js']) {
   assert.equal((await fs.readFile(new URL('../' + file, import.meta.url), 'utf8')).includes('queueQuestionHistoryCapture'), false);
 }

@@ -95,6 +95,8 @@
         return;
       }
       APP.lastAudit = audit;
+      APP.questionAuditDirty = false;
+      APP.lastQuestionDomSignature = currentQuestionDomSignature();
       resetLetterCapitalizeForNewForm(audit);
       const data = dataFromAudit(audit);
       updateDashboard(data);

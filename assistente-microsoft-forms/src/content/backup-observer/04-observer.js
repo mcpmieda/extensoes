@@ -51,13 +51,15 @@
     try {
       APP.autoObserver?.disconnect?.();
       APP.autoObserver = new MutationObserver((mutations) => {
-        if (APP.lifecycle.destroyed || APP.busy || document.hidden || APP.omrModeState?.active) return;
+        if (APP.lifecycle.destroyed) return;
         const changes = mutations.filter((mutation) => !mutationTouchesOnlyIgnoredNodes(mutation));
         if (!changes.length) return;
         const relevant = changes.map(questionMutationContext).filter(Boolean);
         if (!relevant.length) return;
         APP.questionContentRevision = (APP.questionContentRevision || 0) + 1;
+        APP.questionAuditDirty = true;
         APP.sectionBlocksCache = null;
+        if (APP.busy || document.hidden || APP.omrModeState?.active) return;
         const now = Date.now();
         if (now - APP.lastMutationAt < GSSF_TIMING.mutationGuardMs) return;
         APP.lastMutationAt = now;
@@ -91,8 +93,8 @@
       clearTimeout(APP.interactionMapTimer);
       APP.interactionMapTimer = lifecycleTimeout(scheduleMapRefreshIfDomChanged, GSSF_TIMING.interactionMapRefreshMs);
     };
-    const scheduleFocusAnalysis = () => scheduleAutoAnalysis(800);
-    const scheduleVisibilityAnalysis = () => { if (!document.hidden) scheduleAutoAnalysis(800); };
+    const scheduleFocusAnalysis = refreshAnalysisAfterFocus;
+    const scheduleVisibilityAnalysis = () => { if (!document.hidden) refreshAnalysisAfterFocus(); };
     addLifecycleEventListener(document, 'pointerdown', markEditing, true);
     addLifecycleEventListener(document, 'focusin', markEditing, true);
     addLifecycleEventListener(document, 'input', markEditing, true);
@@ -107,4 +109,10 @@
     }, GSSF_TIMING.mapSignatureIntervalMs);
     addLifecycleEventListener(window, 'focus', scheduleFocusAnalysis);
     addLifecycleEventListener(document, 'visibilitychange', scheduleVisibilityAnalysis);
+  }
+
+  function refreshAnalysisAfterFocus() {
+    if (document.hidden || APP.lifecycle.destroyed) return;
+    if (!APP.lastAudit || APP.questionAuditDirty) scheduleAutoAnalysis(800);
+    else scheduleMapRefreshIfDomChanged();
   }

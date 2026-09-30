@@ -1,3 +1,13 @@
+# Revisão local após reinstalação — 15.9.8
+
+Correções locais posteriores à publicação c27d0ba: histórico usa fonte MathML/LaTeX em vez do wrapper visual MathJax, ordenando atributos do MathML e preservando valores, sinais e conteúdo. Versões já salvas não são reescritas nem apagadas. A primeira gravação manual após a mudança pode criar uma versão de transição nas questões matemáticas, pois a representação antiga incluía HTML visual; comparações posteriores usam a nova representação. Não há captura automática.
+
+Retorno de foco/visibilidade consulta mudanças estruturais e só solicita auditoria completa quando não existe relatório ou há conteúdo alterado. O observer passa a marcar alterações mesmo com a aba oculta, evitando perder edições feitas nesse intervalo. A análise manual completa continua disponível; esta correção reduz disparos desnecessários, sem prometer duração máxima de cada análise.
+
+Suíte completa aprovada, mais regressões de ordenação de atributos, independência do wrapper visual, preservação de desigualdades/variantes matemáticas e retorno de foco após mudança em aba oculta. Validação no Forms da revisão depende de recarregar extensão e página. Mesmo número 15.9.8 e mesma pasta de instalação, por ser revisão local para teste; não publicada no GitHub nesta etapa.
+
+---
+
 # Teste final solicitado — 15.9.8
 
 30/09/2026, formulário descartável autorizado. Contagem independente no DOM do Forms: 46 radiogroups, 184 radios, 29 imagens nos wrappers das questões, 11 cabeçalhos de seção. Todos coincidem com o painel. As 46 letras do gabarito coincidem com os ícones de resposta correta do Forms (conferência da configuração, não validação pedagógica das respostas). Comparação dos enunciados completos confirma os seis alertas: Q22/Q21 e Q42–46/Q41.
