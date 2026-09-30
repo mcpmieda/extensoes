@@ -1,6 +1,6 @@
 # Assistente do Microsoft Forms
 
-Versão de desenvolvimento **15.9.5**, derivada da referência histórica `V15.8.1(2).zip`.
+Versão de desenvolvimento **15.9.6**, derivada da referência histórica `V15.8.1(2).zip`.
 
 A 15.9.0 deixou de ser uma migração byte a byte e corrigiu os principais riscos da auditoria. A 15.9.1 reforçou a ação de inserir letras em alternativas matemáticas. A 15.9.2 amplia essa proteção para alternativas textuais, endurece migração/concorrência dos lotes, valida melhor arquivos EvalBee e torna operações de limpeza verificáveis. A 15.9.3 acrescenta o histórico local de questões. A 15.9.4 atualiza o número de versão para publicação. A **15.9.5** reduz as leituras repetidas do histórico e evita versões criadas por estados transitórios do editor. A referência original 15.8.1 continua preservada em `config/baseline-v15.8.1.json`.
 
@@ -42,6 +42,12 @@ O ZIP em `release/` contém o manifesto na raiz; ele pode ser extraído para car
 Ao substituir uma instalação existente, use o procedimento de atualização dessa instalação e conserve um backup dos dados. Carregar outra pasta como uma nova extensão pode resultar em outra identidade e outro armazenamento; a migração do código não transfere automaticamente os dados entre instalações.
 
 ## Histórico local de questões
+
+A 15.9.6 usa o identificador permanente exposto pelo Forms. Registros anteriores que usavam apenas a posição permanecem separados como **Histórico antigo por posição**; não são associados automaticamente a uma questão renumerada. Sem identificador permanente, a captura aguarda o Forms disponibilizá-lo.
+
+As versões e imagens agora participam do backup consolidado. Exportar em um navegador e importar no outro permite transferir e mesclar os históricos; não há sincronização automática entre navegadores. Backups antigos continuam aceitos. A importação repetida não duplica a mesma versão (data e conteúdo iguais). O histórico no backup tem limite de 32 milhões de caracteres serializados; acima disso, a exportação informa falha sem apagar registros. Arquivos de importação têm limite de 64 MB.
+
+A consulta carrega até cinco versões por página, com orçamento de 28 milhões de caracteres por resposta (uma versão individual pode ocupar a página). Cada questão admite até 100 versões: ao atingir esse limite, a captura mostra uma falha e aguarda o usuário exportar/apagar versões. Não há descarte automático. A limpeza de todo o app também apaga o histórico. Após exclusões, só permanece uma assinatura SHA-256 sem o texto para evitar recriação imediata da versão apagada.
 
 Na edição de um questionário, o assistente salva uma primeira versão das questões carregadas e registra novas versões após mudanças de conteúdo. O botão discreto à esquerda de cada questão abre suas versões; **Histórico de questões**, no canto inferior esquerdo, também permite consultar questões que já foram removidas do Forms. Cada versão pode ser apagada separadamente, ou todas as versões de uma questão podem ser excluídas. A exclusão não recria imediatamente o conteúdo apagado; uma nova edição volta a gerar uma versão.
 

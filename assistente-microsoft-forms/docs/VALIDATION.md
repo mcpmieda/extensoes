@@ -1,3 +1,15 @@
+# Registro de validação — 15.9.6
+
+Data: 30 de setembro de 2026.
+
+Correções: identidade permanente para novas capturas; legado por posição mantido separado; remoção de texto residual após exclusão; limpeza global do histórico; backup/mesclagem de versões e imagens; paginação e limite explícito de versões; redução de varreduras na rolagem, checagem periódica e descoberta de seções. Rotina especializada de edição matemática não foi alterada.
+
+Testes de regressão exercitam renumeração, ausência de ID, exclusão de questão seguida de captura incremental, migração de metadados apagados, captura concorrente com limpeza, paginação, ida e volta do backup, importação repetida, rejeição de mídia inválida e limite de 100 versões. Testes dos caminhos frequentes impedem coleta integral na checagem periódica/rolagem; coleta de 500 questões faz no máximo 1000 leituras de número. Isso comprova o comportamento do código exercitado, não um tempo de resposta do Edge.
+
+O diagnóstico anterior encontrou análises de 4676–5374 ms e menor consumo do renderer com o painel oculto. Esses valores são anteriores à correção. A versão corrigida precisa ser recarregada na instalação existente e no formulário para medir novamente; não declarar fluidez, IndexedDB nativo entre abas ou todos os fluxos aprovados apenas pelos testes automatizados. Nenhuma publicação remota está incluída nesta entrega local.
+
+---
+
 # Registro de validação — 15.9.2
 
 Data: 29 de setembro de 2026.

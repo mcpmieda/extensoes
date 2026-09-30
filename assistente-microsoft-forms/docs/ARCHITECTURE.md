@@ -1,4 +1,12 @@
-# Arquitetura — referência 15.8.1 e evolução 15.9.5
+# Arquitetura — referência 15.8.1 e evolução 15.9.6
+
+## Histórico e desempenho na 15.9.6
+
+O banco e as stores do histórico mantêm seus nomes. Na primeira operação do service worker, fingerprints legados contendo texto são convertidos em SHA-256; metadados de questões sem versões são reduzidos à identidade, sequência, contagem e assinatura. Versões legadas `number:N` permanecem recuperáveis no índice do formulário, sem associação automática aos novos IDs `QuestionId_`. A fila do service worker serializa captura, exclusão, exportação e importação entre abas. A importação valida todos os registros antes de sua transação de gravação e preserva as versões locais.
+
+O protocolo existente ganhou `clearAll`, `listPage`, `exportPage`, `validateImport` e `import`. O backup v5 inclui `questionHistory` e continua lendo backups anteriores. Exportação percorre um registro por mensagem; consulta usa cursor reverso, até cinco versões e orçamento de tamanho. Limite de 100 versões por questão interrompe novas capturas com erro visível, sem remover versões antigas.
+
+A checagem periódica consulta apenas IDs e contagens estruturais, sem leituras de layout. O mapa durante rolagem usa blocos conhecidos pela última coleta. A coleta indexa números uma vez em vez de procurá-los repetidamente. A descoberta de seções consulta seletores do Forms e cabeçalhos, sem varrer todos os elementos da página. O observador ignora a interface do histórico e só agenda análise para mutações de questões/seções. A análise integral ainda é síncrona; a duração real após estas mudanças precisa ser medida no Forms com a extensão recarregada.
 
 ## Objetivo e escopo
 

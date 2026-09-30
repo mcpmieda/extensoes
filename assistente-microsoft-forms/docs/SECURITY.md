@@ -1,6 +1,8 @@
 # Segurança e publicação pública
 
-## Estado da 15.9.5
+## Estado da 15.9.6
+
+O histórico apagado não mantém texto em fingerprint ou resumo: SHA-256 substitui fingerprints legados e a limpeza remove versões, mídias e enunciados dos metadados. Identidades e assinaturas permanecem para impedir recaptura imediata. A limpeza global inclui o banco do histórico. Backups v5 passam a conter também questões, fórmulas e imagens; devem receber o mesmo cuidado que o formulário original. Importação valida formatos, tamanho e imagens raster em data URLs; HTML de fórmulas continua apresentado como texto. Não houve ampliação de permissões ou domínios.
 
 A 15.9.0 corrigiu os principais achados da auditoria registrada na issue #1. A 15.9.1 reforçou a integridade das alternativas matemáticas. A 15.9.2 corrige lacunas remanescentes em alternativas textuais, concorrência, migração, limpeza e validação de EvalBee, sem ampliar permissões nem adicionar telemetria, servidores ou código remoto. O pacote continua executando dependências vendorizadas localmente.
 
