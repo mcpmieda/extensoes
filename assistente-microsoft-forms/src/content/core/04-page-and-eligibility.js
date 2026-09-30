@@ -343,7 +343,12 @@
     const cache = APP.pageModeCache || { value: '', at: 0, href: '' };
     if (cache.value && cache.href === u && now - cache.at < 400) return cache.value;
     const body = document.body ? document.body.innerText || '' : '';
-    const value = (/topview=preview/i.test(u) || /quando voce enviar este formulario|quando você enviar este formulário/i.test(body) || exactLabel('voltar').length)
+    // Consultar controles de navegação, não cada span/div das questões.
+    const hasBackControl = Array.from(document.querySelectorAll('button, [role="button"], a, [role="link"], input[type="button"]')).some((el) => {
+      if (isIgnoredAppNode(el) || !visible(el)) return false;
+      return [el.getAttribute?.('aria-label'), el.value, textOf(el)].some((label) => normalizeText(label) === 'voltar');
+    });
+    const value = (/topview=preview/i.test(u) || /quando voce enviar este formulario|quando você enviar este formulário/i.test(body) || hasBackControl)
       ? 'visualização'
       : ((/DesignPageV2/i.test(u) || /subpage=design/i.test(u)) ? 'edição' : 'forms');
     APP.pageModeCache = { value, at: now, href: u };

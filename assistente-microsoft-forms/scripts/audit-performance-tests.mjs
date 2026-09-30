@@ -55,4 +55,37 @@ vm.runInContext(await fs.readFile(new URL('../src/content/forms-dom/04-blank-que
 `, blank);
 assert.equal(blank.empty({ text: 'Pergunta' }, ['Opção 1', 'Opção 2']), true);
 assert.equal(blank.empty({ text: 'Enunciado completo' }, ['Resposta A', 'Resposta B']), false);
+blank.findOptionContainers = () => ['Opção 1', 'Opção 2'];
+blank.optionTextForAudit = (s) => s;
+assert.equal([{ text: 'Pergunta' }, { text: 'Pergunta' }].filter(blank.empty).length, 2, 'Uso como callback não deve tratar índice como alternativas conhecidas.');
+
+const mode = vm.createContext({
+  APP: {}, location: { href: 'https://forms.cloud.microsoft/Pages/DesignPageV2.aspx' },
+  document: { body: { innerText: '' }, querySelectorAll: (selector) => { assert.notEqual(selector, '*'); return []; } },
+  normalizeText: (s) => String(s || '').toLowerCase().trim(), textOf: (el) => el.text || '',
+  visible: (el) => !el.hidden, isIgnoredAppNode: (el) => Boolean(el.app),
+  exactLabel: () => { throw new Error('Varredura global não permitida na identificação do modo'); },
+});
+vm.runInContext(await fs.readFile(new URL('../src/content/core/04-page-and-eligibility.js', import.meta.url), 'utf8') + '\nthis.mode = pageMode;', mode);
+// As funções auxiliares do arquivo não são o objeto deste teste.
+vm.runInContext('visible = (el) => !el.hidden; textOf = (el) => el.text || ""; isIgnoredAppNode = (el) => Boolean(el.app);', mode);
+assert.equal(mode.mode(), 'edição');
+mode.APP.pageModeCache = null;
+mode.location.href += '?topview=preview';
+assert.equal(mode.mode(), 'visualização');
+mode.location.href = 'https://forms.cloud.microsoft/Pages/DesignPageV2.aspx';
+const back = { text: 'Voltar', getAttribute: () => '' };
+mode.document.querySelectorAll = () => [back];
+mode.APP.pageModeCache = null;
+assert.equal(mode.mode(), 'visualização');
+back.hidden = true;
+mode.APP.pageModeCache = null;
+assert.equal(mode.mode(), 'edição');
+back.hidden = false;
+back.app = true;
+mode.APP.pageModeCache = null;
+assert.equal(mode.mode(), 'edição');
+mode.document.body.innerText = 'Quando você enviar este formulário';
+mode.APP.pageModeCache = null;
+assert.equal(mode.mode(), 'visualização');
 console.log(`Auditoria: ${comparisons} comparações com distância exata; limiares e reutilização de alternativas aprovados.`);

@@ -66,7 +66,7 @@
     if (status) {
       const hasContent = Number(data.questions || 0) > 0 || Number(data.radioGroups || 0) > 0;
       status.className = hasContent ? 'gssf-status ok' : 'gssf-status loading';
-      if (pageMode() === 'visualização') {
+      if ((data.mode || pageMode()) === 'visualização') {
         status.innerHTML = '<span class="gssf-status-icon">!</span><span><b>Você está na visualização.</b><small>Volte para a tela de edição do Forms.</small></span>';
         status.className = 'gssf-status warn';
       } else if (hasContent && isActuallyEditingQuestion()) {

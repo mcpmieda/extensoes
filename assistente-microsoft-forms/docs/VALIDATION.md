@@ -1,3 +1,15 @@
+# Teste real de 8abd03d e redução da varredura de modo
+
+30/09/2026. Após recarga da extensão confirmada pelo proprietário e recarga do Forms: análise inicial 2247 ms, maior etapa 450 ms (finalização), apresentação 1207 ms. Análise manual estabilizada: 2303 ms, maior etapa 522 ms (finalização), apresentação 1103 ms. Na manual: descoberta 120 ms, seções 7 ms, localização de alternativas 13 ms, leitura das alternativas 172 ms, enunciados/modelos vazios 90 ms e repetições 67 ms. A análise anterior custava 3979–4108 ms; houve redução nesta sessão, sem ensaio controlado de CPU nem medida de INP. Etapas longas persistem, portanto fluidez não aprovada.
+
+DOM confirma 46 grupos e 184 alternativas; painel mantém 29 imagens, 11 seções, seis repetições e a mesma sequência de 46 letras de gabarito conferida na rodada anterior. Console capturado sem avisos/erros. Nenhuma edição de questão ou captura de histórico nesta rodada.
+
+Inspeção identificou `pageMode` usando `exactLabel('voltar')`, que consulta todos os elementos da página. Nova revisão local restringe a busca a controles de navegação visíveis fora do assistente; o painel reutiliza o modo da auditoria. A atribuição de tempo à função ainda é inferência pelo código, pois a medição agrupa a finalização e a apresentação. Também corrigida compatibilidade de `isEmptyModel` como callback de `filter`: o índice não pode ser interpretado como textos de alternativas conhecidos. Testes adicionados para esse contrato e detecção de edição/preview, controle Voltar oculto e controle interno do assistente.
+
+`npm test` e `npm run package` aprovados. Pasta atual e ZIP 15.9.8 atualizados; nova revisão ainda requer recarregar a extensão para medição no Forms. Não publicada remotamente nesta etapa.
+
+---
+
 # Otimização local da auditoria — aguardando teste no Forms
 
 30/09/2026. A comparação limitada de textos calcula apenas a faixa diagonal compatível com o limite, reutiliza duas linhas e mantém as decisões dos limiares 0,992/0,997. Enunciados são normalizados uma vez por auditoria. A detecção de modelo vazio reutiliza os textos de alternativas já lidos na mesma passagem; chamadas independentes conservam a leitura normal.
