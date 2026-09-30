@@ -1,3 +1,13 @@
+# Validação ao vivo — 15.9.7
+
+30/09/2026, sessão posterior à recarga. Versão confirmada no painel. Log da extensão: 1410 ms / maior etapa 327 ms; 2780 ms / 432 ms; 3858 ms / 571 ms. Tempo total não é tempo contínuo de bloqueio; maior etapa cobre a leitura, não todas as tarefas do Forms ou a apresentação do painel. Ainda existem etapas suficientemente longas para engasgos perceptíveis.
+
+Navegação pelo mapa até a questão 46 funcionou. Histórico persistido abriu com ID estável e versão anterior. Edição temporária da alternativa D gerou versão 2, mantendo somente C como correta. O texto original foi restaurado depois do teste e a versão 3 foi conferida no histórico, com D original e C correta. O índice preservou 92 registros (46 atuais e 46 legados). Console capturado sem avisos/erros.
+
+Houve timeouts da automação na abertura/ativação do editor; alguns cliques surtiram efeito apesar do timeout. Um `fill` inicial falhou porque o campo ainda não tinha `contenteditable=true`; após ativação, a escrita funcionou. Portanto nem todo erro de automação é evidência de bloqueio da extensão, mas a responsividade completa ainda não está aprovada. Esta rodada não isolou CPU do Forms versus extensão e não mediu INP. Não afirmar que todos os travamentos desapareceram.
+
+---
+
 # Medição no Edge — 15.9.6 e ajuste 15.9.7
 
 30/09/2026. Versão 15.9.6 confirmada no painel: 46 questões, 184 alternativas, 29 imagens e 11 seções. Histórico da primeira questão abriu por ID permanente, com imagem local carregada (800 px); índice geral mostrou 46 registros atuais e 46 legados separados. Console capturado sem avisos/erros. Isso não equivale à validação de todos os fluxos de escrita/exclusão ou sincronização.
