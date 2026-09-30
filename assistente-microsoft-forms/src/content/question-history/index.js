@@ -1,5 +1,5 @@
   // O histórico guarda conteúdo autoral, não controles ou respostas de alunos.
-  const GSSF_HISTORY_STATE = { active: false, busy: false, queued: false, initialCaptured: false, fullScan: false, structural: false, questionCount: 0, dirtyNumbers: new Set(), buttons: new Map(), globalButton: null, panel: null, refresh: null, scroll: null, resize: null, positionFrame: null };
+  const GSSF_HISTORY_STATE = { active: false, busy: false, queued: false, initialCaptured: false, fullScan: false, structural: false, questionCount: 0, dirtyNumbers: new Set(), targetNumbers: new WeakMap(), buttons: new Map(), globalButton: null, panel: null, refresh: null, scroll: null, resize: null, positionFrame: null };
 
   function questionHistoryIdentity(block, number) {
     for (let node = block, depth = 0; node && depth < 4; node = node.parentElement, depth += 1) {
@@ -118,7 +118,10 @@
         const content = questionHistorySnapshot(block, number);
         if (content) {
           const blockEditing = editing || Boolean(block.querySelector('[contenteditable="true"], [role="textbox"]'));
-          if (questionHistoryLooksTransient(content, Boolean(block.querySelector('[role="radiogroup"]')), blockEditing)) continue;
+          if (questionHistoryLooksTransient(content, Boolean(block.querySelector('[role="radiogroup"]')), blockEditing)) {
+            GSSF_HISTORY_STATE.dirtyNumbers.add(number);
+            continue;
+          }
           try { await questionHistoryRequest('capture', questionHistoryIdentity(block, number), { content }); }
           catch (error) { reportNonFatalError('historico:capturar-questao', error, { number }); }
         }
@@ -130,21 +133,24 @@
     } catch (error) { reportNonFatalError('historico:capturar', error); }
     finally {
       GSSF_HISTORY_STATE.busy = false;
-      if (GSSF_HISTORY_STATE.queued || GSSF_HISTORY_STATE.dirtyNumbers.size) { GSSF_HISTORY_STATE.queued = false; queueQuestionHistoryCapture(); }
+      if (GSSF_HISTORY_STATE.queued) { GSSF_HISTORY_STATE.queued = false; queueQuestionHistoryCapture(); }
     }
   }
 
   function queueQuestionHistoryCapture(target = null, structural = false) {
     if (!GSSF_HISTORY_STATE.active) return;
-    if (structural) GSSF_HISTORY_STATE.structural = true;
+    if (structural) { GSSF_HISTORY_STATE.structural = true; GSSF_HISTORY_STATE.targetNumbers = new WeakMap(); }
     if (target) {
       const element = target.nodeType === 1 ? target : target.parentElement;
-      const wrapper = element?.closest?.('[data-automation-id="questionWrapper"], [data-automation-id="questionDesignerCard"]');
-      if (wrapper) {
-        const number = questionNumberFromBlock(wrapper);
-        if (number > 0) GSSF_HISTORY_STATE.dirtyNumbers.add(number);
-        else GSSF_HISTORY_STATE.fullScan = true;
+      let number = element && GSSF_HISTORY_STATE.targetNumbers.get(element);
+      if (!number) {
+        const wrapper = element?.closest?.('[data-automation-id="questionWrapper"], [data-automation-id="questionDesignerCard"]');
+        const block = wrapper || (element && collectQuestionBlocks().find((candidate) => candidate.contains(element)));
+        number = questionNumberFromBlock(block);
+        if (number > 0) GSSF_HISTORY_STATE.targetNumbers.set(element, number);
       }
+      if (number > 0) GSSF_HISTORY_STATE.dirtyNumbers.add(number);
+      else GSSF_HISTORY_STATE.fullScan = true;
     }
     if (GSSF_HISTORY_STATE.initialCaptured && !GSSF_HISTORY_STATE.fullScan && !GSSF_HISTORY_STATE.structural && !GSSF_HISTORY_STATE.dirtyNumbers.size) return;
     if (GSSF_HISTORY_STATE.busy) { GSSF_HISTORY_STATE.queued = true; return; }
@@ -260,6 +266,7 @@
     GSSF_HISTORY_STATE.structural = false;
     GSSF_HISTORY_STATE.questionCount = 0;
     GSSF_HISTORY_STATE.dirtyNumbers.clear();
+    GSSF_HISTORY_STATE.targetNumbers = new WeakMap();
     const globalButton = document.createElement('button'); globalButton.type = 'button';
     globalButton.className = 'gssf-history-all-button'; globalButton.textContent = 'Histórico de questões';
     globalButton.addEventListener('click', openFormQuestionHistory);

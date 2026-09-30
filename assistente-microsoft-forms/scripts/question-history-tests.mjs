@@ -14,7 +14,7 @@ assert.equal(looksTransient({ options: [] }, false, false), false);
 assert.equal(looksTransient({ options: [] }, false, true), true);
 assert.equal(looksTransient({ options: [{ correct: true }, { correct: true }, { correct: true }] }, false, true), true);
 vm.runInContext(`
-  const blocksForHistoryTest = [1, 2, 3].map((n) => ({ n, querySelector: () => null }));
+  const blocksForHistoryTest = [1, 2, 3].map((n) => ({ n, querySelector: () => null, contains: (target) => target.n === n }));
   const capturedForHistoryTest = [];
   pageMode = () => 'edição';
   isActuallyEditingQuestion = () => false;
@@ -24,6 +24,8 @@ vm.runInContext(`
   questionHistorySnapshot = (block) => ({ number: block.n, options: [{ correct: false }] });
   questionHistoryIdentity = (block) => String(block.n);
   questionHistoryRequest = async (action, question) => { capturedForHistoryTest.push(question); };
+  clearTimeout = () => {};
+  setTimeout = () => 1;
   APP = { editingUntil: 0 };
   GSSF_HISTORY_STATE.active = true;
   GSSF_HISTORY_STATE.fullScan = true;
@@ -34,6 +36,10 @@ assert.deepEqual([...contentContext.historyCaptureTest.captured], ['1', '2', '3'
 contentContext.historyCaptureTest.state.dirtyNumbers.add(2);
 await contentContext.historyCaptureTest.capture();
 assert.deepEqual([...contentContext.historyCaptureTest.captured], ['1', '2', '3', '2']);
+vm.runInContext(`queueQuestionHistoryCapture({ nodeType: 1, n: 3, closest: () => null });`, contentContext);
+assert.deepEqual([...contentContext.historyCaptureTest.state.dirtyNumbers], [3]);
+await contentContext.historyCaptureTest.capture();
+assert.deepEqual([...contentContext.historyCaptureTest.captured], ['1', '2', '3', '2', '3']);
 const records = new Map();
 const versions = new Map();
 const copy = (value) => value === undefined ? undefined : structuredClone(value);
