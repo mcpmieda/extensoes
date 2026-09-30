@@ -1,3 +1,4 @@
+/* @include ./00-safe-import.js */
 /* @include ./01-base.js */
 /* @include ./02-reports.js */
 /* @include ./03-history-and-audit.js */

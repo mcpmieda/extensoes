@@ -69,6 +69,7 @@
       const q = record.questions[key] || {};
       questions[key] = {
         questionSignature: q.questionSignature || '',
+        importEvidence: q.importEvidence || null,
         promptNormalized: q.promptNormalized || '',
         optionCount: Number(q.optionCount || 0),
         originalAnswer: q.originalAnswer || '',
@@ -239,6 +240,7 @@
       questions[key] = {
         questionNumber: q.number,
         questionSignature: currentSignature,
+        importEvidence: q.importEvidence || null,
         textPreview: cleanQuestionPreview(q.prompt || '', q.number),
         promptNormalized: normalizeText(q.prompt || ''),
         options: (q.optionTexts || []).map((text, index) => ({ letter: letter(index), text: cleanText(text).slice(0, 220), normalized: normalizeText(text) })),

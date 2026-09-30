@@ -44,12 +44,7 @@
         toast('Selecione uma ou mais questões para importar.');
         return;
       }
-      selected.forEach((number) => {
-        const row = pane.querySelector(`.gssf-import-question input[data-q="${number}"]`)?.closest('.gssf-import-question');
-        const sourceQuestion = source.questions?.[String(number)] || null;
-        startImportFlightAnimation(row, row?.querySelector('.gssf-import-single') || row?.querySelector('.gssf-import-question-title-line') || row, number, sourceAnswerForBankQuestion(sourceQuestion));
-      });
-      await importSelectedAnswersFromSource(audit, source, selected, { skipConfirm: true, triggerEffects: true, sourcePane: pane });
+      await importSelectedAnswersFromSource(audit, source, selected, { triggerEffects: true, sourcePane: pane });
     });
     pane.querySelectorAll('.gssf-import-single[data-q]').forEach((btn) => btn.addEventListener('click', async () => {
       const number = Number(btn.dataset.q || 0);
@@ -63,9 +58,9 @@
       APP.omrImportState.sourceCardsScrollTop = Number(sourceCards?.scrollTop || 0);
       btn.disabled = true;
       if (card) card.classList.add('single-importing');
-      startImportFlightAnimation(card, btn, number, answer);
+
       APP.omrImportState.singleQueue = APP.omrImportState.singleQueue.then(async () => {
-        await importSelectedAnswersFromSource(audit, source, [number], { single: true, skipConfirm: true, triggerEffects: true, sourcePane: pane });
+        await importSelectedAnswersFromSource(audit, source, [number], { single: true, triggerEffects: true, sourcePane: pane });
       }).catch((error) => { reportNonFatalError('importacao:fila-individual', error, { questionNumber: number }); });
       await APP.omrImportState.singleQueue;
     }));
@@ -80,7 +75,7 @@
         toast('Esta seção não tem respostas disponíveis para lançar.');
         return;
       }
-      await importSelectedAnswersFromSource(audit, source, numbers, { skipConfirm: true, triggerEffects: true, sourcePane: pane, sectionTitle: target.title, alertOnReplace: true, sectionKey: target.key, sectionImport: true });
+      await importSelectedAnswersFromSource(audit, source, numbers, { triggerEffects: true, sourcePane: pane, sectionTitle: target.title, alertOnReplace: true, sectionKey: target.key, sectionImport: true });
     }));
     pane.querySelector('#gssf-import-section-launch-toggle')?.addEventListener('click', () => {
       APP.omrImportState.sectionLaunchCollapsed = !APP.omrImportState.sectionLaunchCollapsed;

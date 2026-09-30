@@ -1,3 +1,15 @@
+# Correção local da importação — validação autenticada pendente
+
+Associação por evidência completa do enunciado e das alternativas, preservando sinais, representações MathML, imagens e sobrescritos/subscritos na comparação. Prévia truncada e semelhança por palavras não autorizam importação. Uma origem deve corresponder a um único enunciado no destino; cada alternativa deve ter correspondência única. Questões e alternativas reordenadas são remapeadas quando essa prova existe. Diferenças, duplicatas, letras inválidas, quantidade divergente e leitura antiga sem evidência completa são bloqueadas. As leituras antigas continuam armazenadas; é necessário reabrir origem e destino para renovar a evidência. A comparação conservadora pode bloquear representações visualmente equivalentes.
+
+Importação individual, selecionada e por seção compartilham a validação. A interface mostra números de origem/destino e a letra remapeada. Sempre há confirmação do lote antes de gravar; ajustes manuais são preservados e bloqueiam sua importação até serem limpos pelo usuário. Ausência de resposta não dispensa a comparação do conteúdo. Mudança de formulário, revisão do conteúdo, banco ou leitura integral durante a confirmação cancela a operação. Uma importação por vez na aba.
+
+Lote gravado por um único patch do banco; sucesso e efeitos visuais apenas após `flush` e conferência das respostas efetivas. Falhas mostram importação não confirmada. Itens bloqueados são contabilizados no resumo. Não há promessa de transação distribuída entre usuários/máquinas; a persistência usa o service worker já existente. Rotina especializada de edição matemática não alterada.
+
+Suíte completa: 358 verificações técnicas, 823 comportamentais, regressões anteriores e nova suíte `scripts/import-safety-tests.mjs`. A nova suíte executa os fontes do banco/importador com transporte controlado: controle positivo, reordenação de questões/alternativas, enunciado diferente, redução de opções, duplicatas, origem antiga, letra fora da faixa, ajuste manual, falha de gravação, cancelamento, mutação durante confirmação, seleção duplicada, lote parcial, colisão de destinos e preservação de sinais. Build/ZIP: 17 arquivos. A verificação em Forms real e a medição do custo da evidência completa dependem de recarregar extensão e ambos os formulários. Revisão local da mesma 15.9.8, ainda não publicada.
+
+---
+
 # Auditoria de confiabilidade da importação entre Forms
 
 30/09/2026, código local 575edae, runtime 5eef3bb. Verificação solicitada pelo proprietário; nenhuma correção de runtime nesta rodada. Reprodução local em `reports/import-reliability-audit.mjs` (ignorado pelo Git), executando os fontes completos de banco, relatório de respostas, seções, modelo e importador em Node/vm. UI, transporte e armazenamento são controlados nesse ensaio; os casos abaixo não são todos testes nativos.

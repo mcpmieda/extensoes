@@ -106,106 +106,86 @@
     renderImportSourceList(audit, { sourceFormId: APP.omrImportState.sourceFormId });
   }
 
+
   async function importSelectedAnswersFromSource(audit, source, selectedNumbers, options = {}) {
-    if (!selectedNumbers.length) {
-      APP.omrImportState.message = 'Selecione uma ou mais questões para importar.';
-      toast('Selecione uma ou mais questões para importar.');
-      return 0;
-    }
-    const destTitle = cleanText(audit.title || getFormTitle() || document.title || 'Forms atual');
-    const destByNumber = currentQuestionByNumberForImport(audit);
-    const destCount = audit.questions.length || 40;
-    const currentData = reportAnswerData(audit);
-    const importable = selectedNumbers.map((number) => {
-      const q = source.questions?.[String(number)];
-      const sourcePreview = q ? sourcePreviewForImport(q) : '';
-      const destQuestion = destByNumber.get(Number(number)) || null;
-      const destPreview = currentPreviewForImport(destQuestion, Number(number));
-      const blocked = Number(number) > destCount || !destQuestion;
-      const current = currentData.find((item) => Number(item.number) === Number(number));
-      const destBlank = !blocked && !current?.current;
-      const match = importMatchInfo(sourcePreview, destPreview, destBlank, blocked ? 'disabled' : '', q, destQuestion);
-      return { number, answer: sourceAnswerForBankQuestion(q), sourceQuestion: q, match, sourcePreview, destPreview };
-    }).filter((item) => item.answer && item.match.level !== 'blocked');
-    if (!importable.length) {
-      APP.omrImportState.message = 'Não há novas respostas disponíveis para esta origem.';
-      renderImportSourceList(audit, { sourceFormId: source.formId, message: APP.omrImportState.message });
-      toast('Nada disponível para importar.');
-      return 0;
-    }
-    const questionList = options.sourcePane?.querySelector?.('.gssf-bank-question-list');
-    const sourceCards = options.sourcePane?.querySelector?.('.gssf-source-card-list');
-    if (questionList) APP.omrImportState.questionListScrollTop = Number(questionList.scrollTop || 0);
-    if (sourceCards) APP.omrImportState.sourceCardsScrollTop = Number(sourceCards.scrollTop || 0);
-    const cautionCount = importable.filter((item) => ['different','limited','medium'].includes(item.match.level)).length;
-    const conflicts = importable.filter((item) => {
-      const current = currentData.find((data) => Number(data.number) === Number(item.number));
-      return Boolean(current?.current && String(current.current).toUpperCase() !== String(item.answer).toUpperCase());
-    });
-    if (!options.skipConfirm) {
-      const cautionText = cautionCount ? ` Atenção: ${cautionCount} selecionada(s) exigem conferência entre a questão de origem e a questão atual.` : '';
+    if (APP.omrImportRunning) { toast('Aguarde a importação em andamento.'); return 0; }
+    APP.omrImportRunning = true;
+    const formId = getFormUniqueId(audit);
+    const revision = APP.questionContentRevision || 0;
+    const selected = [...new Set(selectedNumbers.map(Number))];
+    let message = '';
+    try {
+      await GSSF_STORAGE.flush();
+      const bank = readFormsBank();
+      const freshSource = bank.forms?.[source.formId];
+      if (!freshSource) throw new Error('Origem indisponível. Atualize a lista.');
+      const sourceSnapshot = JSON.stringify(freshSource);
+      const currentSnapshot = JSON.stringify(bank.forms?.[formId] || null);
+      const currentData = reportAnswerData(audit);
+      const plan = selected.map((number) => {
+        const sourceQuestion = freshSource.questions?.[String(number)];
+        const match = resolveSafeImport(audit, sourceQuestion);
+        const target = match.destination?.number;
+        const current = currentData.find((q) => q.number === target);
+        if (current?.manual) return { number, blocked: true, label: 'Ajuste manual preservado; limpe-o antes de importar.' };
+        return { number, target, answer: match.answer, blocked: match.level === 'blocked', label: match.label };
+      });
+      const allowed = plan.filter((item) => !item.blocked);
+      if (!allowed.length) {
+        message = 'Nenhuma resposta importada. ' + (plan[0]?.label || 'Selecione questões com conteúdo conferido.');
+        toast(message); return 0;
+      }
+      if (new Set(allowed.map((item) => item.target)).size !== allowed.length) throw new Error('Mais de uma origem aponta para a mesma questão. Selecione apenas uma.');
+      const skipped = plan.length - allowed.length;
+      const changes = allowed.filter((item) => currentData.find((q) => q.number === item.target)?.current !== item.answer);
+      const mapping = allowed.map((item) => 'Q' + item.number + ' → Q' + item.target + ': ' + item.answer).join('; ');
       const ok = await askConfirm({
-        title: options.single ? 'Adicionar resposta?' : 'Confirmar importação',
-        message: `Você está importando ${importable.length} resposta(s) de "${source.title || 'Forms salvo'}" para "${destTitle}". Elas serão aplicadas somente no gabarito interno deste app.${cautionText} Deseja continuar?`,
-        confirmText: options.single ? 'Adicionar ao gabarito' : 'Importar respostas',
-        cancelText: 'Cancelar'
+        title: 'Confirmar importação conferida',
+        message: allowed.length + ' resposta(s) de "' + freshSource.title + '" para "' + audit.title + '". ' + changes.length + ' resposta(s) serão alteradas no gabarito interno do app. ' + skipped + ' bloqueada(s), sem alteração. ' + mapping,
+        confirmText: 'Importar respostas', cancelText: 'Cancelar'
       });
       if (!ok) return 0;
-      if (conflicts.length) {
-        const sample = conflicts.slice(0, 8).map((item) => {
-          const current = currentData.find((data) => Number(data.number) === Number(item.number));
-          return `Questão ${item.number}: atual ${current?.current || 'sem resposta'}; origem ${item.answer}`;
-        }).join(' | ');
-        const replace = await askConfirm({
-          title: 'Há respostas diferentes',
-          message: `${conflicts.length} questão(ões) têm resposta diferente entre a origem e o gabarito atual. Exemplos: ${sample}${conflicts.length > 8 ? '...' : ''} Deseja substituir a resposta usada atualmente no app?`,
-          confirmText: 'Substituir no app',
-          cancelText: 'Cancelar'
-        });
-        if (!replace) return 0;
+      await GSSF_STORAGE.flush();
+      if ((APP.questionContentRevision || 0) !== revision || getFormUniqueId() !== formId) throw new Error('O formulário mudou durante a confirmação. Atualize a análise.');
+      const latest = readFormsBank();
+      if (JSON.stringify(latest.forms?.[source.formId]) !== sourceSnapshot || JSON.stringify(latest.forms?.[formId] || null) !== currentSnapshot) throw new Error('O gabarito mudou durante a confirmação. Confira e tente novamente.');
+      const freshAudit = auditPage();
+      for (const item of allowed) {
+        const match = resolveSafeImport(freshAudit, freshSource.questions[String(item.number)]);
+        if (match.level === 'blocked' || match.destination.number !== item.target || match.answer !== item.answer
+          || reportAnswerData(freshAudit).find((q) => q.number === item.target)?.manual) throw new Error('O conteúdo ou ajuste manual mudou. Atualize a análise.');
       }
-    } else if (options.alertOnReplace && conflicts.length) {
-      const targetLabel = options.sectionTitle ? ` na seção "${options.sectionTitle}"` : '';
-      const sample = conflicts.slice(0, 6).map((item) => `Q${item.number} (${item.answer})`).join(', ');
-      const proceed = await askConfirm({
-        title: 'Algumas respostas serão substituídas',
-        message: `Vou substituir ${conflicts.length} resposta(s) já marcadas no gabarito atual${targetLabel} pelas respostas da origem.${sample ? ` Exemplos: ${sample}.` : ''}`,
-        confirmText: 'Continuar',
-        cancelText: 'Cancelar'
-      });
-      if (!proceed) return 0;
+      const record = buildFormBankRecord(freshAudit, latest.forms[formId]);
+      for (const item of allowed) {
+        const q = record.questions[String(item.target)];
+        q.importedAnswer = item.answer;
+        q.effectiveAnswer = item.answer;
+        q.source = 'imported';
+        q.shiftRisk = null;
+        q.importSource = { type: 'formsBank', formId: source.formId, title: freshSource.title, sourceQuestion: item.number, targetQuestion: item.target, matchLevel: 'similar', matchLabel: item.label, importedAt: new Date().toISOString() };
+      }
+      record.answerCount = answerCountFromQuestions(record.questions);
+      record.contentFingerprint = formRecordFingerprint(record);
+      latest.forms[formId] = record;
+      if (!saveFormsBank(latest, 'importação conferida')) throw new Error('Não foi possível agendar a gravação.');
+      await GSSF_STORAGE.flush();
+      const saved = readFormsBank().forms?.[formId];
+      if (!allowed.every((item) => saved?.questions?.[String(item.target)]?.importedAnswer === item.answer && effectiveAnswerOfRecord(saved.questions[String(item.target)]) === item.answer)) throw new Error('A gravação não pôde ser confirmada. Confira o gabarito atual.');
+      message = allowed.length + ' resposta(s) gravada(s) e conferida(s); ' + skipped + ' bloqueada(s).';
+      log(message); toast(message);
+      APP.lastAudit = freshAudit;
+      if (options.triggerEffects) allowed.forEach((item) => registerPendingOmrBubbleEffect(item.target, item.answer, 0));
+      return allowed.length;
+    } catch (error) {
+      message = 'Importação não confirmada: ' + error.message;
+      log(message); toast(message);
+      return 0;
+    } finally {
+      APP.omrImportRunning = false;
+      APP.omrImportState.message = message;
+      if (getFormUniqueId() === formId) {
+        renderOmrMainIntoModal(APP.lastAudit || audit);
+        renderImportSourceList(APP.lastAudit || audit, { sourceFormId: source.formId, message });
+      }
     }
-    const formId = getFormUniqueId(audit);
-    saveCurrentFormToBank(audit, 'antes da importação');
-    let applied = 0;
-    const effectSpecs = [];
-    importable.forEach((item) => {
-      const q = audit.questions.find((question) => Number(question.number) === Number(item.number));
-      if (!q) return;
-      const importSource = {
-        type: 'formsBank',
-        formId: source.formId,
-        title: source.title || 'Forms salvo',
-        sourceQuestion: item.sourceQuestion?.questionNumber || item.number,
-        targetQuestion: item.number,
-        matchLevel: item.match?.level || '',
-        matchLabel: item.match?.label || '',
-        importedAt: new Date().toISOString()
-      };
-      if (updateBankQuestion(formId, item.number, { importedAnswer: item.answer, importSource, originalAnswer: originalAnswerForQuestion(q) })) {
-        applied += 1;
-        effectSpecs.push({ number: item.number, letter: item.answer });
-      }
-    });
-    if (applied && options.sectionImport && options.sectionKey) markSectionLaunchHidden(source.formId, options.sectionKey);
-    if (applied) log(`Respostas importadas de "${source.title || 'Forms salvo'}": ${applied}.`);
-    toast(applied ? 'Importação concluída. O gabarito foi atualizado.' : 'Nada mudou no gabarito.');
-    updateInlineReport(audit);
-    if (options.triggerEffects && effectSpecs.length) effectSpecs.forEach((effect) => registerPendingOmrBubbleEffect(effect.number, effect.letter, options.sectionImport ? 0 : 70));
-    renderOmrMainIntoModal(audit);
-    renderImportSourceList(audit, {
-      sourceFormId: source.formId,
-      message: applied ? '' : 'Não há novas respostas disponíveis para esta origem.'
-    });
-    return applied;
   }

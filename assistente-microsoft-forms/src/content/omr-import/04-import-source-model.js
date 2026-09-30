@@ -114,22 +114,25 @@
     allQuestions.forEach((q) => {
       const number = Number(q.questionNumber || 0);
       if (!number) return;
-      const sourceAnswer = sourceAnswerForBankQuestion(q);
-      const currentBankQuestion = currentFormRecord?.questions?.[String(number)] || null;
+      const match = resolveSafeImport(audit, q);
+      const targetNumber = match.destination?.number || number;
+      const sourceAnswer = match.answer || sourceAnswerForBankQuestion(q);
+      const currentBankQuestion = currentFormRecord?.questions?.[String(targetNumber)] || null;
       if (sameImportedAnswerFromSource(currentBankQuestion, source, q, sourceAnswer)) {
         return;
       }
-      const destQuestion = destByNumber.get(number) || null;
-      const blocked = number > destCount || !destQuestion;
-      const currentAnswer = currentData.get(number)?.current || effectiveAnswerOfRecord(currentBankQuestion) || '';
+      const destQuestion = match.destination || null;
+      const manual = currentData.get(targetNumber)?.manual;
+      const blocked = match.level === 'blocked' || Boolean(manual);
+      if (manual) { match.level = 'blocked'; match.label = 'Ajuste manual preservado; limpe-o antes de importar.'; }
+      const currentAnswer = currentData.get(targetNumber)?.current || effectiveAnswerOfRecord(currentBankQuestion) || '';
       const destBlank = !blocked && !currentAnswer;
       if (!blocked) importableCount += 1;
       if (destBlank) blankCount += 1;
       const sourcePreview = sourcePreviewForImport(q);
       const destPreview = currentPreviewForImport(destQuestion, number);
-      const match = importMatchInfo(sourcePreview, destPreview, destBlank, blocked ? 'disabled' : '', q, destQuestion);
       let statusText = '';
-      if (blocked) statusText = 'Não existe questão correspondente no Forms atual.';
+      if (blocked) statusText = 'Importação bloqueada. ' + match.label;
       else if (!currentAnswer) statusText = 'Sem resposta no gabarito atual.';
       else if (String(currentAnswer).toUpperCase() === String(sourceAnswer).toUpperCase()) statusText = 'A origem é igual à resposta usada atualmente.';
       else statusText = 'A importação substituirá a resposta usada atualmente.';
@@ -150,15 +153,15 @@
         <label class="gssf-import-question-select-area">
           <span class="gssf-import-question-title-line">
             <input type="checkbox" data-q="${escapeHtml(number)}" data-dest-blank="${destBlank ? '1' : '0'}" data-match="${escapeHtml(match.level)}" ${blocked ? 'disabled' : ''} aria-label="Selecionar questão ${escapeHtml(number)}">
-            <span class="gssf-import-question-number">Questão ${escapeHtml(number)}</span>
+            <span class="gssf-import-question-number">Origem Q${escapeHtml(number)}${destQuestion ? ` → Destino Q${escapeHtml(targetNumber)}` : ''}</span>
             ${sectionTitle ? `<span class="gssf-import-question-separator">–</span><span class="gssf-import-section-name" title="${escapeHtml(sectionTitle)}">${escapeHtml(sectionTitle)}</span>` : ''}
           </span>
-          <span class="gssf-import-answer-pair"><b>Origem: ${escapeHtml(sourceAnswer)}</b><em>Atual: ${escapeHtml(currentAnswer || 'sem resposta')}</em></span>
+          <span class="gssf-import-answer-pair"><b>Origem: ${escapeHtml(sourceAnswerForBankQuestion(q))}${!blocked ? ` → Importar: ${escapeHtml(sourceAnswer)}` : ''}</b><em>Atual: ${escapeHtml(currentAnswer || 'sem resposta')}</em></span>
           <span class="gssf-import-question-preview" title="${escapeHtml(sourcePreview)}">${escapeHtml(sourcePreview)}</span>
           <span class="gssf-import-question-status"><span class="gssf-import-status-pill ${escapeHtml(match.level)}">${escapeHtml(match.label)}</span>${statusText ? `<em>${escapeHtml(statusText)}</em>` : ''}</span>
         </label>
         ${singleButton}
-        ${importQuestionDetailsHtml({ source, sourceQuestion: q, sourcePreview, sourceAnswer, destTitle, destQuestion, destPreview, currentAnswer })}
+        ${importQuestionDetailsHtml({ source, sourceQuestion: q, sourcePreview, sourceAnswer: sourceAnswerForBankQuestion(q), destTitle, destQuestion, destPreview, currentAnswer })}
       </article>`);
     });
     return { allQuestions, importableCount, blankCount, rows };

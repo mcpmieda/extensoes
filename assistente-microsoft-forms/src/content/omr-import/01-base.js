@@ -72,7 +72,7 @@
       return {
         status: 'source-needs-refresh',
         matches: [],
-        message: 'A leitura salva deste Forms é de uma versão antiga e não contém o mapa completo de seções. Abra esse Forms de origem novamente com esta versão do assistente e depois volte ao formulário atual.'
+        message: 'A origem não possui um mapa completo de seções. Use a importação individual das questões com conteúdo conferido.'
       };
     }
     if (!currentRanges.length) {
@@ -109,6 +109,14 @@
       });
       if (optionMismatch) {
         rejected.push({ title: sourceRange.title, reason: 'quantidade de alternativas diferente' });
+        return;
+      }
+      const unsafe = questions.some((question) => {
+        const match = resolveSafeImport(audit, question);
+        return match.level === 'blocked' || !currentRange.numbers.includes(match.destination.number);
+      });
+      if (unsafe) {
+        rejected.push({ title: sourceRange.title, reason: 'conteúdo diferente, incompleto ou ambíguo' });
         return;
       }
       const questionNumbers = sourceRange.numbers.filter((number) => Boolean(sourceAnswerForBankQuestion(source?.questions?.[String(number)] || null)));

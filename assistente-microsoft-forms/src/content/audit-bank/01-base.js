@@ -208,7 +208,8 @@
       const letterMarkers = markerInfo?.looseSequential || looseLetterCount >= Math.max(3, Math.ceil(rawOptionTexts.length * 0.75)) ? looseLetterMarkers : strictLetterMarkers;
       const emptyModel = isEmptyModel(block, rawOptionTexts);
       const section = sectionForBlock(block, sectionContext);
-      questions.push({ order: idx + 1, number, prompt, totalOptions: options.length, correct, optionTexts, rawOptionTexts, letterMarkers, emptyModel, sectionTitle: section?.title || '', sectionIndex: Number.isInteger(section?.index) ? section.index : -1 });
+      const importEvidence = buildImportEvidence(block, group, options, optionTexts, number);
+      questions.push({ order: idx + 1, number, prompt, totalOptions: options.length, correct, optionTexts, rawOptionTexts, letterMarkers, emptyModel, importEvidence, sectionTitle: section?.title || '', sectionIndex: Number.isInteger(section?.index) ? section.index : -1 });
       yield 'enunciado e modelo vazio';
     }
 
