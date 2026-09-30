@@ -90,7 +90,10 @@
         scheduleAutoAnalysis(2600);
       }
     };
-    const scheduleMapAfterInteraction = () => lifecycleTimeout(scheduleMapRefreshIfDomChanged, GSSF_TIMING.interactionMapRefreshMs);
+    const scheduleMapAfterInteraction = () => {
+      queueQuestionHistoryCapture();
+      lifecycleTimeout(scheduleMapRefreshIfDomChanged, GSSF_TIMING.interactionMapRefreshMs);
+    };
     const scheduleFocusAnalysis = () => scheduleAutoAnalysis(800);
     const scheduleVisibilityAnalysis = () => { if (!document.hidden) scheduleAutoAnalysis(800); };
     addLifecycleEventListener(document, 'pointerdown', markEditing, true);

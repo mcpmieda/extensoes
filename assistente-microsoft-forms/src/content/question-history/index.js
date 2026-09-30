@@ -92,6 +92,13 @@
       || ((singleChoice || editing) && content.options.length >= 3 && content.options.every((option) => option.correct));
   }
 
+  function questionHistoryEditedNumber(block) {
+    const title = block?.querySelector?.('[aria-label*="Título da pergunta" i], [aria-label*="Titulo da pergunta" i], [aria-label*="Question title" i]');
+    const label = title?.getAttribute?.('aria-label') || '';
+    const match = label.match(/(?:t[ií]tulo da pergunta|question title)\s*(\d{1,3})\b/i);
+    return match ? Number(match[1]) : questionNumberFromBlock(block);
+  }
+
   async function captureQuestionHistory() {
     if (!GSSF_HISTORY_STATE.active || GSSF_HISTORY_STATE.busy || pageMode() === 'visualização') return;
     if (Date.now() < APP.editingUntil) {
@@ -103,6 +110,10 @@
     try {
       const blocks = collectQuestionBlocks();
       if (!blocks.length) return;
+      if (GSSF_HISTORY_STATE.initialCaptured && blocks.length < GSSF_HISTORY_STATE.questionCount && isActuallyEditingQuestion()) {
+        GSSF_HISTORY_STATE.fullScan = true;
+        return;
+      }
       const fullScan = !GSSF_HISTORY_STATE.initialCaptured || GSSF_HISTORY_STATE.fullScan || (GSSF_HISTORY_STATE.structural && blocks.length !== GSSF_HISTORY_STATE.questionCount);
       const dirtyNumbers = new Set(GSSF_HISTORY_STATE.dirtyNumbers);
       const editing = isActuallyEditingQuestion();
@@ -146,7 +157,8 @@
       if (!number) {
         const wrapper = element?.closest?.('[data-automation-id="questionWrapper"], [data-automation-id="questionDesignerCard"]');
         const block = wrapper || (element && collectQuestionBlocks().find((candidate) => candidate.contains(element)));
-        number = questionNumberFromBlock(block);
+        number = questionHistoryEditedNumber(block);
+        if (GSSF_HISTORY_STATE.initialCaptured && number > GSSF_HISTORY_STATE.questionCount) number = 0;
         if (number > 0) GSSF_HISTORY_STATE.targetNumbers.set(element, number);
       }
       if (number > 0) GSSF_HISTORY_STATE.dirtyNumbers.add(number);

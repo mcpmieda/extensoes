@@ -40,6 +40,7 @@ vm.runInContext(`queueQuestionHistoryCapture({ nodeType: 1, n: 3, closest: () =>
 assert.deepEqual([...contentContext.historyCaptureTest.state.dirtyNumbers], [3]);
 await contentContext.historyCaptureTest.capture();
 assert.deepEqual([...contentContext.historyCaptureTest.captured], ['1', '2', '3', '2', '3']);
+assert.equal(vm.runInContext(`questionHistoryEditedNumber({ n: 57, querySelector: () => ({ getAttribute: () => 'Título da pergunta 46 Insira o título da pergunta aqui' }) })`, contentContext), 46);
 const records = new Map();
 const versions = new Map();
 const copy = (value) => value === undefined ? undefined : structuredClone(value);
