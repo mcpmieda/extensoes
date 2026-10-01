@@ -6,5 +6,3 @@
 /* @include ./04-pedagogical-data.js */
 /* @include ./05-forms-bank.js */
 /* @include ./06-question-history.js */
-
-/* @include ./07-simulado-word.js */

@@ -121,7 +121,6 @@
             <button id="gssf-copy" class="gssf-btn ok" type="button">Copiar questões</button>
             <button id="gssf-download-word" class="gssf-btn ok" type="button">Baixar Word</button>
           </div>
-          <div class="gssf-actions"><button id="gssf-simulado-word" class="gssf-btn ok" type="button">Finalizar simulado / Word formatado</button></div>
           <div id="gssf-progress-copy" class="gssf-progress"><span class="gssf-progress-bar"></span><em class="gssf-progress-label"></em></div>
         </section>
 
@@ -203,7 +202,6 @@
     document.getElementById('gssf-open-omr')?.addEventListener('click', openOmrBoard);
     document.getElementById('gssf-copy')?.addEventListener('click', runCopyQuestions);
     document.getElementById('gssf-download-word')?.addEventListener('click', runDownloadWordQuestions);
-    document.getElementById('gssf-simulado-word')?.addEventListener('click', () => globalThis.GSSF_SIMULADO.open({capture: captureSimuladoQuestions, buildHtml: buildWordHtmlDocument, title: () => getFormTitle() || document.title || 'Simulado'}));
     // O botão de remover seções foi ocultado da interface nesta versão.
     // A função runRemoveSections permanece preservada para possível retorno futuro do recurso.
     document.getElementById('gssf-insert-letters')?.addEventListener('click', runInsertAlternativeLetters);

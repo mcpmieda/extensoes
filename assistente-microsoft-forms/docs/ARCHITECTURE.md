@@ -60,6 +60,6 @@ As áreas ainda compartilham funções no escopo principal. Esta entrega cria li
 
 Essas referências descrevem a plataforma. A equivalência desta migração é sustentada pela comparação dos próprios arquivos, registrada em `VALIDATION.md`.
 
-## Exportação de simulado — 15.10.2
+## Ferramentas para Word — 15.10.4
 
-`src/simulado/index.js` e `src/styles/simulado.css` são entradas adicionais do build; o editor é carregado antes de content.js. A captura reutiliza a preparação de Word e imagens de clipboard-word, mantendo o download original. O protocolo GSSF_SIMULADO_WORD conecta o service worker ao host fixo com uma porta nativa durante a paginação. `public/native` contém fontes e binários do host/worker, macro 6.3, editor de template e arte por ano. O modelo vazio e as prévias estão em public/assets. A geração abre sessões próprias do Word; configurações locais ficam fora do Git e da distribuição pública.
+O painel mantém copiar questões e baixar o Word pelo fluxo de clipboard-word. O editor de simulado, as entradas simulado.js/simulado.css, o protocolo nativo e os recursos exclusivos da exportação formatada foram removidos. O build volta às quatro entradas principais. Nenhum banco, histórico, backup ou contrato de armazenamento foi alterado.

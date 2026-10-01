@@ -50,6 +50,6 @@ Com isso, conteúdos como `-25`, `+25`, `A+5`, `B-3`, `A√25`, `B∑x`, `C%5`, 
 
 `config/vendor-lock.json` registra a dependência ativa. `config/baseline-v15.8.1.json` permanece imutável como referência histórica e não deve ser atualizado para fazer a 15.9.0 parecer equivalente ao pacote antigo.
 
-## Word local — 15.10.2
+## Ferramentas para Word — 15.10.4
 
-A permissão adicional `nativeMessaging`, solicitada para a exportação no Word local, está registrada em `config/security-policy.json`. A ponte aceita somente abas do Forms desta extensão e as ações fixas status/model/generate/open. O conector valida a origem contra o manifesto nativo, limita mensagens a 64 MiB, serializa trabalhos e restringe a abertura à pasta de provas geradas. Não há envio das provas a serviços externos. Configurações locais, o registro do host e IDs permitidos são criados pelo instalador em cada computador e não são publicados. A macro não altera a política de segurança do Word e audita texto, imagens, equações e seções.
+A exportação formatada com Word local foi removida, incluindo o conector e a permissão nativeMessaging. Permanecem apenas clipboardWrite e storage; os domínios autorizados do Forms continuam os mesmos. O download normal do Word é produzido pela extensão, sem aplicativo auxiliar.

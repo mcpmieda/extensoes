@@ -2,9 +2,9 @@
 // Fonte modular: core.
   const GSSF_STORAGE = globalThis.GSSF_STORAGE;
 
-  const GSSF_VERSION = '15.10.3';
+  const GSSF_VERSION = '15.10.4';
 
-  const GSSF_BUILD = `v${GSSF_VERSION}-simulado-word-local-2026-10-01`;
+  const GSSF_BUILD = `v${GSSF_VERSION}-word-download-2026-10-01`;
 
   const GSSF_RUNTIME_KEY = '__GSSF_ASSISTENTE_FORMS__';
 

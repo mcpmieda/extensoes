@@ -1,5 +1,12 @@
 # Histórico
 
+## 2026-10-01 — 15.10.4 — Remoção do simulado formatado
+
+- Removidos o botão Finalizar simulado / Word formatado, o editor de camadas e a geração pela macro.
+- Removidos conector, comunicação nativa, instalador, modelo e prévias exclusivos desse recurso.
+- Retirada a permissão nativeMessaging.
+- Preservados Copiar questões, Baixar Word, dados salvos e as demais ferramentas.
+
 ## 2026-10-01 — 15.10.2 — Simulado no Word local
 
 - Download adicional de DOCX formatado pela macro 6.3, preservando o download normal.

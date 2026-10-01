@@ -1,8 +1,7 @@
 {
   "permissions": [
     "clipboardWrite",
-    "storage",
-    "nativeMessaging"
+    "storage"
   ],
   "hostPermissions": [
     "https://forms.cloud.microsoft/*",

@@ -1,13 +1,12 @@
 {
   "manifest_version": 3,
   "name": "Assistente do Microsoft Forms",
-  "version": "15.10.3",
+  "version": "15.10.4",
   "description": "Assistente para Microsoft Forms com gabarito, cartão-resposta, impressão, diagnóstico e organização de conteúdos.",
   "minimum_chrome_version": "105",
   "permissions": [
     "clipboardWrite",
-    "storage",
-    "nativeMessaging"
+    "storage"
   ],
   "host_permissions": [
     "https://forms.cloud.microsoft/*",
@@ -28,12 +27,10 @@
         "storage.js",
         "vendor/xlsx.full.min.js",
         "vendor/jszip.min.js",
-        "simulado.js",
         "content.js"
       ],
       "css": [
-        "content.css",
-        "simulado.css"
+        "content.css"
       ],
       "run_at": "document_idle"
     }
@@ -56,9 +53,7 @@
         "assets/omr-template.jpg",
         "assets/answer-card-print.css",
         "assets/organizer-cabecalho.jpg",
-        "assets/organizer-logo.png",
-        "assets/simulado-capa.png",
-        "assets/simulado-verso.png"
+        "assets/organizer-logo.png"
       ],
       "matches": [
         "https://forms.cloud.microsoft/*",
