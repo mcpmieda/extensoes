@@ -62,7 +62,7 @@
     return { fileName: `${safeTitle}-questoes.doc`, html };
   }
 
-  async function runDownloadWordQuestions() {
+  async function runDownloadWordQuestions(options = {}) {
     await withBusy(async () => {
       if (!isRealFormsDocument()) { log('Abra um formulário real do Microsoft Forms antes de baixar o Word.'); return; }
       showTaskOverlay('Baixando Word', 'Preparando o Forms...');
@@ -102,6 +102,15 @@
         const images = Math.max(imageKeys.size, snapshotImageCount, liveImageCount);
         const payload = await prepareCopyPayloadFromBlocks(wordBlocks, 'copy', { wordDownload: true });
         const imageCheckOk = copyImageCheckOk(payload, images);
+        if (options.captureOnly) {
+          if (!imageCheckOk || payload?.inlineResult?.failed || payload?.wordMathResult?.failed) throw new Error('A captura encontrou imagens ou fórmulas incompletas. Recarregue o formulário e tente novamente.');
+          const areas = simuladoAreasFromForms(blocks);
+          options.onCaptured({innerHtml: payload.innerHtml, count: wordBlocks.length, images: payload.htmlImageCount || 0, areas});
+          await returnToEditIfPreview();
+          setProgress('copy', 100, 'Questões prontas para o simulado.');
+          resetProgressSoon('copy', 700);
+          return;
+        }
         await stepProgress('copy', 88, 'Baixando arquivo Word...', 120);
         const file = downloadWordHtmlFile(payload);
         await stepProgress('copy', 94, 'Voltando para edição...', 120);
@@ -118,6 +127,31 @@
         scheduleAutoAnalysis(900);
       }
     });
+  }
+
+  function simuladoAreasFromForms(blocks) {
+    const sectionBlocks = getSectionBlocks();
+    const contexts = buildSectionContext(sectionBlocks);
+    const areas = [];
+    for (const block of blocks) {
+      const number = questionNumberFromBlock(block);
+      if (!number) continue;
+      const section = sectionForBlock(block, contexts);
+      if (!section) continue;
+      const raw = sectionBlocks[section.index]?.innerText || '';
+      const match = raw.match(/(LINGUAGENS\s*,?\s*C[ÓO]DIGOS E SUAS TECNOLOGIAS|MATEM[ÁA]TICA E SUAS TECNOLOGIAS|CI[ÊE]NCIAS DA NATUREZA E SUAS TECNOLOGIAS|CI[ÊE]NCIAS HUMANAS E SUAS TECNOLOGIAS)/i);
+      const title = (match?.[1] || section.title).trim().toUpperCase().replace(/[|;]/g, ' ');
+      if (areas.at(-1)?.title !== title) areas.push({number, title});
+    }
+    return areas.length && areas[0].number === 1 ? areas.map(a => `${a.number}|${a.title}`).join(';') : '';
+  }
+
+  async function captureSimuladoQuestions() {
+    if (APP.busy) throw new Error('Aguarde a ação atual do Assistente terminar.');
+    let captured = null;
+    await runDownloadWordQuestions({captureOnly: true, onCaptured: result => { captured = result; }});
+    if (!captured) throw new Error('A captura não foi concluída. Confira o registro de atividades do Assistente.');
+    return captured;
   }
 
   async function runCopyQuestions() {

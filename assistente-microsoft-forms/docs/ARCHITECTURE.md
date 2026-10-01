@@ -59,3 +59,7 @@ As áreas ainda compartilham funções no escopo principal. Esta entrega cria li
 - Localização obrigatória de workflows: https://docs.github.com/en/actions/concepts/workflows-and-actions/workflows
 
 Essas referências descrevem a plataforma. A equivalência desta migração é sustentada pela comparação dos próprios arquivos, registrada em `VALIDATION.md`.
+
+## Exportação de simulado — 15.10.2
+
+`src/simulado/index.js` e `src/styles/simulado.css` são entradas adicionais do build; o editor é carregado antes de content.js. A captura reutiliza a preparação de Word e imagens de clipboard-word, mantendo o download original. O protocolo GSSF_SIMULADO_WORD conecta o service worker ao host fixo com uma porta nativa durante a paginação. `public/native` contém fontes e binários do host/worker, macro 6.3, editor de template e arte por ano. O modelo vazio e as prévias estão em public/assets. A geração abre sessões próprias do Word; configurações locais ficam fora do Git e da distribuição pública.

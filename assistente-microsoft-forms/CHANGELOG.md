@@ -1,5 +1,16 @@
 # Histórico
 
+## 2026-10-01 — 15.10.2 — Simulado no Word local
+
+- Download adicional de DOCX formatado pela macro 6.3, preservando o download normal.
+- Camadas editáveis da capa, verso, cabeçalhos, rodapés e selos; ano aplicado às ondas e selos originais.
+- Título da capa/turma manual, obrigatório e persistido.
+- Questões no início de página ou coluna ficam sem linha vazia acima.
+- Conversão de quebras manuais preserva OMath e evita Find/ReplaceAll que encerrava o Word em nova formatação.
+- Layout de objetos concluído antes de salvar; numeração contínua e sem quebra manual adicional após a capa.
+- Nova permissão nativeMessaging documentada, com ações e remetentes restritos.
+- Build/check executam corretamente quando a letra da unidade Windows tem capitalização diferente.
+
 ## 2026-09-29 — 15.9.2 — Auditoria complementar e consistência de dados
 
 - Corrigida a detecção textual de alternativas que já começam por A/B/C/D/E seguida de operador ou símbolo: casos como `A+5`, `B-3`, `A√25`, `B∑x`, `C%5`, `D^2`, `E·x` deixam de receber letra duplicada.

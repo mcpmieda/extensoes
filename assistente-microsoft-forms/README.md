@@ -1,6 +1,6 @@
 # Assistente do Microsoft Forms
 
-Versão de desenvolvimento **15.9.8**, derivada da referência histórica `V15.8.1(2).zip`.
+Versão de desenvolvimento **15.10.2**, derivada da referência histórica `V15.8.1(2).zip`.
 
 A 15.9.7 divide a leitura do painel em etapas com oportunidade de entrada e pintura entre questões. Leituras interrompidas por edição, mutação ou troca de formulário são descartadas. Indicadores de pendência deixaram de animar continuamente. As ações que exigem auditoria síncrona mantêm o contrato anterior; a rotina de edição matemática não foi alterada.
 
@@ -42,6 +42,12 @@ Execute `npm run build`. Em `edge://extensions` ou `chrome://extensions`, ative 
 O ZIP em `release/` contém o manifesto na raiz; ele pode ser extraído para carregar a versão compilada. Distribuição em lojas, assinatura e atualização automática não foram configuradas.
 
 Ao substituir uma instalação existente, use o procedimento de atualização dessa instalação e conserve um backup dos dados. Carregar outra pasta como uma nova extensão pode resultar em outra identidade e outro armazenamento; a migração do código não transfere automaticamente os dados entre instalações.
+
+## Simulado formatado no Word
+
+A 15.10.2 acrescenta **Finalizar simulado / Word formatado** sem substituir **Baixar Word**. Capa, verso, cabeçalhos, rodapés e dois selos laterais têm camadas editáveis. O título da capa/turma é preenchido manualmente e fica salvo; ano, ondas e selos originais acompanham o ano escolhido. O documento é gerado pela macro 6.3 no Word local, com equações editáveis e numeração contínua. A macro remove a linha vazia quando a questão começa uma página ou coluna e preserva os demais espaçamentos. As opções de revisão e impressão são do Word.
+
+O fluxo requer Windows, Word, macro disponível em Normal.dotm e os runtimes locais do Codex. Depois de carregar a extensão, execute `native/instalar-conector.cmd` com o ID da instalação. O instalador cria os arquivos de configuração apenas nesse computador e registra o host no Edge; eles não são versionados nem incluídos no pacote público. Veja [instruções completas](public/LEIA-ME-SIMULADO.txt) e [validação desta versão](docs/SIMULADO-WORD-15.10.2.md). A permissão adicional `nativeMessaging` é usada exclusivamente para conversar com o conector do Word local; os domínios do Forms permanecem os mesmos.
 
 ## Histórico local de questões
 
