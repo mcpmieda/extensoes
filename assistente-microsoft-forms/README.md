@@ -1,6 +1,6 @@
 # Assistente do Microsoft Forms
 
-Versão de desenvolvimento **15.10.2**, derivada da referência histórica `V15.8.1(2).zip`.
+Versão de desenvolvimento **15.10.3**, derivada da referência histórica `V15.8.1(2).zip`.
 
 A 15.9.7 divide a leitura do painel em etapas com oportunidade de entrada e pintura entre questões. Leituras interrompidas por edição, mutação ou troca de formulário são descartadas. Indicadores de pendência deixaram de animar continuamente. As ações que exigem auditoria síncrona mantêm o contrato anterior; a rotina de edição matemática não foi alterada.
 
@@ -47,7 +47,11 @@ Ao substituir uma instalação existente, use o procedimento de atualização de
 
 A 15.10.2 acrescenta **Finalizar simulado / Word formatado** sem substituir **Baixar Word**. Capa, verso, cabeçalhos, rodapés e dois selos laterais têm camadas editáveis. O título da capa/turma é preenchido manualmente e fica salvo; ano, ondas e selos originais acompanham o ano escolhido. O documento é gerado pela macro 6.3 no Word local, com equações editáveis e numeração contínua. A macro remove a linha vazia quando a questão começa uma página ou coluna e preserva os demais espaçamentos. As opções de revisão e impressão são do Word.
 
-O fluxo requer Windows, Word, macro disponível em Normal.dotm e os runtimes locais do Codex. Depois de carregar a extensão, execute `native/instalar-conector.cmd` com o ID da instalação. O instalador cria os arquivos de configuração apenas nesse computador e registra o host no Edge; eles não são versionados nem incluídos no pacote público. Veja [instruções completas](public/LEIA-ME-SIMULADO.txt) e [validação desta versão](docs/SIMULADO-WORD-15.10.2.md). A permissão adicional `nativeMessaging` é usada exclusivamente para conversar com o conector do Word local; os domínios do Forms permanecem os mesmos.
+O fluxo requer Windows, Word, macro disponível em Normal.dotm e os runtimes locais do Codex. Na 15.10.3, execute `native/instalar-conector.cmd` e informe o ID exibido em **Configurar conector Word**. O instalador copia o aplicativo auxiliar para `%LOCALAPPDATA%/GSSF/WordConnector` e registra o host para Edge e Chrome nas duas visões do Registro. Novos IDs explicitamente informados são acrescentados sem apagar os anteriores. Configurações locais não são versionadas nem incluídas no pacote público. Veja [instruções completas](public/LEIA-ME-SIMULADO.txt) e [validação da formatação](docs/SIMULADO-WORD-15.10.2.md). A permissão adicional `nativeMessaging` é usada exclusivamente para conversar com o conector do Word local; os domínios do Forms permanecem os mesmos.
+
+Quando falta o conector, o editor apresenta os requisitos, o ID da instalação e **Verificar conexão**, sem ficar indefinidamente em “Conectando ao modelo”. O download formatado aguarda a conexão; **Baixar Word** mantém o fluxo anterior. A verificação inicial confere Word, arquivos de runtimes e modelo antes de carregar as camadas. A macro em Normal.dotm é verificada pela execução, não por essa verificação inicial.
+
+**Publicação em loja:** este pacote ainda depende de um aplicativo auxiliar instalado separadamente, da macro e dos runtimes do Codex. Carregar o ZIP da extensão não instala essas dependências. A distribuição do aplicativo auxiliar, os requisitos e as instruções para revisão precisam ser preparados antes de declarar a edição pronta para a Chrome Web Store. Esta atualização não representa aprovação nem submissão à loja.
 
 ## Histórico local de questões
 

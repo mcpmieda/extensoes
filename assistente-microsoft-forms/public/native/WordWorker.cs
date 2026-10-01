@@ -39,13 +39,41 @@ class WordWorker {
   string user=Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),python=Path.Combine(user,".cache","codex-runtimes","codex-primary-runtime","dependencies","python","python.exe");
   if(!File.Exists(python))throw new Exception("Runtime Python do Codex não encontrado.");
   string dependencies=Path.GetFullPath(Path.Combine(Path.GetDirectoryName(python),".."));
-  Write(Path.Combine(root,"config.json"),new {python=python,node=Path.Combine(dependencies,"node","bin","node.exe"),nodeModules=Path.Combine(dependencies,"node","node_modules"),template=Path.GetFullPath(Path.Combine(root,"..","assets","simulado-modelo.docx")),outputDirectory=Path.Combine(user,"Downloads","Simulados Assistente Forms")});
-  string manifest=Path.Combine(root,"com.gssf.simulado_word.json");
-  Write(manifest,new {name="com.gssf.simulado_word",description="Word local para formatação fiel do simulado",path=Path.Combine(root,"GssfWordHost.exe"),type="stdio",allowed_origins=new[]{"chrome-extension://"+id+"/"}});
-  using(var k=Registry.CurrentUser.CreateSubKey("Software\\Microsoft\\Edge\\NativeMessagingHosts\\com.gssf.simulado_word")){k.SetValue("",manifest);}
+  string installRoot=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"GSSF","WordConnector"),native=Path.Combine(installRoot,"native"),assets=Path.Combine(installRoot,"assets");
+  string[] files={"GssfWordHost.exe","WordWorker.exe","template.py","year-art.cjs","FormatarQuestoesSimuladoV6.bas"};
+  string template=Path.GetFullPath(Path.Combine(root,"..","assets","simulado-modelo.docx"));
+  // Validate everything before changing browser registration. Keep the companion outside versioned extension folders.
+  foreach(string file in files)if(!File.Exists(Path.Combine(root,file)))throw new Exception("Arquivo do conector ausente: "+file);
+  if(!File.Exists(template))throw new Exception("Modelo do simulado ausente.");
+  if(!File.Exists(Path.Combine(dependencies,"node","bin","node.exe")))throw new Exception("Runtime Node do Codex não encontrado.");
+  Directory.CreateDirectory(native);Directory.CreateDirectory(assets);
+  if(!Path.GetFullPath(root).TrimEnd('\\').Equals(Path.GetFullPath(native),StringComparison.OrdinalIgnoreCase)){
+   foreach(string file in files)File.Copy(Path.Combine(root,file),Path.Combine(native,file),true);
+   File.Copy(template,Path.Combine(assets,"simulado-modelo.docx"),true);
+  }
+  string manifest=Path.Combine(native,"com.gssf.simulado_word.json"),configPath=Path.Combine(native,"config.json");
+  var origins=new List<string>();
+  if(File.Exists(manifest)){
+   var previous=Get(Read(manifest),"allowed_origins") as System.Collections.IEnumerable;
+   if(previous!=null)foreach(object value in previous){string origin=Convert.ToString(value);if(Regex.IsMatch(origin,"^chrome-extension://[a-p]{32}/$")&&!origins.Contains(origin))origins.Add(origin);}
+  }
+  string currentOrigin="chrome-extension://"+id+"/";if(!origins.Contains(currentOrigin))origins.Add(currentOrigin);
+  string output=File.Exists(configPath)?Str(Read(configPath),"outputDirectory"):"";if(output.Length==0)output=Path.Combine(user,"Downloads","Simulados Assistente Forms");
+  Write(configPath,new {python=python,node=Path.Combine(dependencies,"node","bin","node.exe"),nodeModules=Path.Combine(dependencies,"node","node_modules"),template=Path.Combine(assets,"simulado-modelo.docx"),outputDirectory=output});
+  Write(manifest,new {name="com.gssf.simulado_word",description="Word local para formatação fiel do simulado",path=Path.Combine(native,"GssfWordHost.exe"),type="stdio",allowed_origins=origins.ToArray()});
+  foreach(RegistryView view in new[]{RegistryView.Registry32,RegistryView.Registry64})
+   using(var userKey=RegistryKey.OpenBaseKey(RegistryHive.CurrentUser,view))
+    foreach(string browser in new[]{"Software\\Microsoft\\Edge","Software\\Google\\Chrome"})
+     using(var key=userKey.CreateSubKey(browser+"\\NativeMessagingHosts\\com.gssf.simulado_word")){key.SetValue("",manifest,RegistryValueKind.String);}
+  Console.WriteLine("Conector registrado para Edge e Chrome. ID autorizado: "+id);
+  Console.WriteLine("Pasta do conector: "+installRoot);
  }
  [STAThread] static int Main(string[] args){
-  if(args.Length==2&&args[0]=="--install"){try{Install(args[1]);Console.WriteLine("Conector local instalado.");return 0;}catch(Exception e){Console.Error.WriteLine(e.Message);return 1;}}
+  if(args.Length>=1&&args.Length<=2&&args[0]=="--install"){try{
+   string id=args.Length==2?args[1]:"";
+   if(id.Length==0){Console.WriteLine("Copie o ID mostrado em Finalizar simulado > Configurar conector Word.");Console.Write("ID desta instalação da extensão: ");id=(Console.ReadLine()??"").Trim();}
+   Install(id);return 0;
+  }catch(Exception e){Console.Error.WriteLine(e.Message);return 1;}}
   if(args.Length==2&&args[0]=="--print-options"){
    try{
     var cfg=Read(Path.Combine(root,"config.json"));string file=ValidPath(cfg,args[1]);dynamic app;
@@ -59,7 +87,12 @@ class WordWorker {
   if(args.Length!=2)return 2;string request=args[0],response=args[1];dynamic word=null,doc=null,previousDoc=null;bool owned=false;string stage="início";
   try{
    var config=Read(Path.Combine(root,"config.json"));var data=Read(request);string action=Str(data,"action");
-   if(action=="status"){Write(response,new{ok=true,version="15.10.2",macro="6.3",wordAvailable=Type.GetTypeFromProgID("Word.Application")!=null,outputDirectory=Str(config,"outputDirectory")});return 0;}
+   if(action=="status"){
+    bool wordAvailable=Type.GetTypeFromProgID("Word.Application")!=null;
+    bool runtimesAvailable=File.Exists(Str(config,"python"))&&File.Exists(Str(config,"node"))&&Directory.Exists(Str(config,"nodeModules"));
+    bool templateAvailable=File.Exists(Str(config,"template"));
+    Write(response,new{ok=true,version="15.10.3",macro="6.3",wordAvailable=wordAvailable,runtimesAvailable=runtimesAvailable,templateAvailable=templateAvailable,ready=wordAvailable&&runtimesAvailable&&templateAvailable,outputDirectory=Str(config,"outputDirectory")});return 0;
+   }
    if(action=="model"){Python(config,"model",request,response);return 0;}
    if(action=="open"){
    var path=ValidPath(config,Str(data,"path"));

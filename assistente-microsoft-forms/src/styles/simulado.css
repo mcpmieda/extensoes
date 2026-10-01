@@ -43,3 +43,8 @@
 #gssf-simulado-dialog .gsw-result p{font-size:12px;overflow-wrap:anywhere}
 @media(max-width:760px){#gssf-simulado-dialog .gsw-layout{grid-template-columns:1fr}#gssf-simulado-dialog .gsw-layer-list{max-height:220px;overflow:auto}#gssf-simulado-dialog .gsw-grid{grid-template-columns:1fr}#gssf-simulado-dialog .gsw-content{padding:12px}}
 #gssf-root #gssf-simulado-word{margin-top:10px;min-height:34px;height:auto;padding:8px 12px;white-space:normal;line-height:1.3}
+#gssf-simulado-dialog .gsw-connection{margin:16px 22px 0;padding:16px 18px;background:#fff;border:1px solid #dbe4ef;border-radius:12px;flex-shrink:0;max-height:35vh;overflow:auto}
+#gssf-simulado-dialog .gsw-connection[hidden]{display:none}
+#gssf-simulado-dialog .gsw-connection p{font-size:12px;line-height:1.6}
+#gssf-simulado-dialog .gsw-connection summary{cursor:pointer;color:#165ec2;font-weight:600}
+#gssf-simulado-dialog .gsw-connection input{margin:8px 0;font-family:Consolas,monospace}

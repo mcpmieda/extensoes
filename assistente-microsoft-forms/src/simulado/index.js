@@ -5,7 +5,7 @@
   const native = (action, data = {}) => new Promise((resolve, reject) => {
     chrome.runtime.sendMessage({ type: 'GSSF_SIMULADO_WORD', action, ...data }, result => {
       const error = chrome.runtime.lastError;
-      if (error || !result?.ok) reject(new Error(error?.message || result?.error || 'Conector do Word indisponível.'));
+      if (error || !result?.ok) reject(Object.assign(new Error(error?.message || result?.error || 'Conector do Word indisponível.'),{code:result?.code}));
       else resolve(result);
     });
   });
@@ -33,7 +33,7 @@
     if (current) { current.dialog.focus(); return; }
     const prefs = stored();
     const draftKey=location.href+'|'+context.title();
-    const state = { options: { year: new Date().getFullYear(), areas: '', edits: [], coverTitle: '', ...prefs }, layers: [], capture: drafts.get(draftKey)||null, result: null, busy: false, tab: 'Capa', selected: null };
+    const state = { options: { year: new Date().getFullYear(), areas: '', edits: [], coverTitle: '', ...prefs }, layers: [], capture: drafts.get(draftKey)||null, result: null, busy: false, connected: false, connectionError: '', tab: 'Capa', selected: null };
     state.options.coverTitle=state.options.coverTitle || state.options.edits.find(e=>e.id===COVER_TITLE)?.text || '';
     const shade = el('div', { id: 'gssf-simulado-shade' });
     const dialog = el('section', { id: 'gssf-simulado-dialog', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Finalizar simulado no Word', tabindex: '-1' });
@@ -42,9 +42,10 @@
     const titles = el('div');titles.append(el('strong', {}, 'Finalizar simulado'), el('span', {}, 'Modelo original • Word local • macro 6.3'));
     const close = el('button', { class: 'gsw-close', type: 'button', 'aria-label': 'Fechar editor do simulado' }, '×');head.append(titles, close);dialog.append(head);
     const nav = el('nav', { class: 'gsw-tabs', 'aria-label': 'Etapas do simulado' });
+    const connection = el('div', { class: 'gsw-connection' });
     const content = el('div', { class: 'gsw-content' });
     const status = el('div', { class: 'gsw-status', role: 'status', 'aria-live': 'polite' }, 'Conectando ao Word local…');
-    dialog.append(nav, content, status);
+    dialog.append(nav, connection, content, status);
     const previousFocus = document.activeElement;
     function dismiss() { if (state.busy) return;shade.remove();current=null;previousFocus?.focus?.(); }
     close.onclick=dismiss;
@@ -66,7 +67,7 @@
       dialog.setAttribute('aria-busy','true');
       dialog.querySelectorAll('button,input,select,textarea').forEach(n=>n.disabled=true);
       dialog.querySelectorAll('[contenteditable=true]').forEach(n=>n.contentEditable='false');
-      try{await fn();}catch(error){message(error.message,true);}
+      try{await fn();}catch(error){if(error.code?.startsWith('WORD_CONNECTOR_')){state.connected=false;state.connectionError=error.message;}message(error.message,true);}
       finally{state.busy=false;close.disabled=false;dialog.removeAttribute('aria-busy');render();}
     }
     function button(text,fn,primary=false){const b=el('button',{class:'gsw-button'+(primary?' primary':''),type:'button'},text);b.onclick=fn;return b;}
@@ -80,12 +81,25 @@
     function editFor(layer){return state.options.edits.find(e=>e.id===layer.id)||{};}
     function update(layer,patch){if(layer.id===COVER_TITLE&&'text' in patch)state.options.coverTitle=patch.text;let edit=state.options.edits.find(e=>e.id===layer.id);if(!edit){edit={id:layer.id};state.options.edits.push(edit);}Object.assign(edit,patch);persist();}
     function render(){
+      renderConnection();
       nav.replaceChildren();for(const name of ['Capa','Verso e redação','Cabeçalhos e rodapés','Selos laterais','Questões','Finalizar']){
         const b=button(name,()=>{state.tab=name;state.selected=null;render();});b.classList.toggle('active',state.tab===name);b.disabled=state.busy;nav.append(b);
       }
       content.replaceChildren();
       if(state.tab==='Questões')renderQuestions();else if(state.tab==='Finalizar')renderFinish();else renderLayers();
-      content.querySelectorAll('button,input,select,textarea').forEach(n=>n.disabled=state.busy);
+      content.querySelectorAll('button,input,select,textarea').forEach(n=>n.disabled=state.busy||n.hasAttribute('data-gsw-requires-connection')&&!state.connected);
+    }
+    function renderConnection(){
+      connection.replaceChildren();connection.hidden=state.connected;
+      if(state.connected)return;
+      connection.append(el('strong',{},state.connectionError?'Configurar conector Word':'Verificando conector Word…'));
+      connection.append(el('p',{class:'gsw-help'},state.connectionError||'O Word formatado usa um aplicativo local para executar a macro e manter o modelo original.'));
+      if(!state.connectionError)return;
+      const setup=el('details');setup.append(el('summary',{},'Como conectar esta instalação'));
+      setup.append(el('p',{},'Requer Windows, Microsoft Word, macro 6.3 em Normal.dotm e runtimes locais do Codex. Abra native/instalar-conector.cmd na pasta extraída da extensão e informe o ID abaixo. O instalador atende Edge e Chrome.'));
+      const id=el('input',{type:'text',readonly:'readonly','aria-label':'ID desta instalação da extensão'});id.value=chrome.runtime.id;setup.append(id);
+      setup.append(el('p',{},'Depois da instalação, clique em Verificar conexão. O download normal em Baixar Word continua disponível no painel.'));connection.append(setup);
+      connection.append(button('Verificar conexão',()=>task('Verificando conector Word…',connect),true));
     }
     function coverTitleField(parent){
       field(parent,'Título da capa / turma','text',state.options.coverTitle,value=>{state.options.coverTitle=value;update({id:COVER_TITLE},{text:value});const text=content.querySelector('textarea');if(state.tab==='Capa'&&state.selected===COVER_TITLE&&text)text.value=value;},{placeholder:'Ex.: 8º ANO A e B',maxlength:120,required:'required'});
@@ -99,7 +113,7 @@
       if(!choices.length)list.append(el('p',{class:'gsw-help'},'As camadas aparecem após a conexão com o Word.'));
       for(const layer of choices){const b=button((layer.kind==='art'?'▧ ':'T ')+(layer.id===COVER_TITLE?'Título da capa / turma — '+(state.options.coverTitle||'Preencher manualmente'):layer.label),()=>{state.selected=layer.id;render();});b.classList.add('gsw-layer');b.classList.toggle('selected',state.selected===layer.id);list.append(b);}
       const layer=state.layers.find(l=>l.id===state.selected)||choices[0];
-      if(!layer){inspector.append(el('p',{},'Conectando ao modelo original…'));return;}
+      if(!layer){inspector.append(el('p',{},state.connectionError?'Configure o conector acima para carregar as camadas do modelo.':'Conectando ao modelo original…'));return;}
       state.selected=layer.id;const edit=editFor(layer);
       inspector.append(el('h3',{},layer.id===COVER_TITLE?'Título da capa / turma':layer.label));
       if(layer.side)inspector.append(el('p',{class:'gsw-help'},`O selo ${layer.side==='left'?'esquerdo':'direito'} é repetido nas páginas pares e ímpares. A arte original acompanha automaticamente o ano ${state.options.year}, definido em Finalizar. Ao enviar uma arte própria, inclua nela o ano desejado.`));
@@ -179,7 +193,8 @@
       card.append(el('p',{class:'gsw-help'},'Formato: início|título;início|título. A primeira área começa em 1. Deixe vazio para a macro identificar as áreas do modelo.'));
       card.append(el('p',{class:'gsw-help'},'O arquivo usa o modelo original, equações editáveis e a macro 6.3 instalada. A numeração das páginas é contínua para imprimir uma página individual.'));
       const actions=el('div',{class:'gsw-actions'});card.append(actions);
-      actions.append(button('Baixar Word já formatado',()=>task('Preparando o documento no Word local…',async()=>{
+      const download=button('Baixar Word já formatado',()=>task('Preparando o documento no Word local…',async()=>{
+        if(!state.connected)throw new Error('Configure o conector Word antes de finalizar. O download normal continua disponível no painel.');
         if(!state.options.coverTitle.trim())throw new Error('Preencha o título da capa / turma antes de baixar o Word.');
         const year=Number(state.options.year);if(!Number.isInteger(year)||year<2000||year>2099)throw new Error('Escolha um ano entre 2000 e 2099.');
         if(!state.capture)await capture();
@@ -189,7 +204,7 @@
         const images=holder.querySelectorAll('img').length;
         state.result=await native('generate',{html,title:context.title(),expectedQuestions:state.capture.count,expectedImages:images,options:state.options});
         message(`Concluído: ${state.result.questions} questões, ${state.result.images} imagens, ${state.result.equations} equações e ${state.result.pages} páginas. Word salvo em Downloads / Simulados Assistente Forms.`);
-      }),true));
+      }),true);download.setAttribute('data-gsw-requires-connection','');download.disabled=!state.connected;actions.append(download);
       if(state.result){
         const info=el('div',{class:'gsw-result'});info.append(el('strong',{},'Prova finalizada e conferida'),el('p',{},state.result.docx));card.append(info);
         const ready=el('div',{class:'gsw-actions'});info.append(ready);
@@ -197,8 +212,12 @@
       }
       const reset=button('Restaurar personalização do modelo',()=>{state.options.edits=[];state.options.areas='';state.options.coverTitle='';persist();render();message('Personalização restaurada; o ano foi preservado.');});card.append(reset);
     }
-    render();dialog.focus();
-    await task('Lendo camadas do modelo original…',async()=>{
+    async function connect(){
+      state.connected=false;state.connectionError='';
+      try{
+      const health=await native('status');
+      if(!health.wordAvailable)throw new Error('Instale Microsoft Word para Windows para usar a formatação pela macro.');
+      if(health.runtimesAvailable===false||health.templateAvailable===false)throw new Error('O conector está instalado, mas faltam arquivos do modelo ou runtimes. Execute novamente o instalador.');
       const result=await native('model');state.layers=result.layers;
       if((state.options.layoutVersion||1)<2){
         state.options.edits=state.options.edits.filter(edit=>state.layers.some(layer=>layer.id===edit.id));
@@ -210,8 +229,11 @@
         }
         state.options.layoutVersion=2;persist();
       }
-      message('Word conectado. Personalize as camadas ou vá a Finalizar para baixar o documento.');
-    });
+      state.connected=true;message('Word conectado. Personalize as camadas ou vá a Finalizar para baixar o documento.');
+      }catch(error){state.connectionError=error.message;throw error;}
+    }
+    render();dialog.focus();
+    await task('Verificando conector e lendo camadas do modelo…',connect);
   }
   globalThis.GSSF_SIMULADO=Object.freeze({open});
 })();

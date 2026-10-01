@@ -1,4 +1,4 @@
-ASSISTENTE DE FORMS 15.10.2 — FINALIZAR EM WORD
+ASSISTENTE DE FORMS 15.10.3 — FINALIZAR EM WORD
 
 O botão Baixar Word continua funcionando como antes. Finalizar simulado / Word formatado gera um DOCX usando o Word deste computador e a macro 6.3 já instalada.
 
@@ -21,8 +21,10 @@ PAGINAÇÃO
 A numeração é contínua, sem reinício por seção e sem quebra manual adicional após a capa. As seções que permitem capa em uma coluna e questões em duas colunas foram preservadas.
 
 INSTALAÇÃO NESTE COMPUTADOR
-A pasta da extensão continua sendo %USERPROFILE%\Desktop\V15.9.8, para preservar seu ID. O conector local é registrado por native\instalar-conector.cmd. Se mover a pasta, execute o instalador nessa nova pasta. Se o ID da extensão mudar, passe o novo ID como argumento do instalador.
-A versão exibida no assistente deve ser 15.10.2 depois de atualizar a página do Forms. Recarregue a extensão no Edge quando necessário.
+Abra native\instalar-conector.cmd na pasta extraída da extensão. Informe o ID mostrado em Finalizar simulado > Configurar conector Word. Não há mais um ID fixo no instalador. Para uso pela linha de comando, WordWorker.exe --install ID aceita o mesmo ID.
+O instalador copia somente o conector e o modelo para %LOCALAPPDATA%\GSSF\WordConnector e registra essa pasta fixa no Edge e no Chrome. Uma nova autorização explícita acrescenta o ID sem remover os anteriores. Não é necessário acesso de administrador. Não altere políticas de segurança do navegador ou do Word para instalar.
+Depois de instalar, clique em Verificar conexão no editor. Se a pasta da extensão mudar e seu ID for alterado, execute o instalador novamente com o novo ID. A pasta fixa do conector não acompanha a pasta versionada da extensão.
+A versão exibida no assistente deve ser 15.10.3 depois de recarregar a extensão e atualizar a página do Forms. O download normal Baixar Word continua disponível mesmo sem o aplicativo auxiliar.
 
 DEPENDÊNCIAS
 Microsoft Word para Windows, macro instalada em Normal.dotm e runtimes locais do Codex. A geração não usa um serviço remoto e não altera a segurança de macros do Word.
@@ -30,4 +32,7 @@ Microsoft Word para Windows, macro instalada em Normal.dotm e runtimes locais do
 O campo Título da capa / turma deve ser preenchido manualmente antes de baixar o Word. Aparece em Capa e em Finalizar, fica salvo e não é inferido do nome do formulário.
 
 INSTALAÇÃO EM OUTRO COMPUTADOR
-Requer Windows, Microsoft Word e os runtimes locais do Codex (Python com lxml/Pillow, Node com canvas). Importe native/FormatarQuestoesSimuladoV6.bas no módulo de macros do Word, mantendo as outras macros. A macro precisa ficar disponível em Normal.dotm. Em seguida carregue a extensão sem compactação, confira seu ID no navegador e execute native/instalar-conector.cmd com esse ID. O instalador cria a configuração local e registra o conector no Edge. Configurações de um computador não são distribuídas no ZIP.
+Requer Windows, Microsoft Word e os runtimes locais do Codex (Python com lxml/Pillow, Node com canvas). Importe native/FormatarQuestoesSimuladoV6.bas no módulo de macros do Word, mantendo as outras macros. A macro precisa ficar disponível em Normal.dotm. Em seguida carregue a extensão sem compactação, confira seu ID e execute native/instalar-conector.cmd, informando esse ID quando solicitado. O instalador cria a configuração local e registra o conector no Edge e Chrome. Configurações de um computador não são distribuídas no ZIP.
+
+LOJA DE EXTENSÕES
+Instalar a extensão pelo navegador não instala o aplicativo auxiliar do Word. Esta função exige a instalação separada descrita acima. A distribuição do aplicativo auxiliar, seus requisitos e o procedimento de revisão ainda precisam ser preparados para publicação na loja. O pacote não foi submetido nem aprovado pela Chrome Web Store.

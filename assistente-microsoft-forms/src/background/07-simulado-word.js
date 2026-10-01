@@ -15,7 +15,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if(finished)return;finished=true;clearTimeout(timer);
     sendResponse(result);try{port?.disconnect();}catch(_){}
   };
-  const failure=error=>finish({ok:false,error:'Conector do Word: '+error+'. Execute native/instalar-conector.cmd da pasta da extensão para reconectar.'});
+  const failure=error=>{
+    const reason=String(error||'');
+    const code=/not found/i.test(reason)?'WORD_CONNECTOR_MISSING':/forbidden/i.test(reason)?'WORD_CONNECTOR_FORBIDDEN':'WORD_CONNECTOR_UNAVAILABLE';
+    const text=code==='WORD_CONNECTOR_MISSING'?'O conector local do Word ainda não está configurado para este navegador.':code==='WORD_CONNECTOR_FORBIDDEN'?'O conector não está autorizado para o ID desta instalação da extensão.':'Não foi possível concluir a conexão com o Word local.';
+    finish({ok:false,code,error:text,technicalDetail:reason,extensionId:chrome.runtime.id});
+  };
   const timer=setTimeout(()=>failure('Tempo limite. Confira se o Word está aguardando uma resposta.'),660000);
   try{
     port=chrome.runtime.connectNative('com.gssf.simulado_word');
