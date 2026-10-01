@@ -45,7 +45,7 @@
     });
     deactivateQuizFeatures('extensão encerrada');
     try {
-      if (APP.runtimeMessageHandler && chrome?.runtime?.onMessage) chrome.runtime.onMessage.removeListener(APP.runtimeMessageHandler);
+      if (!APP.extensionContextLost && APP.runtimeMessageHandler && typeof chrome !== 'undefined' && chrome.runtime?.onMessage) chrome.runtime.onMessage.removeListener(APP.runtimeMessageHandler);
     } catch (error) {
       reportNonFatalError('lifecycle:remover-runtime-listener', error);
     }
@@ -99,4 +99,3 @@
       btn.setAttribute('aria-label', btn.title);
     }
   }
-

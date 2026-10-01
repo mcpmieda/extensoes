@@ -33,22 +33,30 @@
 
   function fetchImageThroughBackground(src) {
     return new Promise((resolve, reject) => {
+      let timer;
+      const fail = (error) => { clearTimeout(timer); reject(error); };
       try {
+        requireExtensionContext();
         if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) {
-          reject(new Error('Background indisponível para buscar imagem.'));
+          fail(new Error('Background indisponível para buscar imagem.'));
           return;
         }
+        timer = setTimeout(() => fail(new Error('A busca da imagem excedeu o prazo. Tente novamente.')), 30000);
         chrome.runtime.sendMessage({ type: 'GSSF_FETCH_IMAGE', url: src }, (response) => {
-          const runtimeError = chrome.runtime.lastError;
-          if (runtimeError) {
-            reject(new Error(runtimeError.message || 'Falha no background.'));
-            return;
-          }
-          if (response?.ok && response.dataUrl) resolve(response.dataUrl);
-          else reject(new Error(response?.error || 'Background não retornou imagem.'));
+          clearTimeout(timer);
+          try {
+            const runtimeError = chrome.runtime.lastError;
+            requireExtensionContext();
+            if (runtimeError) {
+              fail(new Error(runtimeError.message || 'Falha no background.'));
+              return;
+            }
+            if (response?.ok && response.dataUrl) resolve(response.dataUrl);
+            else fail(new Error(response?.error || 'Background não retornou imagem.'));
+          } catch (error) { fail(error); }
         });
       } catch (error) {
-        reject(error);
+        fail(error);
       }
     });
   }
@@ -111,6 +119,7 @@
 
     async function worker() {
       while (cursor < imgs.length) {
+        requireExtensionContext();
         const index = cursor;
         cursor += 1;
         const img = imgs[index];
@@ -131,6 +140,7 @@
             if (hadCache) cached += 1;
           }
         } catch (error) {
+          if (isInvalidExtensionContext(error)) { APP.extensionContextLost = true; throw error; }
           console.warn('Não consegui embutir imagem; mantendo link original:', src, error);
           img.setAttribute('src', src);
           failed += 1;
@@ -171,31 +181,38 @@
   }
 
   async function prepareCopyPayloadFromBlocks(blocks, progressId = 'copy', options = {}) {
+    requireExtensionContext();
     const temp = buildClipboardContainerFromBlocks(blocks);
     document.body.appendChild(temp);
-    await sleep(45);
-    let wordMathResult = { changed: 0, failed: 0 };
-    if (options?.wordDownload || options?.wordClipboard) {
-      wordMathResult = await normalizeMathAlternativesForWordFormulas(temp, progressId);
-      await sleep(25);
-    }
-    const inlineResult = await inlineImagesAsDataUris(temp, progressId);
-    const decodedImages = await waitForTempImagesDecoded(temp, progressId);
-    await sleep(35);
-    const { html, plain } = htmlPlainFromContainer(temp);
-    const innerHtml = temp.innerHTML;
-    const htmlImageCount = (html.match(/<img\b/gi) || []).length;
-    const dataImageCount = (html.match(/src=["']data:image/gi) || []).length;
-    try { temp.remove(); } catch (_) {}
-    return { html, innerHtml, plain, decodedImages, inlineResult, wordMathResult, htmlImageCount, dataImageCount };
+    try {
+      await sleep(45);
+      let wordMathResult = { changed: 0, failed: 0 };
+      if (options?.wordDownload || options?.wordClipboard) {
+        wordMathResult = await normalizeMathAlternativesForWordFormulas(temp, progressId);
+        await sleep(25);
+      }
+      const inlineResult = await inlineImagesAsDataUris(temp, progressId);
+      requireExtensionContext();
+      const decodedImages = await waitForTempImagesDecoded(temp, progressId);
+      await sleep(35);
+      const { html, plain } = htmlPlainFromContainer(temp);
+      const innerHtml = temp.innerHTML;
+      const htmlImageCount = (html.match(/<img\b/gi) || []).length;
+      const dataImageCount = (html.match(/src=["']data:image/gi) || []).length;
+      return { html, innerHtml, plain, decodedImages, inlineResult, wordMathResult, htmlImageCount, dataImageCount };
+    } finally { temp.remove(); }
   }
 
-  async function copyBlocksToClipboard(blocks, range) {
+  async function copyBlocksToClipboard(blocks, range, expectedImages = 0) {
     const payload = await prepareCopyPayloadFromBlocks(blocks, 'copy', { wordClipboard: true });
     const selection = window.getSelection();
     let copied = false;
     let usedMethod = '';
     const { html, plain } = payload;
+    requireExtensionContext();
+    if (!copyImageCheckOk(payload, Math.max(Number(expectedImages || 0), Number(payload.inlineResult?.total || 0)))) {
+      throw new Error('Não foi possível embutir todas as imagens. A cópia foi cancelada; tente novamente.');
+    }
 
     // Preferimos gravar HTML diretamente no clipboard. Isso evita o problema do navegador
     // copiar só as imagens renderizadas/visíveis na seleção da página.
@@ -266,18 +283,19 @@
   }
 
   async function copyBlocksToClipboardWithImageSafety(blocks, expectedImages, progressId = 'copy') {
-    let first = await copyBlocksToClipboard(blocks, null);
+    let first = await copyBlocksToClipboard(blocks, null, expectedImages);
     if (!first?.copied || copyImageCheckOk(first, expectedImages)) return first;
 
     try {
       log('Conferência de imagens pediu reforço. Vou reconstruir a cópia uma vez antes de concluir.');
       await stepProgress(progressId, 84, 'Reforçando imagens para o Word...', 140);
       await sleep(180);
-      const second = await copyBlocksToClipboard(blocks, null);
+      const second = await copyBlocksToClipboard(blocks, null, expectedImages);
       if (second?.copied && (copyImageCheckOk(second, expectedImages) || !copyImageCheckOk(first, expectedImages))) {
         return { ...second, usedMethod: `${second.usedMethod || 'clipboard'}-retry` };
       }
     } catch (error) {
+      if (isInvalidExtensionContext(error)) throw error;
       console.warn('Reforço de cópia com imagens falhou:', error);
     }
     return first;

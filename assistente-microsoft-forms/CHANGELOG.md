@@ -1,5 +1,13 @@
 # Histórico
 
+## 2026-10-01 — 15.10.5 — Recuperação após atualização da extensão
+
+- Detectada e encerrada a instância desconectada da aba, com aviso para recarregar o Forms após salvar.
+- Interrompidas tentativas repetidas de acesso ao armazenamento quando o contexto da extensão é invalidado.
+- Perda de conexão durante busca de imagens cancela a operação, limpa o conteúdo temporário e não gera arquivo parcial.
+- Cópia e download exigem as imagens embutidas; busca pelo background tem prazo de resposta.
+- Sem novas permissões, alterações no armazenamento ou retorno do simulado formatado.
+
 ## 2026-10-01 — 15.10.4 — Remoção do simulado formatado
 
 - Removidos o botão Finalizar simulado / Word formatado, o editor de camadas e a geração pela macro.

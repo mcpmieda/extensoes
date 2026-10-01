@@ -183,6 +183,8 @@
   }
 
   async function ensurePrivateStorageReady() {
+    try { requireExtensionContext(); }
+    catch (error) { handleInvalidExtensionContext(error); return false; }
     if (APP.storageReady) return true;
     if (!GSSF_STORAGE) {
       console.error('Armazenamento privado da extensão indisponível.');
@@ -193,6 +195,7 @@
       APP.storageReady = true;
       return true;
     } catch (error) {
+      if (handleInvalidExtensionContext(error)) return false;
       console.error('Falha ao inicializar o armazenamento privado da extensão:', error);
       return false;
     }
@@ -250,6 +253,8 @@
 
   async function evaluateQuizEligibility() {
     if (APP.lifecycle.destroyed) return;
+    try { requireExtensionContext(); }
+    catch (error) { handleInvalidExtensionContext(error); return; }
     const now = Date.now();
     const href = String(location.href || '');
     const key = currentFormsDocumentKey();
@@ -301,6 +306,7 @@
   }
 
   function scheduleEligibilityCheck(delay = 0) {
+    if (APP.lifecycle.destroyed) return;
     clearTimeout(APP.eligibilityTimer);
     APP.eligibilityTimer = setTimeout(async () => {
       APP.eligibilityTimer = null;

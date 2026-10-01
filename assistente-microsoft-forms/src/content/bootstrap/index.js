@@ -15,6 +15,7 @@
       document.getElementById('gssf-confirm-modal')?.remove();
       document.getElementById('gssf-work-overlay')?.remove();
       document.getElementById('gssf-question-focus-marker')?.remove();
+      document.getElementById('gssf-reconnect-notice')?.remove();
       document.documentElement.classList.remove('gssf-docked-page', 'gssf-silent-work');
       document.body?.classList.remove('gssf-docked-page');
     } catch (_) {}

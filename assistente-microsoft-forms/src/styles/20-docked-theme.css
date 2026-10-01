@@ -1,5 +1,33 @@
 /* ===== 20-docked-theme.css ===== */
 /* Fonte modular: docked theme */
+#gssf-reconnect-notice {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+  z-index: 2147483647;
+  padding: 18px;
+  border: 1px solid #bdccdc;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f1fbfa, #f2f7ff);
+  color: #0f172a;
+  box-shadow: 0 12px 32px rgba(15,23,42,.16);
+  font: 14px/1.5 Segoe UI, Arial, sans-serif;
+}
+#gssf-reconnect-notice p { margin: 12px 0; }
+#gssf-reconnect-notice button {
+  width: 100%;
+  border: 0;
+  border-radius: 22px;
+  padding: 11px 14px;
+  background: linear-gradient(110deg, #178a8b, #00528d);
+  color: #fff;
+  font: 700 14px Segoe UI, Arial, sans-serif;
+  cursor: pointer;
+}
+#gssf-reconnect-notice button:focus-visible { outline: 3px solid #00bcd4; outline-offset: 3px; }
 html.gssf-docked-page{
   --gssf-w: 340px ;
   --gssf-gap: 0px ;
@@ -824,4 +852,3 @@ body.gssf-docked-page {
   opacity: 0 ;
   pointer-events: none ;
 }
-

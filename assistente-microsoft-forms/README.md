@@ -1,6 +1,8 @@
 # Assistente do Microsoft Forms
 
-Versão de desenvolvimento **15.10.4**, derivada da referência histórica `V15.8.1(2).zip`.
+Versão de desenvolvimento **15.10.5**, derivada da referência histórica `V15.8.1(2).zip`.
+
+A 15.10.5 encerra a instância da aba quando o navegador invalida a conexão após uma atualização da extensão. O aviso oferece recarregar a aba do Forms após salvar. Cópia e download são cancelados quando a conexão é perdida ou as imagens não podem ser embutidas; não há conclusão falsa de um arquivo incompleto. Permissões e dados salvos permanecem iguais.
 
 A 15.9.7 divide a leitura do painel em etapas com oportunidade de entrada e pintura entre questões. Leituras interrompidas por edição, mutação ou troca de formulário são descartadas. Indicadores de pendência deixaram de animar continuamente. As ações que exigem auditoria síncrona mantêm o contrato anterior; a rotina de edição matemática não foi alterada.
 

@@ -53,9 +53,14 @@
   }
 
   async function withBusy(fn) {
-    if (APP.busy) return;
+    if (APP.busy || APP.lifecycle.destroyed) return;
     setBusy(true);
-    try { await fn(); }
-    catch (error) { console.error(error); log(`Erro: ${error.message || error}`); toast('Erro na ação.'); }
-    finally { setBusy(false); scheduleAutoAnalysis(600); }
+    try { requireExtensionContext(); await fn(); }
+    catch (error) {
+      if (!handleInvalidExtensionContext(error)) { console.error(error); log(`Erro: ${error.message || error}`); toast('Erro na ação.'); }
+    }
+    finally {
+      APP.busy = false;
+      if (!APP.lifecycle.destroyed) { setBusy(false); scheduleAutoAnalysis(600); }
+    }
   }

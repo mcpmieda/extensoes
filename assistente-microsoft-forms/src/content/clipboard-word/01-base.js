@@ -20,6 +20,7 @@
     const scroller = formsScroller();
     let previous = -1;
     for (let i = 0; i < 70; i += 1) {
+      requireExtensionContext();
       const height = Math.max(scroller?.scrollHeight || 0, document.documentElement.scrollHeight || 0, document.body.scrollHeight || 0);
       if (scroller && scroller !== document.documentElement && scroller !== document.body) scroller.scrollTop = height;
       window.scrollTo(0, height);

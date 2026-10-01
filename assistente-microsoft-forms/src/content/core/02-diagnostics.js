@@ -6,6 +6,7 @@
   }
 
   function reportNonFatalError(operation, error, context = null) {
+    if (isInvalidExtensionContext(error)) { handleInvalidExtensionContext(error); return; }
     const name = cleanText(operation) || 'operacao-nao-identificada';
     const message = errorText(error);
     const now = Date.now();

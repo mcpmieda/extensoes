@@ -135,7 +135,7 @@
   }
 
   function scheduleAutoAnalysis(delay = GSSF_TIMING.autoAnalysisMs) {
-    if (document.hidden || APP.omrModeState?.active) return;
+    if (APP.lifecycle.destroyed || document.hidden || APP.omrModeState?.active) return;
     const editingDelay = Date.now() < APP.editingUntil ? 2600 : 0;
     const safeDelay = Math.max(Number(delay) || 0, APP.busy ? 2200 : 900, editingDelay);
     clearTimeout(APP.autoTimer);

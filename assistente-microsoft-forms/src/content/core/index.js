@@ -8,3 +8,4 @@
 /* @include ./08-activity.js */
 /* @include ./09-panel.js */
 /* @include ./10-lifecycle-and-theme.js */
+/* @include ./11-runtime-context.js */

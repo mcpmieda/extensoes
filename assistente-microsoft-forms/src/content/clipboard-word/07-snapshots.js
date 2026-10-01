@@ -153,6 +153,7 @@
       for (let y = 0; y <= maxY; y += step) positions.push(y);
       if (!positions.length || positions[positions.length - 1] !== maxY) positions.push(maxY);
       for (let i = 0; i < positions.length; i += 1) {
+        requireExtensionContext();
         const y = positions[i];
         if (scroller && scroller !== document.documentElement && scroller !== document.body) scroller.scrollTop = y;
         window.scrollTo(0, y);

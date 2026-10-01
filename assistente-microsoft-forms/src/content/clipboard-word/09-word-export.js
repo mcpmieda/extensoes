@@ -102,7 +102,10 @@
         const images = Math.max(imageKeys.size, snapshotImageCount, liveImageCount);
         const payload = await prepareCopyPayloadFromBlocks(wordBlocks, 'copy', { wordDownload: true });
         const imageCheckOk = copyImageCheckOk(payload, images);
+        requireExtensionContext();
+        if (!imageCheckOk) throw new Error('Não foi possível embutir todas as imagens. O download foi cancelado; tente novamente.');
         await stepProgress('copy', 88, 'Baixando arquivo Word...', 120);
+        requireExtensionContext();
         const file = downloadWordHtmlFile(payload);
         await stepProgress('copy', 94, 'Voltando para edição...', 120);
         await returnToEditIfPreview();
@@ -115,7 +118,7 @@
       } finally {
         APP.copyImageCache = null;
         hideTaskOverlay(700);
-        scheduleAutoAnalysis(900);
+        if (!APP.lifecycle.destroyed) scheduleAutoAnalysis(900);
       }
     });
   }
@@ -181,8 +184,7 @@
       } finally {
         APP.copyImageCache = null;
         hideTaskOverlay(700);
-        scheduleAutoAnalysis(900);
+        if (!APP.lifecycle.destroyed) scheduleAutoAnalysis(900);
       }
     });
   }
-
