@@ -119,6 +119,6 @@ export async function build() {
   return result;
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && path.relative(path.resolve(process.argv[1]), fileURLToPath(import.meta.url)) === '') {
   build().catch((error) => { console.error(error.message); process.exitCode = 1; });
 }
