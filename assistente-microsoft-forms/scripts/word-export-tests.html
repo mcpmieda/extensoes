@@ -1,0 +1,35 @@
+<!doctype html><meta charset="utf-8"><title>Regressão da exportação Word</title>
+<pre id="result">Executando...</pre>
+<script src="../src/content/clipboard-word/09-word-export.js"></script>
+<script>
+const checks=[];
+function check(value,label){if(!value)throw new Error(label);checks.push(label);}
+function fixture(answer='85',number='20') {
+ return `<article data-gssf-copy-question-number="${number}" data-gssf-copy-question-index="${number}"><div><div>${number}</div><div data-automation-id="questionTitle"><b>Enunciado</b><br>2. Item interno</div></div><div data-automation-id="questionChoiceOptionContainer"><span class="text-format-content">${answer}</span></div></article>`;
+}
+try {
+ const input=fixture();
+ const output=normalizeWordQuestionMarkers(input);
+ check(output.includes('Questão 20'),'Título inequívoco');
+ check(output.includes('A) </span>85'),'Alternativa numérica identificada');
+ check(output.includes('2. Item interno'),'Número interno preservado');
+ check(normalizeWordQuestionMarkers(output)===output,'Normalização idempotente');
+ for(const value of ['A) 85','A. 85']) {
+  const doc=new DOMParser().parseFromString(normalizeWordQuestionMarkers(fixture(value)),'text/html');
+  check(doc.querySelector('.text-format-content').textContent===value,'Letra existente preservada '+value);
+ }
+ for(const value of ['-25','+25','A+5','B-3','85','<b>Texto</b>','<math><mi>x</mi><mo>+</mo><mn>2</mn></math>']) {
+  const doc=new DOMParser().parseFromString(normalizeWordQuestionMarkers(fixture(value)),'text/html');
+  const original=new DOMParser().parseFromString(value,'text/html').body.textContent;
+  check(doc.querySelector('.text-format-content').textContent==='A) '+original,'Conteúdo preservado '+value);
+ }
+ let rejected=false;
+ try {normalizeWordQuestionMarkers(fixture().replace('<div>20</div>',''));} catch(e){rejected=true;}
+ check(rejected,'Marcador ausente impede arquivo ambíguo');
+ const live=document.createElement('div');live.innerHTML=fixture();document.body.append(live);
+ normalizeWordQuestionMarkers(live.innerHTML);
+ check(live.innerHTML===fixture(),'Não altera a origem');live.remove();
+ window.testResult={ok:true,checks};
+}catch(e){window.testResult={ok:false,checks,error:e.message};}
+document.getElementById('result').textContent=JSON.stringify(window.testResult,null,2);
+</script>

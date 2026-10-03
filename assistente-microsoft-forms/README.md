@@ -1,6 +1,8 @@
 # Assistente do Microsoft Forms
 
-Versão de desenvolvimento **15.10.5**, derivada da referência histórica `V15.8.1(2).zip`.
+Versão de desenvolvimento **15.10.6**, derivada da referência histórica `V15.8.1(2).zip`.
+
+A 15.10.6 identifica os títulos como **Questão 01** no arquivo baixado e acrescenta letras às alternativas que ainda não as possuem. Isso evita confundir respostas numéricas com novos números de questão nas macros do Word. A transformação ocorre apenas na cópia exportada, preserva letras existentes e não altera o formulário. A exportação é interrompida quando não consegue identificar o marcador original com segurança.
 
 A 15.10.5 encerra a instância da aba quando o navegador invalida a conexão após uma atualização da extensão. O aviso oferece recarregar a aba do Forms após salvar. Cópia e download são cancelados quando a conexão é perdida ou as imagens não podem ser embutidas; não há conclusão falsa de um arquivo incompleto. Permissões e dados salvos permanecem iguais.
 

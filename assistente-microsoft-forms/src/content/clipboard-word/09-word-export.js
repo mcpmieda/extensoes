@@ -8,8 +8,46 @@
       .replace(/"/g, '&quot;');
   }
 
+  // Normalize only the detached export, never the live Forms question.
+  // A bare numeric answer must not look like another question to Word macros.
+  function normalizeWordQuestionMarkers(bodyHtml) {
+    if (!/data-gssf-copy-question-(?:number|index)\s*=/.test(bodyHtml)) return bodyHtml;
+    const template = document.createElement('template');
+    template.innerHTML = bodyHtml;
+    const scopes = Array.from(template.content.querySelectorAll('[data-gssf-copy-question-number], [data-gssf-copy-question-index]'))
+      .filter(scope => !scope.parentElement?.closest('[data-gssf-copy-question-number], [data-gssf-copy-question-index]'));
+    for (const scope of scopes) {
+      const rawNumber = scope.getAttribute('data-gssf-copy-question-number') || scope.getAttribute('data-gssf-copy-question-index');
+      if (!/^\d{1,4}$/.test(rawNumber || '') || Number(rawNumber) < 1) throw new Error('Número de questão inválido na exportação Word.');
+      const number = Number(rawNumber);
+      const title = scope.querySelector('[data-automation-id="questionTitle"]');
+      const marker = Array.from(scope.querySelectorAll('div, p, span')).find(el => {
+        if (el.children.length || el.closest('[data-automation-id="questionChoiceOptionContainer"], [role="radio"]')) return false;
+        if (title && !(el.compareDocumentPosition(title) & 4)) return false;
+        return new RegExp(`^(?:Quest[ãa]o\\s+)?0*${number}[.)]?\\s*$`, 'i').test(el.textContent.trim());
+      });
+      if (!marker) throw new Error(`Não foi possível identificar o número da questão ${number}. O Word não foi gerado.`);
+      marker.textContent = `Questão ${String(number).padStart(2, '0')}`;
+      marker.style.display = 'block';
+      const options = Array.from(scope.querySelectorAll('[data-automation-id="questionChoiceOptionContainer"]'));
+      options.forEach((option, index) => {
+        if (index >= 26) throw new Error('Quantidade de alternativas não suportada na exportação Word.');
+        if (option.querySelector('.gssf-word-option-letter')) return;
+        const host = option.querySelector('.text-format-content') || option.querySelector('.gssf-word-math-formula-row');
+        if (!host) throw new Error(`Não foi possível identificar uma alternativa da questão ${number}.`);
+        // Preserve existing labels and operators; add only a missing label.
+        if (/^[A-Za-z][).](?:\s|$)/.test(host.textContent.trim())) return;
+        const label = document.createElement('span');
+        label.className = 'gssf-word-option-letter';
+        label.textContent = `${String.fromCharCode(65 + index)}) `;
+        host.prepend(label);
+      });
+    }
+    return template.innerHTML;
+  }
+
   function buildWordHtmlDocument(payload, title) {
-    const bodyHtml = payload?.innerHtml || String(payload?.html || '').replace(/^.*?<body[^>]*>/is, '').replace(/<\/body>.*$/is, '');
+    const bodyHtml = normalizeWordQuestionMarkers(payload?.innerHtml || String(payload?.html || '').replace(/^.*?<body[^>]*>/is, '').replace(/<\/body>.*$/is, ''));
     const safeTitle = escapeWordHtmlText(title || 'Questões do Forms');
     return `<!DOCTYPE html>
 <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
