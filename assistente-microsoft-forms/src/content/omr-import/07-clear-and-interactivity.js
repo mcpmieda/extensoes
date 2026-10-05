@@ -16,6 +16,7 @@
   }
 
   function renderClearImportedList(audit) {
+    if (isReadOnlyAnswerAudit(audit)) { toast('Volte à aba Perguntas do editor e atualize a leitura.'); return; }
     const modal = document.getElementById('gssf-modal');
     const currentPane = modal?.querySelector('#gssf-omr-current');
     if (!currentPane) return;
@@ -55,6 +56,7 @@
     });
     panel.querySelectorAll('.gssf-clear-imported-row input').forEach((input) => input.addEventListener('change', syncToggle));
     panel.querySelector('#gssf-clear-imported-selected')?.addEventListener('click', async () => {
+      if (isReadOnlyAnswerAudit(audit)) { toast('Volte à aba Perguntas do editor e atualize a leitura.'); return; }
       const selected = Array.from(panel.querySelectorAll('.gssf-clear-imported-row input:checked')).map((input) => Number(input.dataset.q)).filter(Boolean);
       if (!selected.length) { toast('Selecione ao menos uma questão.'); return; }
       const count = clearImportedAnswersForAudit(audit, selected);
@@ -154,6 +156,7 @@
         resetBtn.addEventListener('click', (ev) => {
           ev.preventDefault();
           ev.stopPropagation();
+          if (isReadOnlyAnswerAudit(audit)) { toast('Volte à aba Perguntas do editor e atualize a leitura.'); return; }
           clearImportedAnswersForAudit(audit);
           clearManualAnswersForAudit(audit);
           data.forEach((item) => {
@@ -180,6 +183,7 @@
         clearImportedBtn.addEventListener('click', (ev) => {
           ev.preventDefault();
           ev.stopPropagation();
+          if (isReadOnlyAnswerAudit(audit)) { toast('Volte à aba Perguntas do editor e atualize a leitura.'); return; }
           if (isMainDocument) renderClearImportedList(audit);
         });
       }
@@ -190,6 +194,7 @@
         clearManualBtn.addEventListener('click', async (ev) => {
           ev.preventDefault();
           ev.stopPropagation();
+          if (isReadOnlyAnswerAudit(audit)) { toast('Volte à aba Perguntas do editor e atualize a leitura.'); return; }
           const count = clearManualAnswersForAudit(audit);
           data.forEach((item) => {
             item.manual = '';
