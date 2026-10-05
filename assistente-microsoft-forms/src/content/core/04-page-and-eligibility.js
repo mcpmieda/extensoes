@@ -172,7 +172,6 @@
     if (!hasRealFormShell()) return false;
     const key = currentFormsDocumentKey();
     APP.manualOverrideKey = key;
-    APP.quizDetectedKeys.add(key);
     APP.eligibilityMisses = 0;
     APP.eligibilityAttempts = 0;
     await activateQuizFeatures(key, { manual: true });
@@ -270,7 +269,6 @@
     const summary = quizSignalSummary(document);
     APP.eligibilityLastVerifiedAt = now;
     if (hasManualActivationForCurrentDocument() && hasRealFormShell()) {
-      APP.quizDetectedKeys.add(key);
       APP.eligibilityMisses = 0;
       APP.eligibilityAttempts = 0;
       await activateQuizFeatures(key, { manual: true });

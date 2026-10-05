@@ -280,7 +280,9 @@
   }
 
   function saveCurrentFormToBank(audit, reason = 'leitura automática') {
-    if (!audit || !audit.questions) return null;
+    // Ausência de questões na aba Respostas ou durante navegação não é exclusão.
+    if (!audit || !audit.questions?.length) return null;
+    if (audit.mode && audit.mode !== 'edição') return null;
     const bank = readFormsBank();
     const formId = getFormUniqueId(audit);
     const previous = bank.forms[formId] || null;

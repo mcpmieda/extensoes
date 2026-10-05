@@ -205,5 +205,8 @@
   }
 
   function omrMainBodyHtml(audit) {
+    if (!audit?.questions?.some((question) => question.totalOptions >= 2)) {
+      return '<p class="gssf-muted">O gabarito exige questões com alternativas carregadas. Abra a aba Perguntas do editor e atualize a leitura. Questões de texto, data e outros tipos sem alternativas não usam este gabarito. As demais Ferramentas de Respostas continuam disponíveis nas abas acima.</p>';
+    }
     return `${omrToolsHtml()}${buildOmrAuditHtml(audit)}${buildOmrHtml(audit)}`;
   }

@@ -169,6 +169,8 @@
     const problems = [];
     const answerKey = [];
     const questions = [];
+    // A seleção do respondente na visualização não comprova um gabarito.
+    const nativeAnswerKey = pageMode() === 'edição' && quizSignalSummary(document).detected;
     const standardOptionCounts = readStandardOptionCounts();
     const standardOptions = standardOptionCounts[0] || 4;
     const expectedQuestionCount = readExpectedQuestionCount();
@@ -184,7 +186,7 @@
     if (!blocks.length && !fallbackGroups.length) problems.push('Nenhum grupo de alternativas foi encontrado. A página pode estar na edição sem visualização carregada, ou o Forms mudou a estrutura.');
 
     for (const [idx, block] of blocks.entries()) {
-      const group = block.querySelector('[role="radiogroup"]') || fallbackGroups[idx] || block;
+      const group = block.querySelector('[role="radiogroup"]') || block;
       if (!group || !visible(group)) continue;
       groupsToUse.push(group);
       const options = findOptionContainers(group);
@@ -193,7 +195,7 @@
       const mathLetterMarkers = [];
       yield 'localização de alternativas';
       for (const [i, container] of options.entries()) {
-        if (isCorrectOption(container)) correct.push(i);
+        if (nativeAnswerKey && isCorrectOption(container)) correct.push(i);
         rawOptionTexts.push(optionTextForAudit(container));
         mathLetterMarkers.push(optionMathLetterMarkerForAudit(container, i));
         yield 'leitura de alternativa';
@@ -223,11 +225,10 @@
     for (const [i, q] of questions.entries()) {
       if (!q.prompt) problems.push(`Q${q.number}: Sem enunciado`);
       if (q.emptyModel) problems.push(`Q${q.number}: Questão em branco`);
-      if (q.totalOptions && !standardOptionCounts.includes(q.totalOptions)) {
+      if (nativeAnswerKey && q.totalOptions && !standardOptionCounts.includes(q.totalOptions)) {
         problems.push(`Q${q.number}: Tem ${q.totalOptions} alternativas; aceitas: ${standardOptionCounts.join(', ')}`);
       }
-      if (!q.totalOptions) problems.push(`Q${q.number}: Sem alternativas`);
-      if (q.correct.length === 0) problems.push(`Q${q.number}: Sem resposta correta`);
+      if (nativeAnswerKey && q.totalOptions && q.correct.length === 0) problems.push(`Q${q.number}: Sem resposta correta`);
       if (q.correct.length > 1) problems.push(`Q${q.number}: Mais de uma resposta correta`);
       if (q.correct.length === 1) answerKey.push(`${q.number}: ${letter(q.correct[0])}`);
       const seenOptions = [];
