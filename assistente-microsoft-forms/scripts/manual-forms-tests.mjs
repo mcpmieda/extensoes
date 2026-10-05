@@ -151,6 +151,45 @@ click({ preventDefault() {}, stopPropagation() {} });
 assert.equal(savedRecord.questions['1'].originalAnswer, 'A');
 assert.equal(savedRecord.questions['1'].manualAnswer, 'B');
 assert.equal(bankWrites, 1); assert.equal(overrideWrites, 1);
+
+// Os três handlers de limpeza revalidam o modo após montar o modal.
+const cleanupHandlers = new Map(), cleanupNotices = [];
+let cleanupReports = 0;
+const cleanupButtons = Object.fromEntries(['gssf-omr-reset', 'gssf-omr-clear-imported', 'gssf-omr-clear-manual'].map(id => [id, {
+  dataset: {}, addEventListener(type, handler) { if (type === 'click') cleanupHandlers.set(id, handler); }
+}]));
+const cleanupData = [{ number: 1, original: 'A', current: 'B', manual: 'B', imported: '' }];
+bank.document = { getElementById: id => id === 'omr-sheet' ? root : cleanupButtons[id] || null, querySelector: () => null };
+bank.reportAnswerData = () => cleanupData; bank.toast = s => cleanupNotices.push(s);
+bank.updateInlineReport = () => { cleanupReports++; };
+bank.pageMode = () => 'edição';
+bank.attachReportInteractivity({ document: bank.document }, temporaryAudit);
+assert.equal(cleanupHandlers.size, 3);
+const beforeCleanup = JSON.stringify(cleanupData);
+bank.pageMode = () => 'respostas';
+for (const handler of cleanupHandlers.values()) await handler({ preventDefault() {}, stopPropagation() {} });
+assert.equal(JSON.stringify(cleanupData), beforeCleanup);
+assert.equal(cleanupReports, 0); assert.equal(bankWrites, 1); assert.equal(overrideWrites, 1);
+assert.equal(cleanupNotices.length, 3);
+assert(cleanupNotices.every(notice => notice.includes('Volte à aba Perguntas')));
+
+// Wrapper e designer-card aninhados são a mesma pergunta, inclusive sem número.
+const body = { parentElement: null };
+const blockFixture = (top, parentElement = body) => ({ parentElement, closest: () => null,
+  querySelectorAll: () => [], getBoundingClientRect: () => ({ top, width: 400, height: 100 }) });
+const wrapper = blockFixture(0), designerCard = blockFixture(0, wrapper), standaloneCard = blockFixture(150);
+const discovery = vm.createContext({ APP: {}, scrollY: 0,
+  document: { body, querySelectorAll: () => [wrapper, designerCard, standaloneCard] },
+  getSectionBlocks: () => [], getQuestionListChildren: () => [], isLikelySectionBlock: () => false,
+  visible: () => true, hasOptionSignals: () => true, questionNumberFromBlock: b => b.number || 0,
+  nodeHint: () => 'question', meaningfulImage: () => false,
+  byTop: (a,b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top,
+});
+vm.runInContext(await read('forms-dom/02-question-discovery.js'), discovery);
+assert.deepEqual(Array.from(discovery.blocksByQuestionWrappers()), [wrapper, standaloneCard]);
+assert.deepEqual(Array.from(discovery.collectQuestionBlocks()), [wrapper, standaloneCard]);
+wrapper.number = 1; designerCard.number = 1; standaloneCard.number = 2;
+assert.deepEqual(Array.from(discovery.collectQuestionBlocks()), [wrapper, standaloneCard]);
 bank.pageMode = () => 'visualização';
 click({ preventDefault() {}, stopPropagation() {} });
 assert.equal(bankWrites, 1); assert.equal(overrideWrites, 1);

@@ -29,7 +29,7 @@
       const hasImage = Array.from(el.querySelectorAll('img')).some(meaningfulImage);
       return r.width > 260 && r.height > 45 && (questionNumberFromBlock(el) > 0 || hasOptions || hasImage || /question|pergunta/.test(hint));
     });
-    return uniqueElements(candidates).sort(byTop);
+    return uniqueQuestionBlocks(candidates).sort(byTop);
   }
 
   function findQuestionBlockFromRadioGroup(rg) {
@@ -102,11 +102,23 @@
     return out;
   }
 
+  function uniqueQuestionBlocks(elements) {
+    const candidates = uniqueElements(elements);
+    const candidateSet = new Set(candidates);
+    return candidates.filter((block) => {
+      for (let parent = block.parentElement; parent; parent = parent.parentElement) {
+        if (candidateSet.has(parent)) return false;
+      }
+      return true;
+    });
+  }
+
   function collectQuestionBlocks() {
     let blocks = uniqueElements(getQuestionBlocksFromList());
     if (!blocks.length) blocks = uniqueElements(blocksByQuestionWrappers());
     if (!blocks.length) blocks = uniqueElements(blocksByRadioGroups());
     if (!blocks.length) blocks = uniqueElements(blocksByNumbers());
+    blocks = uniqueQuestionBlocks(blocks);
     if (!blocks.length) { APP.scrollQuestionBlocks = []; return []; }
 
     const byNumber = new Map();

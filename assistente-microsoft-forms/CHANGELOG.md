@@ -84,3 +84,8 @@ O pacote recompilado contém os mesmos 17 arquivos do original, com os mesmos by
 - Reconhecer EditFormPage como edição, preservando o bloqueio de gravações do gabarito em visualização. Marcação/importação/limpeza não substituem o original salvo por uma leitura não autoritativa; ausência transitória de sinais preserva o original da mesma questão.
 - Em Forms comuns, mostrar bolhas apenas para questões e alternativas existentes; preservar o modelo legado de 40 posições dos testes.
 - Cobrir abertura automática/manual, navegação SPA, botão, banco e capacidades com regressões locais. Sem nova validação autenticada nem alterações de permissões, armazenamento ou rotinas de edição matemática/importação verificada.
+# 16.0.1
+
+- Deduplicar wrappers/cards aninhados antes de numerar questões, preservando candidatos não aninhados e o bloco externo da mesma pergunta.
+- Verificar o modo no início dos handlers de redefinir/limpar importadas/limpar manuais, sem alterar a interface ou informar sucesso quando a página já saiu da edição.
+- Testes de descoberta com/sem numeração e navegação após renderização dos controles de limpeza. Entrega corrigida da linha 16, preservando a tag 16.0.0 publicada.

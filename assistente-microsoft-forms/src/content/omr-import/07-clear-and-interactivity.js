@@ -154,6 +154,7 @@
         resetBtn.addEventListener('click', (ev) => {
           ev.preventDefault();
           ev.stopPropagation();
+          if (isReadOnlyAnswerAudit(audit)) { toast('Volte à aba Perguntas do editor e atualize a leitura.'); return; }
           clearImportedAnswersForAudit(audit);
           clearManualAnswersForAudit(audit);
           data.forEach((item) => {
@@ -180,6 +181,7 @@
         clearImportedBtn.addEventListener('click', (ev) => {
           ev.preventDefault();
           ev.stopPropagation();
+          if (isReadOnlyAnswerAudit(audit)) { toast('Volte à aba Perguntas do editor e atualize a leitura.'); return; }
           if (isMainDocument) renderClearImportedList(audit);
         });
       }
@@ -190,6 +192,7 @@
         clearManualBtn.addEventListener('click', async (ev) => {
           ev.preventDefault();
           ev.stopPropagation();
+          if (isReadOnlyAnswerAudit(audit)) { toast('Volte à aba Perguntas do editor e atualize a leitura.'); return; }
           const count = clearManualAnswersForAudit(audit);
           data.forEach((item) => {
             item.manual = '';
