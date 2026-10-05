@@ -74,3 +74,11 @@ Migração estrutural a partir de `V15.8.1(2).zip`. Versão de runtime mantida e
 Recuperadas 18 áreas funcionais, subdivididas por grupos de funções; separados armazenamento, background, estilos e recursos estáticos; mantidos imagens, ícones, bibliotecas e licenças. Adicionados build local sem downloads, verificação de integridade e baseline, pacote determinístico, política de permissões e instruções de desenvolvimento/agentes.
 
 O pacote recompilado contém os mesmos 17 arquivos do original, com os mesmos bytes. Não houve atualização de dependências, alteração de layout, ganho de desempenho comprovado, validação em sessão autenticada do Forms ou configuração de publicação em loja. A pendência de segurança da biblioteca SheetJS foi documentada.
+# 16.0.0
+
+- Separar ativação manual do cache de detecção automática de teste, preservando os critérios automáticos existentes.
+- Disponibilizar Ferramentas de Respostas sem depender da quantidade de questões carregadas, nos dois caminhos de atualização do painel.
+- Mostrar orientação específica no gabarito sem alternativas, mantendo as demais ferramentas disponíveis.
+- Preservar o banco diante de leituras vazias e de visualização; não interpretar seleção do respondente como resposta correta.
+- Reconhecer cards do editor e evitar erros de alternativas/gabarito em questões sem alternativas.
+- Cobrir abertura automática/manual, navegação SPA, botão, banco e capacidades com regressões locais. Sem nova validação autenticada nem alterações de permissões, armazenamento ou rotinas de edição matemática/importação verificada.

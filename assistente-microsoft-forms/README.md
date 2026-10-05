@@ -1,6 +1,10 @@
 # Assistente do Microsoft Forms
 
-Versão de desenvolvimento **15.10.6**, derivada da referência histórica `V15.8.1(2).zip`.
+Versão de desenvolvimento **16.0.0**, derivada da referência histórica `V15.8.1(2).zip`.
+
+A 16.0.0 permite abrir pelo ícone do navegador o assistente nos formulários do editor Microsoft Forms suportado, inclusive formulários comuns como CONTEUDOS. A abertura automática conserva os sinais estruturais de teste já usados; a abertura manual não passa a classificar o formulário como teste. **Ferramentas de Respostas** fica disponível mesmo quando a aba atual não carrega questões. O gabarito informa quando precisa de questões com alternativas; as outras abas permanecem disponíveis. Leituras vazias e de visualização não substituem o banco salvo. Seleções na visualização não são interpretadas como gabarito, e questões sem alternativas não recebem erros de resposta correta ausente. Não há suporte novo à página pública de envio de respostas, nem ampliação de permissões.
+
+Validação da 16.0.0: suíte local de regressões e verificações do pacote. Esta entrega não foi validada numa sessão autenticada do Microsoft Forms nem em todos os tipos possíveis de formulário; nenhuma escrita em formulários reais foi realizada.
 
 A 15.10.6 identifica os títulos como **Questão 01** no arquivo baixado e acrescenta letras às alternativas que ainda não as possuem. Isso evita confundir respostas numéricas com novos números de questão nas macros do Word. A transformação ocorre apenas na cópia exportada, preserva letras existentes e não altera o formulário. A exportação é interrompida quando não consegue identificar o marcador original com segurança.
 
