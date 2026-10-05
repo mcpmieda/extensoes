@@ -111,8 +111,12 @@
 
   function buildOmrAudit(audit, dataOverride = null) {
     const data = dataOverride || reportAnswerData(audit);
-    const realQuestions = audit.questions.length || data.length;
-    const auditData = data.filter((item) => item.number <= realQuestions);
+    const commonForm = audit.nativeAnswerKey === false;
+    const compatibleQuestions = commonForm ? audit.questions.filter(question => question.totalOptions >= 2
+      && question.totalOptions <= 4 && Number(question.number) >= 1 && Number(question.number) <= 40) : audit.questions;
+    const compatibleNumbers = new Set(compatibleQuestions.map(question => Number(question.number)));
+    const realQuestions = commonForm ? compatibleQuestions.length : (audit.questions.length || data.length);
+    const auditData = data.filter((item) => commonForm ? compatibleNumbers.has(item.number) : item.number <= realQuestions);
     const marked = auditData.filter((item) => item.current).length;
     const blank = Math.max(0, realQuestions - marked);
     const manual = auditData.filter((item) => item.manual).length;
@@ -121,7 +125,7 @@
     const conflicts = auditData.filter((item) => item.conflict).length;
     const maxOptionCount = Math.max(
       4,
-      ...(audit.questions || []).map((q) => Number(q.optionCount || q.options?.length || q.optionTexts?.length || 0)),
+      ...(compatibleQuestions || []).map((q) => Number(q.optionCount || q.options?.length || q.optionTexts?.length || 0)),
       ...auditData.map((item) => (/^[A-Z]$/.test(String(item.current || '')) ? String(item.current).charCodeAt(0) - 64 : 0))
     );
     const distribution = {};
@@ -146,7 +150,7 @@
     const adjustments = manual + imported;
     return {
       cards: [
-        { label: 'questões', value: realQuestions, cls: '' },
+        { label: commonForm ? 'questões no quadro' : 'questões', value: realQuestions, cls: '' },
         { label: 'marcadas', value: marked, cls: 'ok' },
         { label: 'em branco', value: blank, cls: blank ? 'warn' : 'ok' },
         { label: 'ajustes no app', value: adjustments, cls: adjustments ? 'manual' : '' }

@@ -102,6 +102,14 @@ assert.equal((bubbles.buildOmrHtml({ ...mixed, nativeAnswerKey: true }).match(/c
 const unsupported = { nativeAnswerKey: false, questions: [{ number: 1, totalOptions: 5 }, { number: 41, totalOptions: 4 }] };
 assert.equal((bubbles.buildOmrHtml(unsupported).match(/class="omr-bubble/g) || []).length, 0);
 assert.match(reports.omrMainBodyHtml(unsupported), /fora desses limites/);
+reports.letter = i => String.fromCharCode(65 + i);
+const mixedSummary = reports.buildOmrAudit({ ...mixed, questions: [...mixed.questions, ...unsupported.questions.map(q => ({ ...q, number: q.number === 1 ? 4 : q.number }))] }, [
+  { number: 1, current: '', original: '' }, { number: 2, current: '', original: '' },
+  { number: 3, current: 'B', original: 'B' }, { number: 4, current: '', original: '' }, { number: 41, current: '', original: '' }
+]);
+assert.equal(mixedSummary.cards[0].value, 2); assert.equal(mixedSummary.cards[0].label, 'questões no quadro');
+assert.equal(mixedSummary.cards[1].value, 1); assert.equal(mixedSummary.cards[2].value, 1);
+assert.equal(mixedSummary.distribution.B, 1); assert.equal(mixed.questions.length, 3, 'total do formulário não muda');
 
 // O snapshot de preview é não autoritativo mesmo com questões carregadas.
 bank.readManualOverrides = () => ({}); bank.getFormTitle = () => 'Quiz'; bank.document = { title: 'Quiz' };
