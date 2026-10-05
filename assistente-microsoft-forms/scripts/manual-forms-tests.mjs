@@ -26,6 +26,7 @@ assert.equal(ctx.APP.quizDetectedKeys.size, 0);
 ctx.location.href += '&tab=responses';
 await ctx.evaluateQuizEligibility();
 assert.equal(ctx.APP.quizActive, true, 'mesmo documento mantém uso manual na aba Respostas');
+assert.equal(ctx.pageMode(), 'respostas', 'aba Respostas não autoriza gravações de gabarito');
 ctx.location.href = 'https://forms.cloud.microsoft/Pages/DesignPageV2.aspx?id=generico';
 await ctx.evaluateQuizEligibility();
 assert.equal(ctx.APP.quizActive, false, 'SPA não transfere autorização manual');
@@ -77,6 +78,7 @@ vm.runInContext(await read('audit-bank/04-forms-bank.js'), bank);
 bank.saveFormsBank = () => { writes++; return true; };
 assert.equal(bank.saveCurrentFormToBank({ questions: [] }), null);
 assert.equal(bank.saveCurrentFormToBank({ questions: [{ number: 1 }], mode: 'visualização' }), null);
+assert.equal(bank.saveCurrentFormToBank({ questions: [{ number: 1 }], mode: 'respostas' }), null);
 assert.equal(reads, 0); assert.equal(writes, 0);
 
 // Sem alternativas: explicação contextual, sem montar controles de gabarito.

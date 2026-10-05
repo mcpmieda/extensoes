@@ -354,7 +354,8 @@
     });
     const value = (/topview=preview/i.test(u) || /quando voce enviar este formulario|quando você enviar este formulário/i.test(body) || hasBackControl)
       ? 'visualização'
-      : ((/\/Pages\/(DesignPageV2|EditFormPage)\.aspx/i.test(u) || /subpage=design/i.test(u)) ? 'edição' : 'forms');
+      : (/[?&](?:topview|subpage|tab|view)=responses?(?:[&#]|$)/i.test(u) ? 'respostas'
+        : ((/\/Pages\/(DesignPageV2|EditFormPage)\.aspx/i.test(u) || /subpage=design/i.test(u)) ? 'edição' : 'forms'));
     APP.pageModeCache = { value, at: now, href: u };
     return value;
   }
