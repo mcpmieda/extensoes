@@ -260,6 +260,7 @@
       url: location.href,
       title: getFormTitle() || document.title,
       mode: pageMode(),
+      nativeAnswerKey,
       questions,
       radioGroups: groupsToUse.length || fallbackGroups.length,
       candidateBlocks: blocks.length,

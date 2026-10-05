@@ -35,6 +35,19 @@ assert.equal(ctx.APP.quizActive, false, 'retornar não promove manual a autoaber
 ctx.document.querySelectorAll = selector => selector.includes('script[type=') ? [{ textContent: '{"isQuiz":true}' }] : [];
 await ctx.evaluateQuizEligibility();
 assert.equal(ctx.APP.quizActive, true, 'quiz válido continua abrindo automaticamente');
+ctx.location.href = 'https://forms.cloud.microsoft/Pages/EditFormPage.aspx?id=quiz';
+assert.equal(ctx.pageMode(), 'edição', 'EditFormPage é editor sem exigir subpage=design');
+await ctx.evaluateQuizEligibility();
+assert.equal(ctx.APP.quizActive, true);
+ctx.location.href += '&topview=preview';
+assert.equal(ctx.pageMode(), 'visualização', 'preview de EditFormPage continua sem autorizar gabarito nativo');
+ctx.location.href = 'https://forms.cloud.microsoft/Pages/EditFormPage.aspx?id=conteudos';
+ctx.document.querySelectorAll = () => [];
+await ctx.evaluateQuizEligibility();
+assert.equal(ctx.APP.quizActive, false);
+await ctx.forceActivateFromBrowserAction();
+assert.equal(ctx.APP.quizActive, true);
+assert(!ctx.APP.quizDetectedKeys.has(ctx.currentFormsDocumentKey()));
 ctx.location.href = 'https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=publico';
 await ctx.evaluateQuizEligibility();
 assert.equal(ctx.APP.quizActive, false);
@@ -67,12 +80,70 @@ assert.equal(bank.saveCurrentFormToBank({ questions: [{ number: 1 }], mode: 'vis
 assert.equal(reads, 0); assert.equal(writes, 0);
 
 // Sem alternativas: explicação contextual, sem montar controles de gabarito.
-const reports = vm.createContext({});
+const reports = vm.createContext({ isReadOnlyAnswerAudit: bank.isReadOnlyAnswerAudit });
 vm.runInContext(await read('omr-import/03-history-and-audit.js'), reports);
 assert.match(reports.omrMainBodyHtml({ questions: [] }), /demais Ferramentas/);
 assert.match(reports.omrMainBodyHtml({ questions: [{ totalOptions: 0 }] }), /texto, data/);
 reports.omrToolsHtml = () => 'TOOLS'; reports.buildOmrAuditHtml = () => 'AUDIT'; reports.buildOmrHtml = () => 'OMR';
 assert.equal(reports.omrMainBodyHtml({ questions: [{ totalOptions: 4 }] }), 'TOOLSAUDITOMR');
+assert.match(reports.omrMainBodyHtml({ mode: 'visualização', questions: [{ totalOptions: 4 }] }), /volte à aba Perguntas/);
+
+// Form misto não inventa bolhas para texto/data, posições ausentes ou quinta opção.
+const bubbles = vm.createContext({ chrome: { runtime: { getURL: s => s } },
+  reportAnswerData: () => [], buildOmrSectionBands: () => '', buildChangePanelHtml: () => '', buildResetRiskAlertHtml: () => '', escapeHtml: s => s });
+vm.runInContext(await read('omr-import/02-reports.js'), bubbles);
+const mixed = { nativeAnswerKey: false, questions: [{ number: 1, totalOptions: 2 }, { number: 2, totalOptions: 0 }, { number: 3, totalOptions: 4 }] };
+const mixedHtml = bubbles.buildOmrHtml(mixed);
+assert.equal((mixedHtml.match(/class="omr-bubble/g) || []).length, 6);
+assert(!mixedHtml.includes('data-q="2"')); assert(!mixedHtml.includes('data-q="4"'));
+assert.equal((bubbles.buildOmrHtml({ ...mixed, nativeAnswerKey: true }).match(/class="omr-bubble/g) || []).length, 160, 'template legado do quiz permanece');
+const unsupported = { nativeAnswerKey: false, questions: [{ number: 1, totalOptions: 5 }, { number: 41, totalOptions: 4 }] };
+assert.equal((bubbles.buildOmrHtml(unsupported).match(/class="omr-bubble/g) || []).length, 0);
+assert.match(reports.omrMainBodyHtml(unsupported), /fora desses limites/);
+
+// O snapshot de preview é não autoritativo mesmo com questões carregadas.
+bank.readManualOverrides = () => ({}); bank.getFormTitle = () => 'Quiz'; bank.document = { title: 'Quiz' };
+bank.letter = i => String.fromCharCode(65 + i);
+const savedAudit = { mode: 'edição', nativeAnswerKey: true, url: ctx.location.href, questions: [{ number: 1, prompt: 'Calcule', totalOptions: 2, optionTexts: ['-25', '+25'], correct: [0] }] };
+const savedRecord = bank.buildFormBankRecord(savedAudit);
+const previewAudit = { ...savedAudit, mode: 'visualização', nativeAnswerKey: false, questions: savedAudit.questions.map(q => ({ ...q, correct: [] })) };
+assert.equal(bank.buildFormBankRecord(previewAudit, savedRecord), savedRecord);
+const temporaryAudit = { ...previewAudit, mode: 'edição' };
+assert.equal(bank.buildFormBankRecord(temporaryAudit, savedRecord).questions['1'].originalAnswer, 'A', 'sinal transitório não apaga original confirmado');
+assert.equal(bank.buildFormBankRecord({ ...temporaryAudit, nativeAnswerKey: true }, savedRecord).questions['1'].originalAnswer, '', 'leitura real autoritativa pode remover resposta nativa');
+bank.pageMode = () => 'visualização';
+assert.equal(bank.updateBankQuestion(savedRecord.formId, 1, { manualAnswer: 'B', originalAnswer: '' }), false);
+assert.equal(reads, 0); assert.equal(writes, 0);
+vm.runInContext(await read('audit-bank/05-manual-answers.js'), bank);
+assert.equal(bank.saveManualOverrides(previewAudit, [{ number: 1, current: 'B', original: 'A' }]), 0);
+reports.readManualOverrides = () => ({}); reports.getCurrentFormRecord = () => savedRecord;
+reports.letter = bank.letter; reports.originalAnswerForQuestion = bank.originalAnswerForQuestion;
+assert.equal(reports.reportAnswerData(previewAudit)[0].original, 'A');
+
+// Handler real da bolha: marcação manual não reescreve originalAnswer;
+// navegação para preview entre render e clique impede a gravação.
+let click, bankWrites = 0, overrideWrites = 0;
+const bubble = { dataset: { q: '1', letter: 'B' }, style: {}, classList: { toggle() {} }, setAttribute() {}, addEventListener(type, handler) { if (type === 'click') click = handler; } };
+const root = { querySelectorAll: () => [bubble], addEventListener() {} };
+bank.document = { getElementById: id => id === 'omr-sheet' ? root : null, querySelector: () => null };
+bank.APP = { omrImportState: {} }; bank.toast = () => {};
+bank.readFormsBank = () => ({ forms: { [savedRecord.formId]: savedRecord } });
+bank.saveFormsBank = () => { bankWrites++; return true; };
+bank.GSSF_STORAGE.setItem = () => { overrideWrites++; }; bank.GSSF_STORAGE.removeItem = () => {};
+bank.reportAnswerData = () => [{ number: 1, original: 'A', current: 'A', manual: '', imported: '' }];
+bank.updateInlineReport = () => {}; bank.renderImportSourceList = () => {};
+vm.runInContext(await read('omr-import/07-clear-and-interactivity.js'), bank);
+bank.attachReportInteractivity({ document: bank.document }, previewAudit);
+assert.equal(click, undefined);
+bank.pageMode = () => 'edição';
+bank.attachReportInteractivity({ document: bank.document }, temporaryAudit);
+click({ preventDefault() {}, stopPropagation() {} });
+assert.equal(savedRecord.questions['1'].originalAnswer, 'A');
+assert.equal(savedRecord.questions['1'].manualAnswer, 'B');
+assert.equal(bankWrites, 1); assert.equal(overrideWrites, 1);
+bank.pageMode = () => 'visualização';
+click({ preventDefault() {}, stopPropagation() {} });
+assert.equal(bankWrites, 1); assert.equal(overrideWrites, 1);
 
 // Leitura real do gerador: seleção de preview/nonquiz não vira gabarito;
 // texto/data não recebem erros de alternativas ou resposta correta.
@@ -96,6 +167,7 @@ for (const settings of [[false, 'edição'], [true, 'visualização'], [true, 'e
   [quiz, mode] = settings;
   const audit = auditCtx.auditPage();
   assert.equal(audit.questions.length, 2);
+  assert.equal(audit.nativeAnswerKey, quiz && mode === 'edição');
   assert.equal(audit.questions[0].correct.length, quiz && mode === 'edição' ? 2 : 0);
   assert.equal(audit.questions[1].correct.length, 0);
   assert(!audit.problems.some(p => /Q2: (Sem alternativas|Sem resposta correta)/.test(p)));

@@ -81,4 +81,6 @@ O pacote recompilado contém os mesmos 17 arquivos do original, com os mesmos by
 - Mostrar orientação específica no gabarito sem alternativas, mantendo as demais ferramentas disponíveis.
 - Preservar o banco diante de leituras vazias e de visualização; não interpretar seleção do respondente como resposta correta.
 - Reconhecer cards do editor e evitar erros de alternativas/gabarito em questões sem alternativas.
+- Reconhecer EditFormPage como edição, preservando o bloqueio de gravações do gabarito em visualização. Marcação/importação/limpeza não substituem o original salvo por uma leitura não autoritativa; ausência transitória de sinais preserva o original da mesma questão.
+- Em Forms comuns, mostrar bolhas apenas para questões e alternativas existentes; preservar o modelo legado de 40 posições dos testes.
 - Cobrir abertura automática/manual, navegação SPA, botão, banco e capacidades com regressões locais. Sem nova validação autenticada nem alterações de permissões, armazenamento ou rotinas de edição matemática/importação verificada.

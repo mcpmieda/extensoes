@@ -354,7 +354,7 @@
     });
     const value = (/topview=preview/i.test(u) || /quando voce enviar este formulario|quando você enviar este formulário/i.test(body) || hasBackControl)
       ? 'visualização'
-      : ((/DesignPageV2/i.test(u) || /subpage=design/i.test(u)) ? 'edição' : 'forms');
+      : ((/\/Pages\/(DesignPageV2|EditFormPage)\.aspx/i.test(u) || /subpage=design/i.test(u)) ? 'edição' : 'forms');
     APP.pageModeCache = { value, at: now, href: u };
     return value;
   }

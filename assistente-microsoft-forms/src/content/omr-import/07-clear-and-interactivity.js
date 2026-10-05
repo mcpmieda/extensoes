@@ -68,6 +68,7 @@
   }
 
   function clearImportedAnswersForAudit(audit, questionNumbers = null) {
+    if (isReadOnlyAnswerAudit(audit)) return 0;
     const formId = getFormUniqueId(audit);
     const bank = readFormsBank();
     const form = bank.forms?.[formId];
@@ -93,6 +94,7 @@
   }
 
   function clearManualAnswersForAudit(audit) {
+    if (isReadOnlyAnswerAudit(audit)) return 0;
     const key = getManualStorageKey(audit);
     try { GSSF_STORAGE.removeItem(key); } catch (_) {}
     const formId = getFormUniqueId(audit);
@@ -117,6 +119,7 @@
   }
 
   function attachReportInteractivity(targetWindow, audit) {
+    if (isReadOnlyAnswerAudit(audit)) return;
     if (!targetWindow || targetWindow.closed) return;
     let doc;
     try { doc = targetWindow.document; } catch (_) { return; }
@@ -228,6 +231,7 @@
       btn.addEventListener('click', (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
+        if (isReadOnlyAnswerAudit(audit)) { toast('Volte à aba Perguntas do editor e atualize a leitura.'); return; }
         const q = Number(btn.dataset.q);
         const answer = btn.dataset.letter;
         const item = data.find((x) => x.number === q);
@@ -237,7 +241,7 @@
         item.conflict = false;
         paint(q);
         saveManualOverrides(audit, data);
-        updateBankQuestion(getFormUniqueId(audit), q, { manualAnswer: item.manual || '', originalAnswer: item.original || '' });
+        updateBankQuestion(getFormUniqueId(audit), q, { manualAnswer: item.manual || '' });
         updateChangedInfo();
         updateInlineReport(audit);
         refreshSourceColumn();

@@ -194,7 +194,10 @@
     return value.slice(0, 320);
   }
 
-  function originalAnswerForQuestion(q) {
+  function originalAnswerForQuestion(q, previous, audit) {
+    if (audit?.nativeAnswerKey === false) {
+      return previous?.questionSignature === questionSignature(q) ? (previous.originalAnswer || '') : '';
+    }
     return q?.correct?.length === 1 ? letter(q.correct[0]) : '';
   }
 
@@ -221,6 +224,7 @@
   }
 
   function buildFormBankRecord(audit, previous = null) {
+    if (isReadOnlyAnswerAudit(audit)) return previous;
     const formId = getFormUniqueId(audit);
     const now = new Date().toISOString();
     const manual = readManualOverrides(audit);
@@ -230,7 +234,7 @@
       const key = String(q.number);
       const prev = previousQuestions[key] || {};
       const currentSignature = questionSignature(q);
-      const originalAnswer = originalAnswerForQuestion(q);
+      const originalAnswer = originalAnswerForQuestion(q, prev, audit);
       const manualAnswer = Object.prototype.hasOwnProperty.call(manual, key) ? String(manual[key] || '') : (prev.manualAnswer || '');
       const importedAnswer = prev.importedAnswer || '';
       const hasCarryover = Boolean(manualAnswer || importedAnswer);
@@ -282,7 +286,7 @@
   function saveCurrentFormToBank(audit, reason = 'leitura automática') {
     // Ausência de questões na aba Respostas ou durante navegação não é exclusão.
     if (!audit || !audit.questions?.length) return null;
-    if (audit.mode && audit.mode !== 'edição') return null;
+    if (isReadOnlyAnswerAudit(audit)) return null;
     const bank = readFormsBank();
     const formId = getFormUniqueId(audit);
     const previous = bank.forms[formId] || null;
@@ -302,6 +306,7 @@
   }
 
   function updateBankQuestion(formId, number, updates) {
+    if (isReadOnlyAnswerAudit()) return false;
     const bank = readFormsBank();
     const form = bank.forms?.[formId];
     if (!form) return false;
@@ -316,4 +321,9 @@
     form.lastReadAt = new Date().toISOString();
     bank.forms[formId] = form;
     return saveFormsBank(bank);
+  }
+
+  function isReadOnlyAnswerAudit(audit) {
+    return Boolean(audit?.mode && audit.mode !== 'edição')
+      || (typeof pageMode === 'function' && pageMode() !== 'edição');
   }

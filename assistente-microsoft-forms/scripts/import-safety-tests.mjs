@@ -7,7 +7,7 @@ const paths = ['audit-bank/04-forms-bank.js', 'omr-import/00-safe-import.js', 'o
 const code = (await Promise.all(paths.map(p => fs.readFile(new URL('../src/content/' + p, import.meta.url), 'utf8')))).join('\n');
 const question = (number, prompt, opts, correct = []) => ({ number, prompt, optionTexts: opts, totalOptions: opts.length, correct, sectionTitle: 'Teste', sectionIndex: 0, importEvidence: { version: 1, prompt, options: opts } });
 const base = question(1, 'Enunciado completo', ['Saturno', 'Marte', 'Terra', 'Vênus'], [0]);
-async function run({ dest = [base], origin = [base], manual = {}, fail = false, cancel = false, stale = false, selected, mutate } = {}) {
+async function run({ dest = [base], origin = [base], manual = {}, fail = false, cancel = false, stale = false, selected, mutate, preview = false, lostSignals = false } = {}) {
   const cache = new Map(), notices = [], confirms = [], writes = [];
   let confirmed, writeCount = 0;
   const audit = { title: 'Destino', questions: dest, url: 'https://forms.cloud.microsoft/Pages/DesignPageV2.aspx?id=dest' };
@@ -26,6 +26,10 @@ async function run({ dest = [base], origin = [base], manual = {}, fail = false, 
   const src = { formId: 'source', title: 'Origem', questions: Object.fromEntries(origin.map(q => [q.number, { questionNumber: q.number, optionCount: q.totalOptions, originalAnswer: String.fromCharCode(65 + q.correct[0]), importEvidence: q.importEvidence, sectionTitle: 'Teste', sectionIndex: 0 }])) };
   const bank = { forms: { source: src, 'id:dest': ctx.buildFormBankRecord(audit) } };
   confirmed = JSON.stringify(bank); cache.set('gssf_forms_bank_v1', confirmed);
+  if (preview || lostSignals) {
+    audit.mode = preview ? 'visualização' : 'edição'; audit.nativeAnswerKey = false;
+    audit.questions = audit.questions.map(q => ({ ...q, correct: [] }));
+  }
   const count = await ctx.importSelectedAnswersFromSource(audit, src, selected || origin.map(q => q.number), { skipConfirm: true });
   return { ctx, src, audit, count, confirms, notices, writeCount, records: ctx.readFormsBank().forms['id:dest'].questions };
 }
@@ -43,6 +47,9 @@ r = await run({ fail:true }); assert.equal(r.count,0); assert.match(r.notices.at
 r = await run({ cancel:true }); assert.equal(r.count,0); assert.equal(r.writeCount,0);
 r = await run({ stale:true }); assert.equal(r.count,0); assert.equal(r.writeCount,0);
 r = await run({dest:[structuredClone(base)],mutate:a=>{a.questions[0].importEvidence.prompt='Modificado';}}); assert.equal(r.count,0); assert.equal(r.writeCount,0);
+r = await run({ preview: true }); assert.equal(r.count,0); assert.equal(r.writeCount,0); assert.equal(r.records['1'].originalAnswer,'A');
+r = await run({ lostSignals: true }); assert.equal(r.records['1'].originalAnswer,'A');
+r = await run({dest:[structuredClone(base)],mutate:a=>{a.mode='visualização';a.nativeAnswerKey=false;a.questions[0].correct=[];}}); assert.equal(r.count,0); assert.equal(r.writeCount,0); assert.equal(r.records['1'].originalAnswer,'A');
 r = await run({ selected:[1,1] }); assert.equal(r.count,1); assert.equal(r.writeCount,1);
 r = await run({ origin:[base,question(2,'Ausente',['Alpha','Beta'],[1])] }); assert.equal(r.count,1); assert.match(r.notices.at(-1),/1 bloqueada/);
 r = await run({ origin:[base,{...base,number:2}] }); assert.equal(r.count,0); assert.equal(r.writeCount,0);

@@ -18,6 +18,7 @@
   }
 
   function saveManualOverrides(audit, data) {
+    if (isReadOnlyAnswerAudit(audit)) return 0;
     const overrides = {};
     (data || []).forEach((item) => {
       const number = String(item.number);
@@ -44,4 +45,3 @@
       return -1;
     }
   }
-
