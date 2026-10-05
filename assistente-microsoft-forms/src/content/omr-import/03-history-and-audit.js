@@ -11,9 +11,12 @@
     const currentRecordQuestionNumbers = Object.keys(currentRecord?.questions || {}).map((n) => Number(n)).filter(Number.isFinite);
     const maxQuestion = Math.max(40, Number(audit?.questions?.length || 0), Number(currentRecord?.questionCount || 0), ...currentRecordQuestionNumbers);
     for (let q = 1; q <= maxQuestion; q += 1) {
-      const original = byQuestion.get(q) || '';
       const key = String(q);
       const bankQuestion = currentRecord?.questions?.[key] || {};
+      const auditQuestion = audit.questions.find(question => Number(question.number) === q);
+      if (audit.nativeAnswerKey === false && (!auditQuestion || auditQuestion.totalOptions < 2)) continue;
+      const original = isReadOnlyAnswerAudit(audit) ? String(bankQuestion.originalAnswer || '')
+        : (audit.nativeAnswerKey === false ? originalAnswerForQuestion(auditQuestion, bankQuestion, audit) : (byQuestion.get(q) || ''));
       const manual = Object.prototype.hasOwnProperty.call(overrides, key) ? String(overrides[key] || '') : String(bankQuestion.manualAnswer || '');
       const imported = String(bankQuestion.importedAnswer || '');
       const current = manual || imported || original;
@@ -108,8 +111,12 @@
 
   function buildOmrAudit(audit, dataOverride = null) {
     const data = dataOverride || reportAnswerData(audit);
-    const realQuestions = audit.questions.length || data.length;
-    const auditData = data.filter((item) => item.number <= realQuestions);
+    const commonForm = audit.nativeAnswerKey === false;
+    const compatibleQuestions = commonForm ? audit.questions.filter(question => question.totalOptions >= 2
+      && question.totalOptions <= 4 && Number(question.number) >= 1 && Number(question.number) <= 40) : audit.questions;
+    const compatibleNumbers = new Set(compatibleQuestions.map(question => Number(question.number)));
+    const realQuestions = commonForm ? compatibleQuestions.length : (audit.questions.length || data.length);
+    const auditData = data.filter((item) => commonForm ? compatibleNumbers.has(item.number) : item.number <= realQuestions);
     const marked = auditData.filter((item) => item.current).length;
     const blank = Math.max(0, realQuestions - marked);
     const manual = auditData.filter((item) => item.manual).length;
@@ -118,7 +125,7 @@
     const conflicts = auditData.filter((item) => item.conflict).length;
     const maxOptionCount = Math.max(
       4,
-      ...(audit.questions || []).map((q) => Number(q.optionCount || q.options?.length || q.optionTexts?.length || 0)),
+      ...(compatibleQuestions || []).map((q) => Number(q.optionCount || q.options?.length || q.optionTexts?.length || 0)),
       ...auditData.map((item) => (/^[A-Z]$/.test(String(item.current || '')) ? String(item.current).charCodeAt(0) - 64 : 0))
     );
     const distribution = {};
@@ -143,7 +150,7 @@
     const adjustments = manual + imported;
     return {
       cards: [
-        { label: 'questões', value: realQuestions, cls: '' },
+        { label: commonForm ? 'questões no quadro' : 'questões', value: realQuestions, cls: '' },
         { label: 'marcadas', value: marked, cls: 'ok' },
         { label: 'em branco', value: blank, cls: blank ? 'warn' : 'ok' },
         { label: 'ajustes no app', value: adjustments, cls: adjustments ? 'manual' : '' }
@@ -205,5 +212,13 @@
   }
 
   function omrMainBodyHtml(audit) {
-    return `${omrToolsHtml()}${buildOmrAuditHtml(audit)}${buildOmrHtml(audit)}`;
+    if (isReadOnlyAnswerAudit(audit)) {
+      return '<p class="gssf-muted">Para marcar ou importar respostas no gabarito interno, volte à aba Perguntas do editor e atualize a leitura. A visualização não fornece um gabarito confiável. As demais Ferramentas de Respostas continuam disponíveis nas abas acima.</p>';
+    }
+    if (!audit?.questions?.some((question) => question.totalOptions >= 2)) {
+      return '<p class="gssf-muted">O gabarito exige questões com alternativas carregadas. Abra a aba Perguntas do editor e atualize a leitura. Questões de texto, data e outros tipos sem alternativas não usam este gabarito. As demais Ferramentas de Respostas continuam disponíveis nas abas acima.</p>';
+    }
+    const limits = audit.nativeAnswerKey === false && audit.questions.some(question => question.totalOptions > 4 || Number(question.number) > 40)
+      ? '<p class="gssf-muted">Este quadro OMR permite marcar apenas questões de 1 a 40 com duas a quatro alternativas. Perguntas fora desses limites não têm bolhas editáveis neste quadro. As demais ferramentas continuam disponíveis.</p>' : '';
+    return `${limits}${omrToolsHtml()}${buildOmrAuditHtml(audit)}${buildOmrHtml(audit)}`;
   }

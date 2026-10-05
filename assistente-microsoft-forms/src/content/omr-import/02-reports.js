@@ -14,10 +14,13 @@
     const buttons = [];
     cols.forEach((col) => {
       for (let q = col.start; q <= col.end; q += 1) {
+        const question = audit.questions.find(item => Number(item.number) === q);
+        if (audit.nativeAnswerKey === false && (!question || question.totalOptions < 2 || question.totalOptions > 4)) continue;
         const row = q - col.start;
         const y = y0 + (row * step);
         const item = data.find((x) => x.number === q) || { original: '', current: '' };
         letters.forEach((l, index) => {
+          if (audit.nativeAnswerKey === false && index >= question.totalOptions) return;
           const selected = item.current === l ? ' selected' : '';
           const original = item.original === l ? ' original-answer' : '';
           const changed = item.current !== item.original;

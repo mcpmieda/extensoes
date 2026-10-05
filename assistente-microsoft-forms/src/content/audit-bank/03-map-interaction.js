@@ -327,7 +327,7 @@
     key.innerHTML = inlineKeyHtml(audit);
     updateQuestionMap(audit);
     updateLetterMap(audit);
-    if (openOmr) openOmr.disabled = APP.busy || !audit.questions.length;
+    if (openOmr) openOmr.disabled = APP.busy;
     updateDashboardExtras(audit);
     saveCurrentFormToBank(audit);
   }

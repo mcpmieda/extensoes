@@ -172,7 +172,6 @@
     if (!hasRealFormShell()) return false;
     const key = currentFormsDocumentKey();
     APP.manualOverrideKey = key;
-    APP.quizDetectedKeys.add(key);
     APP.eligibilityMisses = 0;
     APP.eligibilityAttempts = 0;
     await activateQuizFeatures(key, { manual: true });
@@ -270,7 +269,6 @@
     const summary = quizSignalSummary(document);
     APP.eligibilityLastVerifiedAt = now;
     if (hasManualActivationForCurrentDocument() && hasRealFormShell()) {
-      APP.quizDetectedKeys.add(key);
       APP.eligibilityMisses = 0;
       APP.eligibilityAttempts = 0;
       await activateQuizFeatures(key, { manual: true });
@@ -356,7 +354,8 @@
     });
     const value = (/topview=preview/i.test(u) || /quando voce enviar este formulario|quando você enviar este formulário/i.test(body) || hasBackControl)
       ? 'visualização'
-      : ((/DesignPageV2/i.test(u) || /subpage=design/i.test(u)) ? 'edição' : 'forms');
+      : (/[?&](?:topview|subpage|tab|view)=responses?(?:[&#]|$)/i.test(u) ? 'respostas'
+        : ((/\/Pages\/(DesignPageV2|EditFormPage)\.aspx/i.test(u) || /subpage=design/i.test(u)) ? 'edição' : 'forms'));
     APP.pageModeCache = { value, at: now, href: u };
     return value;
   }

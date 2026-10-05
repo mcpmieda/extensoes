@@ -108,6 +108,7 @@
 
 
   async function importSelectedAnswersFromSource(audit, source, selectedNumbers, options = {}) {
+    if (isReadOnlyAnswerAudit(audit)) { toast('Volte à aba Perguntas do editor e atualize a leitura antes de importar respostas.'); return 0; }
     if (APP.omrImportRunning) { toast('Aguarde a importação em andamento.'); return 0; }
     APP.omrImportRunning = true;
     const formId = getFormUniqueId(audit);
@@ -150,6 +151,7 @@
       const latest = readFormsBank();
       if (JSON.stringify(latest.forms?.[source.formId]) !== sourceSnapshot || JSON.stringify(latest.forms?.[formId] || null) !== currentSnapshot) throw new Error('O gabarito mudou durante a confirmação. Confira e tente novamente.');
       const freshAudit = auditPage();
+      if (isReadOnlyAnswerAudit(freshAudit)) throw new Error('A página saiu da edição durante a confirmação. Atualize a análise.');
       for (const item of allowed) {
         const match = resolveSafeImport(freshAudit, freshSource.questions[String(item.number)]);
         if (match.level === 'blocked' || match.destination.number !== item.target || match.answer !== item.answer

@@ -15,6 +15,7 @@
   function blocksByQuestionWrappers() {
     const selectors = [
       '[data-automation-id="questionWrapper"]',
+      '[data-automation-id="questionDesignerCard"]',
       '[aria-label*="Título da pergunta" i]',
       '[aria-label*="Titulo da pergunta" i]',
       '[aria-label*="Question title" i]'

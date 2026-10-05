@@ -123,6 +123,10 @@
     const modal = document.getElementById('gssf-modal');
     const pane = modal?.querySelector('#gssf-omr-source-pane');
     if (!pane) return;
+    if (isReadOnlyAnswerAudit(audit)) {
+      pane.innerHTML = '<p class="gssf-muted">Importação de gabarito disponível na aba Perguntas do editor, após atualizar a leitura.</p>';
+      return;
+    }
     const currentQuestionList = pane.querySelector('.gssf-bank-question-list');
     const currentSourceCards = pane.querySelector('.gssf-source-card-list');
     if (currentQuestionList) APP.omrImportState.questionListScrollTop = Number(currentQuestionList.scrollTop || 0);

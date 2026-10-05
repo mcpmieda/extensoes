@@ -133,7 +133,7 @@
     if (removeBtn) removeBtn.disabled = APP.busy || !(Number(data?.sections || 0) || dashboardSections);
     if (!APP.busy && !Number(data?.sections || 0)) setProgress('sections', 0, '');
     const openOmr = document.getElementById('gssf-open-omr');
-    if (openOmr) openOmr.disabled = APP.busy || !Number(data?.questions || 0);
+    if (openOmr) openOmr.disabled = APP.busy;
     const lettersBtn = document.getElementById('gssf-insert-letters');
     if (lettersBtn) lettersBtn.disabled = APP.busy || !Number(data?.questions || 0);
     const removeLettersBtn = document.getElementById('gssf-remove-letters');
