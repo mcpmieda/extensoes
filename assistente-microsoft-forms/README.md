@@ -2,7 +2,7 @@
 
 Versão de desenvolvimento **16.0.3**, derivada da referência histórica `V15.8.1(2).zip`.
 
-A 16.0.3 remove a inserção automática de rótulos como A) na exportação Baixar Word. Mantém as alternativas exatamente como vieram: sem letra, com letra simples ou com pontuação original. Números, operadores, HTML rico e fórmulas são preservados. Os marcadores das questões continuam como Questão 01 para compatibilidade com as macros.
+A 16.0.3 remove a inserção automática de rótulos como A) na exportação Baixar Word. Mantém as alternativas exatamente como vieram: sem letra, com letra simples ou com pontuação original. Números, operadores, HTML rico e fórmulas são preservados. Os marcadores das questões continuam como Questão 01 para compatibilidade com as macros. A limpeza do HTML também preserva a tag B, além de STRONG, mantendo os negritos dos títulos e trechos do enunciado.
 
 A 16.0.2 atualiza a edição de alternativas textuais: relê os campos após a remontagem do Forms, espera o editor estar ativo, altera somente o trecho necessário e confirma o texto salvo. A conferência final também tenta novamente questões cuja primeira edição falhou. A rota matemática e as permissões permanecem preservadas. Esta publicação corresponde à cópia local do proprietário; a validação desta publicação é técnica, sem nova escrita em um Forms autenticado.
 

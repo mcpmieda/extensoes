@@ -1,5 +1,6 @@
 <!doctype html><meta charset="utf-8"><title>Regressão da exportação Word</title>
 <pre id="result">Executando...</pre>
+<script src="../src/content/clipboard-word/06-sanitization.js"></script>
 <script src="../src/content/clipboard-word/09-word-export.js"></script>
 <script>
 const checks=[];
@@ -25,6 +26,27 @@ try {
   const reference=new DOMParser().parseFromString(fixture(value),'text/html');
   check(doc.querySelector('[data-automation-id="questionChoiceOptionContainer"]').innerHTML===reference.querySelector('[data-automation-id="questionChoiceOptionContainer"]').innerHTML,'HTML completo preservado '+value);
  }
+
+ const boldSource=document.createElement('div');
+ boldSource.innerHTML='<p><b>O passeio</b></p><p>Texto normal <b>cansados, mas felizes</b> e <strong>outro destaque</strong> sem ampliar o negrito.</p><p><span style="font-weight:700">Negrito por estilo</span> <i>itálico</i> <u>sublinhado</u></p>';
+ const originalBoldHtml=boldSource.innerHTML;
+ const boldCopy=boldSource.cloneNode(true);
+ sanitizeClonedMarkup(boldCopy);
+ check(boldCopy.innerHTML===originalBoldHtml,'Sanitização preserva HTML rico completo');
+ check(boldCopy.querySelectorAll('b').length===2,'Título e trecho em B preservados');
+ check(boldCopy.querySelector('strong').textContent==='outro destaque','STRONG preservado');
+ check(boldCopy.querySelector('span').style.fontWeight==='700','Negrito inline preservado');
+ check(boldCopy.querySelector('i')&&boldCopy.querySelector('u'),'Itálico e sublinhado preservados');
+ const wordHtml=buildWordHtmlDocument({innerHtml:fixture(boldCopy.innerHTML,'1')},'Teste de negrito');
+ const wordDoc=new DOMParser().parseFromString(wordHtml,'text/html');
+ check(wordDoc.querySelectorAll('b').length===3,'Baixar Word mantém todos os B após a limpeza');
+ check(wordDoc.querySelector('.text-format-content').innerHTML===boldCopy.innerHTML,'Exportação mantém HTML misto exatamente');
+ check(wordDoc.querySelector('p:nth-child(2)').querySelectorAll('b,strong').length===2,'Texto normal não vira bloco inteiro em negrito');
+ check(boldSource.innerHTML===originalBoldHtml,'Fonte rica permanece intacta');
+ const unsafe=document.createElement('div');
+ unsafe.innerHTML='<b onclick="alert(1)">Destaque seguro</b><script>alert(1)</'+'script>';
+ sanitizeClonedMarkup(unsafe);
+ check(unsafe.querySelector('b')&&!unsafe.querySelector('b').hasAttribute('onclick')&&!unsafe.querySelector('script'),'B seguro não afrouxa limpeza de scripts e eventos');
  let rejected=false;
  try {normalizeWordQuestionMarkers(fixture().replace('<div>20</div>',''));} catch(e){rejected=true;}
  check(rejected,'Marcador ausente impede arquivo ambíguo');
