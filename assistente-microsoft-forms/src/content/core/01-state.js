@@ -2,9 +2,9 @@
 // Fonte modular: core.
   const GSSF_STORAGE = globalThis.GSSF_STORAGE;
 
-  const GSSF_VERSION = '16.0.2';
+  const GSSF_VERSION = '16.0.3';
 
-  const GSSF_BUILD = `v${GSSF_VERSION}-normal-letters-capitalize-2026-10-06`;
+  const GSSF_BUILD = `v${GSSF_VERSION}-word-original-alternatives-2026-10-06`;
 
   const GSSF_RUNTIME_KEY = '__GSSF_ASSISTENTE_FORMS__';
 

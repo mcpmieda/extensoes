@@ -11,17 +11,19 @@ try {
  const input=fixture();
  const output=normalizeWordQuestionMarkers(input);
  check(output.includes('Questão 20'),'Título inequívoco');
- check(output.includes('A) </span>85'),'Alternativa numérica identificada');
+ check(!output.includes('gssf-word-option-letter'),'Não acrescenta rótulo automático');
  check(output.includes('2. Item interno'),'Número interno preservado');
  check(normalizeWordQuestionMarkers(output)===output,'Normalização idempotente');
- for(const value of ['A) 85','A. 85']) {
+ for(const value of ['A) 85','A. 85','A 85','A) A resposta','A) (x + 2)','(x + 2)','85']) {
   const doc=new DOMParser().parseFromString(normalizeWordQuestionMarkers(fixture(value)),'text/html');
   check(doc.querySelector('.text-format-content').textContent===value,'Letra existente preservada '+value);
  }
- for(const value of ['-25','+25','A+5','B-3','85','<b>Texto</b>','<math><mi>x</mi><mo>+</mo><mn>2</mn></math>']) {
+ for(const value of ['-25','+25','A+5','B-3','85','1','2','3','4','<b>Texto</b> com <i>ênfase</i>','<math><mi>x</mi><mo>+</mo><mn>2</mn></math>','<span class="gssf-word-option-letter">A </span><sup>2</sup>']) {
   const doc=new DOMParser().parseFromString(normalizeWordQuestionMarkers(fixture(value)),'text/html');
   const original=new DOMParser().parseFromString(value,'text/html').body.textContent;
-  check(doc.querySelector('.text-format-content').textContent==='A) '+original,'Conteúdo preservado '+value);
+  check(doc.querySelector('.text-format-content').textContent===original,'Conteúdo preservado '+value);
+  const reference=new DOMParser().parseFromString(fixture(value),'text/html');
+  check(doc.querySelector('[data-automation-id="questionChoiceOptionContainer"]').innerHTML===reference.querySelector('[data-automation-id="questionChoiceOptionContainer"]').innerHTML,'HTML completo preservado '+value);
  }
  let rejected=false;
  try {normalizeWordQuestionMarkers(fixture().replace('<div>20</div>',''));} catch(e){rejected=true;}

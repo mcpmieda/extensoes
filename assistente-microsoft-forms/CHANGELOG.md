@@ -1,4 +1,10 @@
 # Histórico
+## 16.0.3 — 2026-10-06
+
+- Baixar Word normaliza somente os números das questões, sem acrescentar letras ou parênteses às alternativas.
+- Preserva o HTML original das alternativas, incluindo letras existentes, operadores, números e fórmulas.
+- Regressões da exportação conferem texto e HTML sem rótulos, sem remover conteúdo legítimo.
+
 ## 16.0.2 — 2026-10-06
 
 - Publica a versão local atual do proprietário.

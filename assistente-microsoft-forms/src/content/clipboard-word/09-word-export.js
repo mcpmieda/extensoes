@@ -29,19 +29,9 @@
       if (!marker) throw new Error(`Não foi possível identificar o número da questão ${number}. O Word não foi gerado.`);
       marker.textContent = `Questão ${String(number).padStart(2, '0')}`;
       marker.style.display = 'block';
-      const options = Array.from(scope.querySelectorAll('[data-automation-id="questionChoiceOptionContainer"]'));
-      options.forEach((option, index) => {
-        if (index >= 26) throw new Error('Quantidade de alternativas não suportada na exportação Word.');
-        if (option.querySelector('.gssf-word-option-letter')) return;
-        const host = option.querySelector('.text-format-content') || option.querySelector('.gssf-word-math-formula-row');
-        if (!host) throw new Error(`Não foi possível identificar uma alternativa da questão ${number}.`);
-        // Preserve existing labels and operators; add only a missing label.
-        if (/^[A-Za-z][).](?:\s|$)/.test(host.textContent.trim())) return;
-        const label = document.createElement('span');
-        label.className = 'gssf-word-option-letter';
-        label.textContent = `${String.fromCharCode(65 + index)}) `;
-        host.prepend(label);
-      });
+      // Export only the original alternatives. Their letters, punctuation,
+      // numeric answers and formula bodies belong to the author.
+      // This step normalizes question markers only; it adds no option labels.
     }
     return template.innerHTML;
   }
