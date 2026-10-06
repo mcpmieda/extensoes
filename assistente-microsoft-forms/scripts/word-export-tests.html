@@ -47,6 +47,21 @@ try {
  unsafe.innerHTML='<b onclick="alert(1)">Destaque seguro</b><script>alert(1)</'+'script>';
  sanitizeClonedMarkup(unsafe);
  check(unsafe.querySelector('b')&&!unsafe.querySelector('b').hasAttribute('onclick')&&!unsafe.querySelector('script'),'B seguro não afrouxa limpeza de scripts e eventos');
+
+ const pixel='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jX1sAAAAASUVORK5CYII=';
+ const imageInput=`<article data-gssf-copy-question-number="1"><div>1</div><div data-automation-id="questionTitle"><b>Texto original</b> com figura</div><div><img id="stem-1" src="${pixel}" alt="Diagrama um"><img id="stem-2" src="${pixel}" title="Legenda original"></div><div data-automation-id="questionChoiceOptionContainer"><span class="text-format-content">85</span><img id="option-1" src="${pixel}" alt="Resposta em imagem"></div><span class="gssf-word-math-formula-body"><img id="formula-1" src="${pixel}" alt="Formula"></span></article>`;
+ const imageOutput=normalizeWordQuestionMarkers(imageInput);
+ const imageDoc=new DOMParser().parseFromString(imageOutput,'text/html');
+ const group=imageDoc.querySelector('[data-gssf-word-stem-images]');
+ const stemTitle=imageDoc.querySelector('[data-automation-id="questionTitle"]');
+ check(group&&Boolean(group.compareDocumentPosition(stemTitle)&4),'Figuras antes do enunciado');
+ check([...group.querySelectorAll('img')].map(x=>x.id).join(',')==='stem-1,stem-2','Ordem original entre figuras preservada');
+ check(imageDoc.querySelector('#option-1').closest('[data-automation-id="questionChoiceOptionContainer"]'),'Imagem da alternativa não sai da alternativa');
+ check(imageDoc.querySelector('#formula-1').closest('.gssf-word-math-formula-body'),'Fórmula não sai do texto matemático');
+ check(imageDoc.querySelector('#stem-2').title==='GSSF_ENUNCIADO|Legenda original','Legenda original preservada nos metadados');
+ check(imageDoc.querySelectorAll('img').length===4&&[...imageDoc.querySelectorAll('img')].every(x=>x.src===pixel),'Todas as imagens e seus bytes preservados');
+ check(imageDoc.querySelector('.text-format-content').textContent==='85','Alternativa sem letra permanece sem letra');
+ check(normalizeWordQuestionMarkers(imageOutput)===imageOutput,'Ordenação de imagens idempotente');
  let rejected=false;
  try {normalizeWordQuestionMarkers(fixture().replace('<div>20</div>',''));} catch(e){rejected=true;}
  check(rejected,'Marcador ausente impede arquivo ambíguo');

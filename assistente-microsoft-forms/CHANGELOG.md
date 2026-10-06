@@ -1,4 +1,11 @@
 # Histórico
+## 16.0.4 — 2026-10-06
+
+- Exporta figuras do enunciado entre o número da questão e o texto.
+- Mantém imagens das alternativas e fórmulas na posição original.
+- Identifica a função das imagens nos metadados da cópia para alinhamento com as macros do Word.
+- Mantém as correções da 16.0.3 para letras e negritos.
+
 ## 16.0.3 — 2026-10-06
 
 - Baixar Word normaliza somente os números das questões, sem acrescentar letras ou parênteses às alternativas.

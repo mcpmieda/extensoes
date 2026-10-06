@@ -1,6 +1,8 @@
 # Assistente do Microsoft Forms
 
-Versão de desenvolvimento **16.0.3**, derivada da referência histórica `V15.8.1(2).zip`.
+Versão de desenvolvimento **16.0.4**, derivada da referência histórica `V15.8.1(2).zip`.
+
+A 16.0.4 coloca as imagens do enunciado após o número da questão e antes do texto. Imagens das alternativas e fórmulas permanecem em seus respectivos conteúdos. A ordenação só atua na cópia exportada; texto, letras, formatação e bytes das imagens são preservados. Metadados de imagem permitem às macros distinguir figuras do enunciado de alternativas e fórmulas.
 
 A 16.0.3 remove a inserção automática de rótulos como A) na exportação Baixar Word. Mantém as alternativas exatamente como vieram: sem letra, com letra simples ou com pontuação original. Números, operadores, HTML rico e fórmulas são preservados. Os marcadores das questões continuam como Questão 01 para compatibilidade com as macros. A limpeza do HTML também preserva a tag B, além de STRONG, mantendo os negritos dos títulos e trechos do enunciado.
 

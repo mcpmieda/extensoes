@@ -29,6 +29,24 @@
       if (!marker) throw new Error(`Não foi possível identificar o número da questão ${number}. O Word não foi gerado.`);
       marker.textContent = `Questão ${String(number).padStart(2, '0')}`;
       marker.style.display = 'block';
+      const stemImages = [];
+      for (const image of scope.querySelectorAll('img')) {
+        const originalTitle = image.getAttribute('title') || '';
+        if (/^GSSF_(?:ENUNCIADO|ALTERNATIVA|FORMULA)\|/.test(originalTitle)) continue;
+        const inOption = image.closest('[data-automation-id="questionChoiceOptionContainer"], [role="radio"]');
+        const mathContainer = image.closest('math, mjx-container, .MathJax, [class*="MathJax"], [data-mathml], .gssf-word-math-formula-body, .gssf-word-mathml, .gssf-word-math-body');
+        const mathDescription = /MathJax|LaTeX|equation|f[oó]rmula matem[aá]tica/i.test((image.getAttribute('alt') || '') + ' ' + originalTitle);
+        const role = mathContainer || mathDescription ? 'FORMULA' : inOption ? 'ALTERNATIVA' : 'ENUNCIADO';
+        image.setAttribute('title', `GSSF_${role}|${originalTitle}`);
+        if (role === 'ENUNCIADO') stemImages.push(image);
+      }
+      if (stemImages.length) {
+        const group = document.createElement('div');
+        group.setAttribute('data-gssf-word-stem-images', '1');
+        group.style.cssText = 'display:block;text-align:center;margin:0;padding:0;';
+        for (const image of stemImages) group.appendChild(image);
+        marker.insertAdjacentElement('afterend', group);
+      }
       // Export only the original alternatives. Their letters, punctuation,
       // numeric answers and formula bodies belong to the author.
       // This step normalizes question markers only; it adds no option labels.
