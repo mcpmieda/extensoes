@@ -97,7 +97,10 @@
             skipped.push(`Q${qn}: em branco`);
             continue;
           }
-          const markerInfo = detectManualOptionMarkers(currentTexts);
+          const markerInfo = {
+            ...detectManualOptionMarkers(currentTexts),
+            parenSequential: detectAlternativeParenMarkerSequence(currentTexts)
+          };
           const removalProofs = isRemoving ? currentTexts.map((text, optIndex) =>
             provenAlternativePrefixOrigin(qn, optIndex, text)
               || provenAlternativePrefixOrigin(qn, optIndex, text, mathIntegrityFingerprints(optionContainers[optIndex] || null, fields[optIndex]))) : [];
@@ -107,10 +110,9 @@
               ? removalProofs[optIndex].originalText
               : withoutAlternativeLetter(text, optIndex, false, markerInfo, removalProofs[optIndex]);
             const next = withAlternativeLetter(text, optIndex, capitalizeWithInsert, markerInfo);
-            // Cinto de segurança adicional: sem capitalização explícita, a ação Inserir
-            // não pode produzir um texto que deixe de conter integralmente o original.
+            // Cinto de segurança: preserva o corpo; aceita somente ')' da escala confirmada.
             // Se uma futura heurística violar essa regra, a alternativa não é editada.
-            if (!capitalizeWithInsert && !alternativeInsertionPreservesOriginal(text, next, optIndex)) {
+            if (!capitalizeWithInsert && !alternativeInsertionPreservesOriginal(text, next, optIndex, markerInfo)) {
               failures.push(`Q${qn} ${letter(optIndex)}: edição bloqueada para preservar o conteúdo original`);
               return cleanText(text);
             }

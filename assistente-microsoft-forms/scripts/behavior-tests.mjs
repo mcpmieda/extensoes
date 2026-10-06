@@ -20,8 +20,35 @@ async function testAlternativeInsertionIntegrity() {
     stripWrappingParenthesesForOption: (value) => value
   };
   vm.createContext(context);
-  vm.runInContext(source + '\nthis.__alt={withAlternativeLetter,withoutAlternativeLetter,alternativeInsertionPreservesOriginal,alternativeStartsWithExpectedLetter};', context);
-  const { withAlternativeLetter, withoutAlternativeLetter, alternativeInsertionPreservesOriginal } = context.__alt;
+  vm.runInContext(source + '\nthis.__alt={withAlternativeLetter,withoutAlternativeLetter,alternativeInsertionPreservesOriginal,alternativeStartsWithExpectedLetter,detectAlternativeParenMarkerSequence};', context);
+  const { withAlternativeLetter, withoutAlternativeLetter, alternativeInsertionPreservesOriginal, detectAlternativeParenMarkerSequence } = context.__alt;
+  for (const inputs of [
+    ['a)Indicativo', 'b) Subjuntivo', 'c) Imperativo afirmativo', 'd) Imperativo negativo'],
+    ['A)Indicativo', 'B) Subjuntivo', 'C) Imperativo afirmativo', 'D) Imperativo negativo'],
+    ['a) -25', 'B)+25', 'c) (x + 1)', 'D) y)'],
+    ['A) ) texto', 'B Alfa', 'C) Beta', 'D Gama', 'e) √25']
+  ]) {
+    const info = { parenSequential: detectAlternativeParenMarkerSequence(inputs) };
+    assert(info.parenSequential, 'Sequência completa deve confirmar os rótulos existentes.');
+    inputs.forEach((before, index) => {
+      const prefix = before.match(new RegExp(`^${String.fromCharCode(65 + index)}\\s*\\)\\s*(.*)$`, 'i'));
+      const expected = prefix && !prefix[1].startsWith(')') ? `${String.fromCharCode(65 + index)} ${prefix[1]}` : before;
+      const next = withAlternativeLetter(before, index, false, info);
+      assert(next === expected, `Corrigir somente ')' de ${before}: ${next}.`);
+      assert(alternativeInsertionPreservesOriginal(before, next, index, info), 'Validação deve permitir apenas a correção comprovada.');
+      assert(withAlternativeLetter(next, index, false, info) === next, 'Repetir não pode consumir um segundo parêntese.');
+      if (prefix) assert(!alternativeInsertionPreservesOriginal(before, `${next} alterado`, index, info), 'Corpo diferente deve ser rejeitado.');
+    });
+  }
+  for (const inputs of [
+    ['a) x'], ['a) x', 'b) y'], ['a) x', 'c) y', 'd) z', 'e) w'],
+    ['a) x', '+25', '-25', '(x + 1)'], ['A+25', 'B-25', 'C√25', 'D^2']
+  ]) assert(!detectAlternativeParenMarkerSequence(inputs), 'Sem escala confirmada não pode remover parênteses.');
+  assert(withAlternativeLetter('a) texto', 0, false, null) === 'a) texto', 'Letra isolada sem sequência permanece intacta.');
+  for (const before of ['A. texto','A: texto','A-25','A +25','A -25','A) (x)']) {
+    const info = { parenSequential: true };
+    if (!before.startsWith('A)')) assert(withAlternativeLetter(before, 0, false, info) === before, 'Outros separadores/sinais não são normalizados.');
+  }
   const cases = [
     [0, '- 25', 'A - 25'], [0, '−25', 'A −25'], [0, '+25', 'A +25'], [0, '±25', 'A ±25'],
     [0, '×25', 'A ×25'], [0, '÷25', 'A ÷25'], [0, '=25', 'A =25'], [0, '<25', 'A <25'],

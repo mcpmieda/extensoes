@@ -68,11 +68,32 @@
     return new RegExp(`^${wanted}(?:\\s+|$|(?=[^\\p{L}]))`, 'iu').test(raw);
   }
 
-  function alternativeInsertionPreservesOriginal(originalText, nextText, optionIndex) {
+  function detectAlternativeParenMarkerSequence(optionTexts) {
+    const texts = (optionTexts || []).map((text) => cleanText(text).trim());
+    // Uma letra isolada pode ser variavel: confirmar a escala inteira A/B/C/D(/E).
+    if (texts.length < 3 || texts.length > 5) return false;
+    return texts.every((text, index) => new RegExp(`^${escapeRegExp(letter(index))}(?:\\s*\\)|\\s+|$)`, 'i').test(text));
+  }
+
+  function normalizeExistingParenAlternative(text, optionIndex, markerInfo = null) {
+    if (!markerInfo?.parenSequential || optionIndex < 0 || optionIndex > 4) return null;
+    const raw = cleanText(text).trim();
+    const wanted = letter(optionIndex);
+    const match = raw.match(new RegExp(`^${escapeRegExp(wanted)}\\s*\\)\\s*(.*)$`, 'is'));
+    if (!match) return null;
+    // Dois ')' no inicio sao ambiguos; nao consumir um a cada nova execucao.
+    if (match[1].startsWith(')')) return null;
+    // Retirar somente o primeiro ')' do rotulo; preservar o corpo completo.
+    return match[1] ? `${wanted} ${match[1]}` : wanted;
+  }
+
+  function alternativeInsertionPreservesOriginal(originalText, nextText, optionIndex, markerInfo = null) {
     const original = cleanText(originalText).trim();
     const next = cleanText(nextText).trim();
     if (!original) return true;
     if (next === original) return true;
+    const normalizedParen = normalizeExistingParenAlternative(original, optionIndex, markerInfo);
+    if (normalizedParen !== null && next === normalizedParen) return true;
     const wanted = escapeRegExp(letter(optionIndex));
     const match = next.match(new RegExp(`^${wanted}\\s+(.*)$`, 'is'));
     return Boolean(match && cleanText(match[1]).trim() === original);
@@ -83,7 +104,14 @@
     const raw = cleanText(text).trim();
     if (!raw) return wanted;
 
-    // REGRA DE INTEGRIDADE: inserir letra nunca remove prefixo, separador ou operador
+    const normalizedParen = normalizeExistingParenAlternative(raw, optionIndex, markerInfo);
+    if (normalizedParen !== null) {
+      if (!capitalizeBody) return normalizedParen;
+      const body = normalizedParen.slice(wanted.length).trim();
+      return body ? `${wanted} ${capitalizeAlternativeBody(body)}` : wanted;
+    }
+
+    // REGRA DE INTEGRIDADE: fora do ')' confirmado acima, nunca remove prefixo ou operador
     // existente. A heurística antiga interpretava "A - 25" como "A" + separador
     // e transformava a alternativa em "A 25" numa segunda execução. Não há como
     // distinguir com segurança um separador visual de um operador matemático apenas

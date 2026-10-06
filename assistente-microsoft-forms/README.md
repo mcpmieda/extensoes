@@ -1,6 +1,8 @@
 # Assistente do Microsoft Forms
 
-Versão de desenvolvimento **16.0.4**, derivada da referência histórica `V15.8.1(2).zip`.
+Versão de desenvolvimento **16.0.5**, derivada da referência histórica `V15.8.1(2).zip`.
+
+A 16.0.5 normaliza somente o `)` após a letra esperada em sequências completas A/B/C/D(/E), tanto minúsculas quanto maiúsculas: `a)Indicativo` e `A) Indicativo` viram `A Indicativo`. O corpo é preservado, incluindo sinais, números e parênteses. Marcadores isolados, sequências fora de ordem e outros separadores permanecem intactos. A repetição é idempotente. A exportação Word continua sem acrescentar letras automaticamente.
 
 A 16.0.4 coloca as imagens do enunciado após o número da questão e antes do texto. Imagens das alternativas e fórmulas permanecem em seus respectivos conteúdos. A ordenação só atua na cópia exportada; texto, letras, formatação e bytes das imagens são preservados. Metadados de imagem permitem às macros distinguir figuras do enunciado de alternativas e fórmulas.
 

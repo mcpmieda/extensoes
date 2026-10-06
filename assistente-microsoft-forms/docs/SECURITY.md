@@ -40,7 +40,7 @@ O banco de gabaritos é atualizado por alterações de formulário e de campo de
 
 ## Integridade das alternativas
 
-A ação **Inserir letras** é não destrutiva: ela não remove separadores nem operadores existentes. A ação **Remover letras** remove apenas a letra esperada, preservando pontuação e operadores.
+A ação **Inserir letras** preserva o conteúdo e os operadores. Na 16.0.5, a única exceção é normalizar o `)` de rótulos existentes após confirmar a sequência completa A/B/C/D(/E); não são removidos outros separadores, sinais ou parênteses do corpo. A ação **Remover letras** remove apenas a letra esperada, preservando pontuação e operadores.
 
 Na rota matemática, a 15.9.1 elimina o reparo que reconstruía a expressão inteira. A inserção faz uma única tentativa de prefixo e só é considerada bem-sucedida quando o corpo completo original continua reconhecível. Se a posição ou o conteúdo não puderem ser confirmados, a ação reporta falha e não executa uma segunda correção. Casos ambíguos como `A+25`, `A−25` e `E = E` são deixados intactos.
 
