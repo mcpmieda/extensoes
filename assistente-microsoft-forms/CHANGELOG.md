@@ -1,4 +1,13 @@
 # Histórico
+## 16.0.2 — 2026-10-06
+
+- Publica a versão local atual do proprietário.
+- Relê campos normais após a remontagem do editor e confirma a persistência do texto.
+- Edita somente o trecho necessário em alternativas textuais, preservando a formatação.
+- Repete a conferência quando a primeira tentativa falha em todas as alternativas.
+- Mantém a rota matemática, armazenamento, permissões e recursos existentes.
+- Validação desta publicação: build, verificações técnicas e regressões locais; sem nova validação autenticada no Forms.
+
 
 ## 2026-10-01 — 15.10.5 — Recuperação após atualização da extensão
 

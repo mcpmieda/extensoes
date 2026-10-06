@@ -21,10 +21,10 @@
 
   function alternativeEditLooksApplied(field, optionContainer, optIndex, expected, mathLike) {
     const current = optionVisibleTextForLetterAction(field, optionContainer);
+    const mathField = Boolean(mathLike || isMathOptionField(field, optionContainer, null));
+    if (!mathField) return cleanText(current) === cleanText(expected);
     if (alternativeTextEquivalentForEdit(current, expected)) return true;
     const expectedHasPrefix = alternativeTextHasVisualPrefix(expected, optIndex);
-    const mathField = Boolean(mathLike || isMathOptionField(field, optionContainer, null));
-    if (!mathField) return false;
 
     const visualHasPrefix = mathAlternativeVisuallyHasLetter(optionContainer, field, optIndex);
     if (visualHasPrefix && expectedHasPrefix) return mathExpectedBodyWasPreserved(expected, optionContainer, field, optIndex);
@@ -37,12 +37,12 @@
   }
 
   async function confirmAlternativeEditVisually(qn, optIndex, expected, field, optionContainer, activeBlock, mathLike) {
-    for (let attempt = 0; attempt < 9; attempt += 1) {
+    for (let attempt = 0; attempt < (mathLike ? 9 : 3); attempt += 1) {
       let block = activeBlock;
       let option = optionContainer;
       let candidateField = field;
       if (attempt > 0) {
-        const fresh = await freshOptionTargetForLetterAction(qn, optIndex, activeBlock);
+        const fresh = mathLike ? await freshOptionTargetForLetterAction(qn, optIndex, activeBlock) : await freshNormalOptionTarget(qn, optIndex, activeBlock);
         block = fresh.block || block;
         option = fresh.optionContainer || option;
         candidateField = fresh.field || candidateField;
@@ -63,26 +63,115 @@
     for (let optIndex = 0; optIndex < fields.length; optIndex += 1) {
       const expected = cleanText(nextTexts?.[optIndex] || '');
       if (!expected) continue;
-      const fresh = await freshOptionTargetForLetterAction(qn, optIndex, activeBlock);
-      const field = fresh.field || fields[optIndex];
+      const fresh = await freshNormalOptionTarget(qn, optIndex, activeBlock);
+      const field = fresh.field;
       const optionContainer = fresh.optionContainer || optionContainers?.[optIndex] || null;
       const block = fresh.block || activeBlock;
       if (!field) continue;
       if (isMathOptionField(field, optionContainer, block)) continue;
       const current = optionVisibleTextForLetterAction(field, optionContainer);
-      if (alternativeTextEquivalentForEdit(current, expected)) continue;
-      const ok = setTextLikeUser(field, expected);
+      if (cleanText(current) === cleanText(expected)) continue;
+      const ok = await editNormalAlternativeText(qn, optIndex, block, expected);
       if (ok) {
-        fixed += 1;
-        if (options.commitEach) {
-          await commitEditedOptionField(field, block);
-          if (options.waitSave) await waitForFormsAutosaveAfterEdits(3600);
-        } else {
-          await sleep(160);
-        }
+        await commitNormalAlternativeField(field);
+        const confirmed = await freshNormalOptionTarget(qn, optIndex, block);
+        if (confirmed.field && alternativeEditLooksApplied(confirmed.field, confirmed.optionContainer, optIndex, expected, false)) fixed += 1;
       }
     }
     return fixed;
+  }
+
+  async function freshNormalOptionTarget(qn, optIndex, fallbackBlock) {
+    const candidates = questionBlockCandidates(qn).filter((block) => block.isConnected);
+    const block = candidates.find((candidate) => optionTextFieldsForQuestion(qn, candidate).length)
+      || candidates[0] || (fallbackBlock?.isConnected ? fallbackBlock : null);
+    if (!block) return { block: null, optionContainer: null, field: null };
+    const group = block.querySelector('[role="radiogroup"]') || block;
+    const optionContainer = findOptionContainers(group)[optIndex] || null;
+    let field = optionTextField(optionContainer) || optionTextFieldsForQuestion(qn, block)[optIndex];
+    if (!field?.isConnected) {
+      const fresh = await freshOptionTargetForLetterAction(qn, optIndex, block);
+      return { ...fresh, field: fresh.field?.isConnected ? fresh.field : null };
+    }
+    return { block, optionContainer, field };
+  }
+
+  function setNormalAlternativeText(field, value) {
+    if (!field?.isConnected || isMathOptionField(field, null, null)) return false;
+    // Um textbox Rooster inativo é apenas uma representação do texto. Escrever
+    // nele pelo fallback altera o DOM sem passar pelo editor/salvamento do Forms.
+    if (!('value' in field) && !field.isContentEditable) return false;
+    if (field.isContentEditable) {
+      // Prefixo + capitalização deve editar somente o trecho que mudou. Substituir
+      // todo o HTML destruiria formatação; a rotina antiga recusava spans/b/negrito.
+      field.focus();
+      if (!field.isConnected) return false;
+      const original = String(field.textContent || '');
+      const requested = String(value ?? '');
+      if (original === requested) return true;
+      let start = 0;
+      while (start < original.length && start < requested.length && original[start] === requested[start]) start += 1;
+      let end = original.length;
+      let requestedEnd = requested.length;
+      while (end > start && requestedEnd > start && original[end - 1] === requested[requestedEnd - 1]) {
+        end -= 1;
+        requestedEnd -= 1;
+      }
+      const walker = document.createTreeWalker(field, NodeFilter.SHOW_TEXT);
+      const nodes = [];
+      let node;
+      let offset = 0;
+      while ((node = walker.nextNode())) {
+        nodes.push({ node, start: offset, end: offset + node.textContent.length });
+        offset += node.textContent.length;
+      }
+      const position = (index) => {
+        const entry = nodes.find((item) => index <= item.end);
+        return entry ? [entry.node, index - entry.start] : [field, 0];
+      };
+      const range = document.createRange();
+      const [startNode, startOffset] = position(start);
+      const [endNode, endOffset] = position(end);
+      range.setStart(startNode, startOffset);
+      range.setEnd(endNode, endOffset);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      try {
+        if (!document.execCommand('insertText', false, requested.slice(start, requestedEnd))) return false;
+      } catch (_) { return false; }
+      return cleanText(field.textContent) === cleanText(requested);
+    }
+    return setTextLikeUser(field, value);
+  }
+
+  async function editNormalAlternativeText(qn, optIndex, block, value) {
+    let fresh = await freshNormalOptionTarget(qn, optIndex, block);
+    let field = fresh.field;
+    if (!field || isMathOptionField(field, fresh.optionContainer, fresh.block)) return false;
+    // O clique/foco monta o Rooster e acrescenta contenteditable e um div interno.
+    // Esperar essa montagem e reler o campo evita escrever no textbox inativo.
+    try { fireRealClick(field); } catch (_) { try { field.click(); } catch (__) {} }
+    try { field.focus(); } catch (_) {}
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      fresh = await freshNormalOptionTarget(qn, optIndex, fresh.block || block);
+      field = fresh.field;
+      if (field?.isConnected && ('value' in field || field.isContentEditable)) {
+        if (isMathOptionField(field, fresh.optionContainer, fresh.block)) return false;
+        const applied = setNormalAlternativeText(field, value);
+        if (applied) await commitNormalAlternativeField(field);
+        return applied;
+      }
+      await sleep(60);
+    }
+    return false;
+  }
+
+  async function commitNormalAlternativeField(field) {
+    if (!field?.isConnected) return;
+    field.dispatchEvent(new Event('change', { bubbles: true }));
+    field.blur();
+    await sleep(120);
   }
 
   async function freshOptionTargetForLetterAction(qn, optIndex, fallbackBlock = null) {

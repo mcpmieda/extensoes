@@ -160,10 +160,20 @@
                 applied = await setMathOptionTextLikeUser(activeField, next, optionContainer, activeBlock);
               }
             } else {
-              // Campos normais seguem o comportamento estável da V7.
+              // O Forms pode recriar os campos após cada input/blur. Nunca escrever
+              // na fotografia dos campos obtida antes de editar a primeira opção.
+              const fresh = await freshNormalOptionTarget(qn, optIndex, activeBlock);
+              activeBlock = fresh.block || activeBlock;
+              optionContainer = fresh.optionContainer || optionContainer;
+              activeField = fresh.field;
               applied = isRemoving && removalProofs[optIndex]?.mathAfter ? false : isRemoving && removalProofs[optIndex]
                 ? (removeProvenRichTextPrefix(activeField, removalProofs[optIndex], optIndex) || setTextLikeUser(activeField, next))
-                : setTextLikeUser(activeField, next);
+                : await editNormalAlternativeText(qn, optIndex, activeBlock, next);
+              if (applied) {
+                await commitNormalAlternativeField(activeField);
+                const confirmed = await freshNormalOptionTarget(qn, optIndex, activeBlock);
+                applied = Boolean(confirmed.field && alternativeEditLooksApplied(confirmed.field, confirmed.optionContainer, optIndex, next, false));
+              }
             }
 
             if (applied && mathLike) {
@@ -180,9 +190,6 @@
               }
               qChanged += 1;
               changed += 1;
-              if (!mathLike && (looksLikeMathEditorOpen() || /matem[aá]tica|math|equation|latex/i.test(blockedOptionFieldLabel(activeField)))) {
-                await commitEditedOptionField(activeField, activeBlock);
-              }
             } else {
               const visuallyApplied = await confirmAlternativeEditVisually(qn, optIndex, next, activeField, optionContainer, activeBlock, mathLike);
               if (visuallyApplied) {
@@ -195,17 +202,8 @@
             }
             await sleep(mathLike ? 420 : 95);
           }
-          if (qChanged && !isRemoving && !qHadMath) {
-            // M1 Matemática: evita rodar a conferência/retry de campos normais em questão matemática.
-            // A rota matemática continua com sua própria confirmação e espera conservadora.
-            const retried = await retryMissingNormalAlternativeEdits(qn, fields, optionContainers, editBlock, nextTexts);
-            if (retried) {
-              qChanged += retried;
-              changed += retried;
-            }
-          }
           if (qChanged) {
-            await commitEditedOptionField(fields[fields.length - 1], editBlock);
+            if (qHadMath) await commitEditedOptionField(fields[fields.length - 1], editBlock);
             if (qHadMath) {
               await waitForFormsAutosaveAfterEdits(3600);
             } else {
@@ -213,15 +211,22 @@
               // Evita a espera longa de autosave que deixava a última alternativa parecendo travada.
               await sleep(180);
             }
-            if (!isRemoving && !qHadMath) {
-              // M1 Matemática: a conferência final de campos normais fica ativa só para questões comuns.
-              // Em questão matemática, isso economiza varreduras sem tocar na digitação/commit matemático.
-              const finalRetried = await retryMissingNormalAlternativeEdits(qn, fields, optionContainers, editBlock, nextTexts, { commitEach: true, waitSave: false });
-              if (finalRetried) {
-                qChanged += finalRetried;
-                changed += finalRetried;
-                await sleep(180);
-              }
+          }
+          if (!isRemoving && !qHadMath) {
+            // Conferir mesmo quando nenhuma alternativa foi aplicada na primeira
+            // tentativa; antes, questões inteiras com falha não recebiam retry.
+            const finalRetried = await retryMissingNormalAlternativeEdits(qn, fields, optionContainers, editBlock, nextTexts);
+            if (finalRetried) {
+              changed += finalRetried;
+              await sleep(180);
+            }
+            for (let optIndex = 0; optIndex < fields.length; optIndex += 1) {
+              const fresh = await freshNormalOptionTarget(qn, optIndex, editBlock);
+              const confirmed = fresh.field && alternativeEditLooksApplied(fresh.field, fresh.optionContainer, optIndex, nextTexts[optIndex], false);
+              if (!confirmed) continue;
+              const failure = `Q${qn} ${letter(optIndex)}: não consegui confirmar edição`;
+              const failureIndex = failures.indexOf(failure);
+              if (failureIndex >= 0) failures.splice(failureIndex, 1);
             }
           }
         }

@@ -1,6 +1,8 @@
 # Assistente do Microsoft Forms
 
-Versão de desenvolvimento **16.0.1**, derivada da referência histórica `V15.8.1(2).zip`.
+Versão de desenvolvimento **16.0.2**, derivada da referência histórica `V15.8.1(2).zip`.
+
+A 16.0.2 atualiza a edição de alternativas textuais: relê os campos após a remontagem do Forms, espera o editor estar ativo, altera somente o trecho necessário e confirma o texto salvo. A conferência final também tenta novamente questões cuja primeira edição falhou. A rota matemática e as permissões permanecem preservadas. Esta publicação corresponde à cópia local do proprietário; a validação desta publicação é técnica, sem nova escrita em um Forms autenticado.
 
 A 16.0.1 corrige dois achados posteriores à publicação da 16.0.0: wrappers/cards aninhados da mesma pergunta são deduplicados antes da numeração, e ações de limpeza verificam novamente o modo no clique, sem mostrar sucesso após sair da edição. Use o pacote 16.0.1 como entrega corrigida da linha 16; a tag 16.0.0 permanece preservada para rastreabilidade.
 
